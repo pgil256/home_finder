@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    {% if download_links %}
+    <div class="text-center">
+        <h2 class="text-4xl font-semibold text-gray-800 mb-4">Download Your Files:</h2>
+        <div class="flex flex-col items-center space-y-2">
+            <a href="{{ download_links.excel }}"
+                class="block w-1/2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-center transition-colors duration-300 ease-in-out">
+                Download Excel
+            </a>
+            <a href="{{ download_links.pdf }}"
+                class="block w-1/2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-center transition-colors duration-300 ease-in-out">
+                Download PDF
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Scraping Progress</h1>
+        <div class="py-4">
+            <div class="w-full bg-gray-200 rounded-full">
+                <div id="progress-bar"
+                    class="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full transition-width duration-500 ease-in-out"
+                    style="width: 0%;"> 0% </div>
+            </div>
+        </div>
+        <p id="progress-bar-message" class="text-md text-gray-600 mt-3">Waiting for progress...</p>
+        <div class="py-4">
+            <p class="text-xl font-semibold text-gray-800 mt-6 py-2">Can't wait?</p>
+            <p class="text-lg text-gray-600 py-1">Send us your email, and we'll notify you directly:</p>
+            <form action="/submit-email" method="POST" class="mt-4">
+                <div class="flex justify-center items-center space-x-4">
+                    <input type="email" name="email" placeholder="Enter your email" required
+                        class="px-4 py-2 w-full max-w-sm text-gray-700 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}
+
+{% block scripts %}>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
+        CeleryProgressBar.initProgressBar(progressUrl);
+    });
+
+    function checkDownloadLinks(taskId) {
+            fetch(`/WebDriver/scraping-progress/${taskId}/links`)
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        document.getElementById('excel-download').href = data.download_links.excel;
+                        document.getElementById('pdf-download').href = data.download_links.pdf;
+                    }
+                })
+                .catch((error) => console.error('Error fetching download links:', error));
+        }
+
+</script>
+{% endblock scripts %}

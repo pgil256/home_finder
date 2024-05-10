@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto max-w-2xl p-8 bg-white shadow-xl rounded-xl">
+    <h1 class="text-4xl font-bold mb-6 text-center text-gray-900">Refine your Search</h1>
+    <h3 class="text-lg mb-3 text-center text-gray-600">Enter parameters that best match your desired property, then hit
+        "Submit"</h3>
+    <form method="post" action="{% url 'submit-form' %}" class="space-y-6" onsubmit="return validateForm();">
+        {% csrf_token %}
+        <div class="flex mb-6">
+            <!-- City Input -->
+            <div class="flex-1 mr-4">
+                <label for="City" class="block text-lg font-medium text-gray-900 mb-2">City</label>
+                <input type="text" id="City" name="City"
+                    class="block w-full text-lg border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter city" onchange="updatePlaceholderColor(this)">
+            </div>
+            <!-- State Input -->
+            <div class="w-1/3">
+                <label for="State" class="block text-lg font-medium text-gray-900 mb-2">State</label>
+                <select id="State" name="State"
+                    class="select-placeholder block w-full text-lg border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+                    onchange="updatePlaceholderColor(this)">
+                    <option value="" disabled selected>Select state</option>
+                    {% for state in form_context.state_options %}
+                    <option value="{{ state }}">{{ state }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% for field in form_context.fields %}
+        <div class="mb-6">
+            <label class="block text-lg font-medium text-gray-900 mb-2" for="{{ field.name }}">{{ field.name }}</label>
+            {% if field.type == 'range_select' %}
+            <div class="flex space-x-6 items-center">
+                <select id="{{ field.name }}_min" name="{{ field.name }}_min"
+                    class="select-placeholder block w-full text-lg border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+                    aria-label="Minimum {{ field.name }}" onchange="updatePlaceholderColor(this)">
+                    <option value="" disabled selected>Minimum</option>
+                    {% for option in field.options %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <span class="text-lg text-gray-900 px-2">to</span>
+                <select id="{{ field.name }}_max" name="{{ field.name }}_max"
+                    class="select-placeholder block w-full text-lg border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+                    aria-label="Maximum {{ field.name }}" onchange="updatePlaceholderColor(this)">
+                    <option value="" disabled selected>Maximum</option>
+                    {% for option in field.options %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% elif field.type == 'select' %}
+            <select id="{{ field.name }}" name="{{ field.name }}"
+                class="select-placeholder block w-full text-lg border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+                onchange="updatePlaceholderColor(this)">
+                <option value="" disabled selected>{{ field.help_text }}</option>
+                {% for option in field.options %}
+                <option value="{{ option }}">{{ option }}</option>
+                {% endfor %}
+            </select>
+            {% else %}
+            <input type="{{ field.type }}" id="{{ field.name }}" name="{{ field.name }}"
+                class="block w-full text-lg border-gray-300 rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="{{ field.help_text }}" onchange="updatePlaceholderColor(this)">
+            {% endif %}
+        </div>
+        {% endfor %}
+        <div class="flex justify-center mt-6">
+            <button type="submit"
+                class="px-12 py-2 text-lg text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-lg font-medium transition duration-300 ease-in-out">
+                Submit
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updatePlaceholderColor(element) {
+        if (element.value !== "" && element.classList.contains('select-placeholder')) {
+            element.classList.remove('select-placeholder');
+        } else if (element.value === "") {
+            element.classList.add('select-placeholder');
+        }
+    }
+
+    function validateForm() {
+        let isValid = true;
+
+        // Validate City
+        const city = document.getElementById('City');
+        if (city.value.trim() === '') {
+            alert('Please enter a city.');
+            city.focus();
+            return false;
+        }
+
+        // Validate State
+        const state = document.getElementById('State');
+        if (state.value === '') {
+            alert('Please select a state.');
+            state.focus();
+            return false;
+        }
+
+        // Validate range fields
+        const rangeFields = document.querySelectorAll('[id$="_min"], [id$="_max"]');
+        for (let i = 0; i < rangeFields.length; i += 2) {
+            const minElement = rangeFields[i];
+            const maxElement = rangeFields[i + 1];
+            const minValue = parseInt(minElement.value) || null;
+            const maxValue = parseInt(maxElement.value) || null;
+
+            if (minValue !== null && maxValue !== null && minValue > maxValue) {
+                alert(`The minimum value for ${minElement.name.replace('_min', '')} cannot be greater than the maximum value.`);
+                minElement.focus();
+                return false;
+            }
+        }
+
+        return isValid; // Continue with form submission if all checks pass
+    }
+</script>
+{% endblock %}

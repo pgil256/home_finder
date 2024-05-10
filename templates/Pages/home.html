@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Home Finder{% endblock %}
+
+{% block hero-image-content %}
+
+
+<!-- Full-width Hero Image Section with Increased Size -->
+<div>
+    <section class="text-center relative">
+        <img src="{% static 'img/house.jpg' %}" alt="Dream Home" class="w-full h-[90vh] object-cover object-center">
+        <div class="absolute inset-0 bg-gradient-to-b from-slate-500 to-blue-800 opacity-75"></div>
+        <div class="absolute inset-0 flex flex-col items-center justify-center space-y-4">
+            <h1 class="animate-fadeInUp text-4xl md:text-6xl font-bold leading-tight p-6 text-white">
+                Find Your Dream Home
+            </h1>
+            <p class="text-md md:text-2xl p-4 text-gray-200">
+                Explore top listings, compare prices, and uncover your next home with ease.
+            </p>
+            <a href="{% url 'keyword-selection' %}"
+                class="bg-blue-600 hover:bg-blue-700 text-white text-md md:text-xl font-bold py-3 px-8 md:px-12 rounded-lg shadow-lg transition duration-300 ease-in-out">
+                Start Your Search
+            </a>
+            <a id="learnMoreButton"
+                class="bg-gray-800 hover:bg-black text-white text-md md:text-xl font-bold py-3 px-8 md:px-12 rounded-lg shadow-lg transition duration-300 ease-in-out">
+                Learn More
+            </a>
+
+        </div>
+    </section>
+</div>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="learn-more" class="container mx-auto px-6">
+
+    <section class="mb-12">
+        <header class="text-center py-15 md:py-16">
+            <h2 class="text-2xl md:text-4xl font-bold">How It Works</h2>
+        </header>
+        <div class="flex justify-center items-center gap-2 md:gap-8 lg:gap-16">
+
+            <!-- Enter Keywords -->
+            <div class="flex flex-col items-center text-center">
+                <div class="w-24 h-24 mb-4 shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600 p-1">
+                    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/search.svg" alt="Search Icon"
+                        class="w-full h-full bg-white p-4">
+                </div>
+                <h3 class="text-lg font-semibold">Enter Keywords</h3>
+                <p class="text-lg text-gray-600 mt-2">Choose the terms important to your real estate search.</p>
+            </div>
+
+            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/arrow-right.svg" alt="Arrow Right"
+                class="w-8 h-8 text-gray-600 hidden md:block">
+
+            <!-- Specify Your Search -->
+            <div class="flex flex-col items-center text-center">
+                <div class="w-24 h-24 mb-4 shadow-lg bg-gradient-to-br from-green-500 to-teal-600 p-1">
+                    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/funnel.svg" alt="Filter Icon"
+                        class="w-full h-full bg-white p-4">
+                </div>
+                <h3 class="text-lg font-semibold">Specify Your Search</h3>
+                <p class="text-lg text-gray-600 mt-2">Enter the queries that best match your desired property.</p>
+            </div>
+
+            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/arrow-right.svg" alt="Arrow Right"
+                class="w-8 h-8 text-gray-600 hidden md:block">
+
+            <!-- Find Market Insights -->
+            <div class="flex flex-col items-center text-center">
+                <div class="w-24 h-24 mb-4 shadow-lg bg-gradient-to-br from-red-500 to-orange-600 p-1">
+                    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/graph-up.svg"
+                        alt="Market Insights Icon" class="w-full h-full bg-white p-4">
+                </div>
+                <h3 class="text-lg font-semibold">Find Market Insights</h3>
+                <p class="text-lg text-gray-600 mt-2">All of the listing data you need to find your next home.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="mb-12">
+        <header class="text-center py-12 md:py-16">
+            <h2 class="text-2xl md:text-4xl font-bold">What We Offer</h2>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 text-center">
+            <div class="p-8 bg-slate-200 rounded-lg shadow-md">
+                <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/search.svg" alt="Custom Search"
+                    class="w-14 h-14 mx-auto mb-4">
+                <h3 class="text-xl font-semibold">Custom Searches</h3>
+                <p class="mt-2">Pinpoint homes that meet all your criteria.</p>
+            </div>
+            <div class="p-8 bg-slate-200 rounded-lg shadow-md">
+                <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/graph-up.svg" alt="Market Insights"
+                    class="w-14 h-14 mx-auto mb-4">
+                <h3 class="text-xl font-semibold">Visual Data</h3>
+                <p class="mt-2">Make informed decisions with real-time data.</p>
+            </div>
+            <div class="p-8 bg-slate-200 rounded-lg shadow-md">
+                <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons/icons/layout-three-columns.svg"
+                    alt="Compare Listings" class="w-14 h-14 mx-auto mb-4">
+                <h3 class="text-xl font-semibold">Compare Listings</h3>
+                <p class="mt-2">View side-by-side comparisons of properties.</p>
+            </div>
+        </div>
+    </section>
+    <div class="flex justify-center p-6">
+        <a href="{% url 'keyword-selection' %}"
+            class="mb-4 inline-block bg-blue-600 text-white text-lg font-bold px-12 py-3 shadow hover:bg-blue-700 transition-colors rounded-lg">Find
+            Your Next Home</a>
+    </div>
+</div>
+
+
+{% endblock %}

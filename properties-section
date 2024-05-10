@@ -1,0 +1,1354 @@
+<section class="PropertiesList_propertiesContainer__Vox4I PropertiesList_listViewGrid__bttyS"
+    data-testid="property-list">
+    <div id="placeholder_property_3896511126" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_3896511126" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="BWCNextImage_wrapper___o_xP"><span
+                    style="box-sizing:border-box;display:block;overflow:hidden;width:initial;height:initial;background:none;opacity:1;border:0;margin:0;padding:0;position:absolute;top:0;left:0;bottom:0;right:0"><img
+                        alt=""
+                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0ODAiIGhlaWdodD0iMjcwIiBmaWxsPSJub25lIiB4bWxuczp2PSJodHRwczovL3ZlY3RhLmlvL25hbm8iPjxzdHlsZT48IVtDREFUQVsuR3tzdHJva2Utd2lkdGg6NH0uSHtzdHJva2U6I2UxZTFlMX0uSXtzdHJva2UtbGluZWNhcDpyb3VuZH1dXT48L3N0eWxlPjxwYXRoIGZpbGw9IiNmMmYyZjIiIGQ9Ik0wIDBoNDgwdjI3MEgweiIvPjxnIGNsaXAtcGF0aD0idXJsKCNBKSI+PGcgZmlsbD0iI2Y4ZjhmOCIgY2xhc3M9IkcgSCI+PHBhdGggZD0ibTM0NC4xOTcgOTAuMzA1LTEzNS4yMy0zNi4yMzRjLTkuNjAyLTIuNTczLTE5LjQ3MiAzLjEyNS0yMi4wNDUgMTIuNzI4bC0yNC44NDcgOTIuNzI4Yy0yLjU3MyA5LjYwMyAzLjEyNiAxOS40NzMgMTIuNzI4IDIyLjA0NmwxMzUuMjMgMzYuMjM0YzkuNjAyIDIuNTczIDE5LjQ3Mi0zLjEyNSAyMi4wNDUtMTIuNzI3bDI0Ljg0Ny05Mi43MjljMi41NzMtOS42MDMtMy4xMjYtMTkuNDczLTEyLjcyOC0yMi4wNDZaIi8+PHBhdGggZD0iTTMwMC41IDY5LjkzOWgtMTQwYy05Ljk0MSAwLTE4IDguMDU5LTE4IDE4djk2YzAgOS45NDEgOC4wNTkgMTggMTggMThoMTQwYzkuOTQxIDAgMTgtOC4wNTkgMTgtMTh2LTk2YzAtOS45NDEtOC4wNTktMTgtMTgtMThaIi8+PC9nPjxnIGNsYXNzPSJHIj48cGF0aCBkPSJNMjc3LjE2NCA5OS45MzloLTUuMzI4YTIuMzM2IDIuMzM2IDAgMCAwLTIuMzM2IDIuMzM2djIxLjMyOGEyLjMzNiAyLjMzNiAwIDAgMCAyLjMzNiAyLjMzNmg1LjMyOGEyLjMzNiAyLjMzNiAwIDAgMCAyLjMzNi0yLjMzNnYtMjEuMzI4YTIuMzM2IDIuMzM2IDAgMCAwLTIuMzM2LTIuMzM2WiIgZmlsbD0iI2YzZjNmMyIgc3Ryb2tlPSIjZTllOWU5Ii8+PHBhdGggZD0iTTE2OS41IDE2OS45MzloMTI2IiBjbGFzcz0iSCBJIi8+PC9nPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE5Ny41IDExNy45MzlhNy45NiA3Ljk2IDAgMCAxLTEuMzg1IDQuNSA5Ljk3NiA5Ljk3NiAwIDAgMSAzLjM4NSA3LjUgOS45NSA5Ljk1IDAgMCAxLTEuNDQ3IDUuMTgzIDExLjk2IDExLjk2IDAgMCAxIDMuNDQ3IDguNDE3YzAgNi42MjctNS4zNzMgMTItMTIgMTJzLTEyLTUuMzczLTEyLTEyYTExLjk2IDExLjk2IDAgMCAxIDMuNDQ3LTguNDE3IDkuOTUgOS45NSAwIDAgMS0xLjQ0Ny01LjE4MyA5Ljk3NiA5Ljk3NiAwIDAgMSAzLjM4NS03LjUgOCA4IDAgMSAxIDE0LjYxNS00LjVaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTE5Ni4xMTUgMTIyLjQzOWwtMS42NTItMS4xMjYtLjk5NSAxLjQ1OCAxLjMyMyAxLjE2OCAxLjMyNC0xLjV6bTEuOTM4IDEyLjY4M2wtMS43MDktMS4wMzgtLjgwOCAxLjMzMSAxLjA5MiAxLjExIDEuNDI1LTEuNDAzem0tMTcuMTA2IDBsMS40MjUgMS40MDMgMS4wOTItMS4xMS0uODA4LTEuMzMxLTEuNzA5IDEuMDM4em0xLjkzOC0xMi42ODNsMS4zMjQgMS41IDEuMzIzLTEuMTY4LS45OTUtMS40NTgtMS42NTIgMS4xMjZ6bTE0Ljg4MyAxLjEyN2E5Ljk2NSA5Ljk2NSAwIDAgMCAxLjczMi01LjYyN2gtNGE1Ljk3IDUuOTcgMCAwIDEtMS4wMzcgMy4zNzRsMy4zMDUgMi4yNTN6bTMuNzMyIDYuMzczYzAtMy41ODQtMS41NzQtNi44MDMtNC4wNjEtOC45OTlsLTIuNjQ4IDIuOTk5YTcuOTc2IDcuOTc2IDAgMCAxIDIuNzA5IDZoNHptLTEuNzM3IDYuMjIyYTExLjk1MiAxMS45NTIgMCAwIDAgMS43MzctNi4yMjJoLTRhNy45NTUgNy45NTUgMCAwIDEtMS4xNTYgNC4xNDVsMy40MTkgMi4wNzd6bS0zLjEzNS4zNjRhOS45NjMgOS45NjMgMCAwIDEgMi44NzIgNy4wMTRoNGMwLTMuODI1LTEuNTM2LTcuMjk1LTQuMDIxLTkuODE5bC0yLjg1MSAyLjgwNXptMi44NzIgNy4wMTRhMTAgMTAgMCAwIDEtMTAgMTB2NGM3LjczMiAwIDE0LTYuMjY4IDE0LTE0aC00em0tMTAgMTBhMTAgMTAgMCAwIDEtMTAtMTBoLTRjMCA3LjczMiA2LjI2OCAxNCAxNCAxNHYtNHptLTEwLTEwYTkuOTYzIDkuOTYzIDAgMCAxIDIuODcyLTcuMDE0bC0yLjg1MS0yLjgwNWExMy45NTcgMTMuOTU3IDAgMCAwLTQuMDIxIDkuODE5aDR6bS0yLTEzLjZhMTEuOTUgMTEuOTUgMCAwIDAgMS43MzcgNi4yMjJsMy40MTktMi4wNzdhNy45NTUgNy45NTUgMCAwIDEtMS4xNTYtNC4xNDVoLTR6bTQuMDYxLTguOTk5YTExLjk3OCAxMS45NzggMCAwIDAtNC4wNjEgOC45OTloNGE3Ljk3NiA3Ljk3NiAwIDAgMSAyLjcwOS02bC0yLjY0OC0yLjk5OXptLTIuMDYxLTMuMDAxYzAgMi4wODMuNjM5IDQuMDIzIDEuNzMyIDUuNjI3bDMuMzA1LTIuMjUzYTUuOTcgNS45NyAwIDAgMS0xLjAzNy0zLjM3NGgtNHptMTAtMTBhMTAgMTAgMCAwIDAtMTAgMTBoNGE2IDYgMCAwIDEgNi02di00em0xMCAxMGExMCAxMCAwIDAgMC0xMC0xMHY0YTYgNiAwIDAgMSA2IDZoNHoiIGZpbGw9IiNlMWUxZTEiLz48cGF0aCBkPSJNMTg5LjUgMTQ1LjkzOXYyNCIgY2xhc3M9IkcgSCBJIi8+PHBhdGggZD0iTTIyMS4wNDYgMTY5LjkzOWg1NC45MDhhMy41NDcgMy41NDcgMCAwIDAgMy41NDYtMy41NDZ2LTQ3LjA5MWwtMzEtMTkuMzYzLTMxIDE5LjM2M3Y0Ny4wOTFhMy41NDcgMy41NDcgMCAwIDAgMy41NDYgMy41NDZaIiBmaWxsPSIjZjNmM2YzIi8+PHBhdGggZD0ibTIxOS41IDEyMi42NjYgNi00LjcyN3Y1MmgtNnYtNDcuMjczWiIgZmlsbD0iI2U5ZTllOSIvPjxnIGNsYXNzPSJIIEciPjxwYXRoIGQ9Ik0yMTkuNSAxMjMuOTM5djQ2aDYwdi00NiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9IkkiLz48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJNMjU5LjUgMTUzLjEzOWE3LjIgNy4yIDAgMCAwLTcuMi03LjJoLTUuNmE3LjIgNy4yIDAgMCAwLTcuMiA3LjJ2MTYuOGgyMHYtMTYuOHptLTEwLTE1LjJhNiA2IDAgMSAwIDAtMTIgNiA2IDAgMCAwIDAgMTJ6Ii8+PC9nPjxwYXRoIGQ9Ik0yMTkuNSAxMDUuOTM5YTYgNiAwIDEgMSAwLTEyIDYgNiAwIDAgMSAwIDEyWiIvPjxwYXRoIGQ9Ik0yNjcuNSA5OS45MzloMTQiIGNsYXNzPSJJIi8+PHBhdGggZD0ibTI0NS42NjQgMTAwLjc5LTMxLjM5NSAyMy4zMjdhNi44NiA2Ljg2IDAgMCAwLTIuNzY5IDUuNTA3djMuNTkyYzAgMS45NTIgMi4yMjQgMy4wNyAzLjc5MSAxLjkwNmwzNC4yMDktMjUuNDE4IDM0LjIwOSAyNS40MThjMS41NjcgMS4xNjQgMy43OTEuMDQ2IDMuNzkxLTEuOTA2di0zLjU5MmE2Ljg2IDYuODYgMCAwIDAtMi43NjktNS41MDdsLTMxLjM5NS0yMy4zMjdhNi40MyA2LjQzIDAgMCAwLTcuNjcyIDBaIiBmaWxsPSIjZmZmIi8+PC9nPjwvZz48ZGVmcz48Y2xpcFBhdGggaWQ9IkEiPjxwYXRoIGZpbGw9IiNmZmYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExOS41IDQ5KSIgZD0iTTAgMGgyNDF2MTcySDB6Ii8+PC9jbGlwUGF0aD48L2RlZnM+PC9zdmc+"
+                        decoding="async" data-nimg="fill"
+                        style="position:absolute;top:0;left:0;bottom:0;right:0;box-sizing:border-box;padding:0;border:none;margin:auto;display:block;width:0;height:0;min-width:100%;max-width:100%;min-height:100%;max-height:100%"></span>
+            </div>
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by Realty 365</span></div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/1033-N-28th-St_Allentown_PA_18104_M38965-11126?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0"
+                                aria-label="Details for 1033 N 28th St">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture
+                                        class="Picture_fade__a5shR Picture_bottom__CCmq5 Picture_topOnHover__fvGWh">
+                                        <source
+                                            srcset="https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m782901332rd-w960_h720.webp, https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m782901332rd-w960_h720.webp 2x"
+                                            type="image/webp" data-testid="img-webp" width="100%" height="100%"><img
+                                            data-src="https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m782901332rd-w960_h720.jpg"
+                                            data-testid="picture-img" alt="1033 N 28th St, Allentown, PA 18104"
+                                            src="https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m782901332rd-w960_h720.jpg"
+                                            srcset="https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m782901332rd-w960_h720.jpg, https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m782901332rd-w960_h720.jpg 2x"
+                                            itemprop="image" data-label="pc-photo" data-atf="false" data-fmp="true"
+                                            loading="lazy" width="100%" height="100%">
+                                    </picture>
+                                    <picture data-lazy="force-loaded"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR Picture_topOnHover__fvGWh">
+                                        <source
+                                            srcset="https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m948413086rd-w960_h720.webp, https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m948413086rd-w960_h720.webp 2x"
+                                            type="image/webp" data-testid="img-webp" width="100%" height="100%"><img
+                                            data-testid="picture-img" alt="1033 N 28th St, Allentown, PA 18104"
+                                            src="https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m948413086rd-w960_h720.jpg"
+                                            srcset="https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m948413086rd-w960_h720.jpg, https://ap.rdcpix.com/a96eaddd2ca82966fd58db9996370c01l-m948413086rd-w960_h720.jpg 2x"
+                                            itemprop="image" data-label="pc-photo" data-atf="true" data-fmp="true"
+                                            loading="eager" width="100%" height="100%" fetchpriority="high">
+                                    </picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new</span></span>
+                                    </div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 1033 N 28th St Allentown, PA 18104"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/1033-N-28th-St_Allentown_PA_18104_M38965-11126?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 1033 N 28th St"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">House for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $259,900</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">3</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">2</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">1,512</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">1,512 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">0.27</span>acre
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">0.27 acre lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">1033 N 28th St</div>
+                                <div class="truncate-line" data-testid="card-address-2">Allentown, PA 18104</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 1033 N 28th St Allentown, PA 18104"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3422347497" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_3422347497" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="BWCNextImage_wrapper___o_xP"><span
+                    style="box-sizing:border-box;display:block;overflow:hidden;width:initial;height:initial;background:none;opacity:1;border:0;margin:0;padding:0;position:absolute;top:0;left:0;bottom:0;right:0"><img
+                        alt=""
+                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0ODAiIGhlaWdodD0iMjcwIiBmaWxsPSJub25lIiB4bWxuczp2PSJodHRwczovL3ZlY3RhLmlvL25hbm8iPjxzdHlsZT48IVtDREFUQVsuR3tzdHJva2Utd2lkdGg6NH0uSHtzdHJva2U6I2UxZTFlMX0uSXtzdHJva2UtbGluZWNhcDpyb3VuZH1dXT48L3N0eWxlPjxwYXRoIGZpbGw9IiNmMmYyZjIiIGQ9Ik0wIDBoNDgwdjI3MEgweiIvPjxnIGNsaXAtcGF0aD0idXJsKCNBKSI+PGcgZmlsbD0iI2Y4ZjhmOCIgY2xhc3M9IkcgSCI+PHBhdGggZD0ibTM0NC4xOTcgOTAuMzA1LTEzNS4yMy0zNi4yMzRjLTkuNjAyLTIuNTczLTE5LjQ3MiAzLjEyNS0yMi4wNDUgMTIuNzI4bC0yNC44NDcgOTIuNzI4Yy0yLjU3MyA5LjYwMyAzLjEyNiAxOS40NzMgMTIuNzI4IDIyLjA0NmwxMzUuMjMgMzYuMjM0YzkuNjAyIDIuNTczIDE5LjQ3Mi0zLjEyNSAyMi4wNDUtMTIuNzI3bDI0Ljg0Ny05Mi43MjljMi41NzMtOS42MDMtMy4xMjYtMTkuNDczLTEyLjcyOC0yMi4wNDZaIi8+PHBhdGggZD0iTTMwMC41IDY5LjkzOWgtMTQwYy05Ljk0MSAwLTE4IDguMDU5LTE4IDE4djk2YzAgOS45NDEgOC4wNTkgMTggMTggMThoMTQwYzkuOTQxIDAgMTgtOC4wNTkgMTgtMTh2LTk2YzAtOS45NDEtOC4wNTktMTgtMTgtMThaIi8+PC9nPjxnIGNsYXNzPSJHIj48cGF0aCBkPSJNMjc3LjE2NCA5OS45MzloLTUuMzI4YTIuMzM2IDIuMzM2IDAgMCAwLTIuMzM2IDIuMzM2djIxLjMyOGEyLjMzNiAyLjMzNiAwIDAgMCAyLjMzNiAyLjMzNmg1LjMyOGEyLjMzNiAyLjMzNiAwIDAgMCAyLjMzNi0yLjMzNnYtMjEuMzI4YTIuMzM2IDIuMzM2IDAgMCAwLTIuMzM2LTIuMzM2WiIgZmlsbD0iI2YzZjNmMyIgc3Ryb2tlPSIjZTllOWU5Ii8+PHBhdGggZD0iTTE2OS41IDE2OS45MzloMTI2IiBjbGFzcz0iSCBJIi8+PC9nPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE5Ny41IDExNy45MzlhNy45NiA3Ljk2IDAgMCAxLTEuMzg1IDQuNSA5Ljk3NiA5Ljk3NiAwIDAgMSAzLjM4NSA3LjUgOS45NSA5Ljk1IDAgMCAxLTEuNDQ3IDUuMTgzIDExLjk2IDExLjk2IDAgMCAxIDMuNDQ3IDguNDE3YzAgNi42MjctNS4zNzMgMTItMTIgMTJzLTEyLTUuMzczLTEyLTEyYTExLjk2IDExLjk2IDAgMCAxIDMuNDQ3LTguNDE3IDkuOTUgOS45NSAwIDAgMS0xLjQ0Ny01LjE4MyA5Ljk3NiA5Ljk3NiAwIDAgMSAzLjM4NS03LjUgOCA4IDAgMSAxIDE0LjYxNS00LjVaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTE5Ni4xMTUgMTIyLjQzOWwtMS42NTItMS4xMjYtLjk5NSAxLjQ1OCAxLjMyMyAxLjE2OCAxLjMyNC0xLjV6bTEuOTM4IDEyLjY4M2wtMS43MDktMS4wMzgtLjgwOCAxLjMzMSAxLjA5MiAxLjExIDEuNDI1LTEuNDAzem0tMTcuMTA2IDBsMS40MjUgMS40MDMgMS4wOTItMS4xMS0uODA4LTEuMzMxLTEuNzA5IDEuMDM4em0xLjkzOC0xMi42ODNsMS4zMjQgMS41IDEuMzIzLTEuMTY4LS45OTUtMS40NTgtMS42NTIgMS4xMjZ6bTE0Ljg4MyAxLjEyN2E5Ljk2NSA5Ljk2NSAwIDAgMCAxLjczMi01LjYyN2gtNGE1Ljk3IDUuOTcgMCAwIDEtMS4wMzcgMy4zNzRsMy4zMDUgMi4yNTN6bTMuNzMyIDYuMzczYzAtMy41ODQtMS41NzQtNi44MDMtNC4wNjEtOC45OTlsLTIuNjQ4IDIuOTk5YTcuOTc2IDcuOTc2IDAgMCAxIDIuNzA5IDZoNHptLTEuNzM3IDYuMjIyYTExLjk1MiAxMS45NTIgMCAwIDAgMS43MzctNi4yMjJoLTRhNy45NTUgNy45NTUgMCAwIDEtMS4xNTYgNC4xNDVsMy40MTkgMi4wNzd6bS0zLjEzNS4zNjRhOS45NjMgOS45NjMgMCAwIDEgMi44NzIgNy4wMTRoNGMwLTMuODI1LTEuNTM2LTcuMjk1LTQuMDIxLTkuODE5bC0yLjg1MSAyLjgwNXptMi44NzIgNy4wMTRhMTAgMTAgMCAwIDEtMTAgMTB2NGM3LjczMiAwIDE0LTYuMjY4IDE0LTE0aC00em0tMTAgMTBhMTAgMTAgMCAwIDEtMTAtMTBoLTRjMCA3LjczMiA2LjI2OCAxNCAxNCAxNHYtNHptLTEwLTEwYTkuOTYzIDkuOTYzIDAgMCAxIDIuODcyLTcuMDE0bC0yLjg1MS0yLjgwNWExMy45NTcgMTMuOTU3IDAgMCAwLTQuMDIxIDkuODE5aDR6bS0yLTEzLjZhMTEuOTUgMTEuOTUgMCAwIDAgMS43MzcgNi4yMjJsMy40MTktMi4wNzdhNy45NTUgNy45NTUgMCAwIDEtMS4xNTYtNC4xNDVoLTR6bTQuMDYxLTguOTk5YTExLjk3OCAxMS45NzggMCAwIDAtNC4wNjEgOC45OTloNGE3Ljk3NiA3Ljk3NiAwIDAgMSAyLjcwOS02bC0yLjY0OC0yLjk5OXptLTIuMDYxLTMuMDAxYzAgMi4wODMuNjM5IDQuMDIzIDEuNzMyIDUuNjI3bDMuMzA1LTIuMjUzYTUuOTcgNS45NyAwIDAgMS0xLjAzNy0zLjM3NGgtNHptMTAtMTBhMTAgMTAgMCAwIDAtMTAgMTBoNGE2IDYgMCAwIDEgNi02di00em0xMCAxMGExMCAxMCAwIDAgMC0xMC0xMHY0YTYgNiAwIDAgMSA2IDZoNHoiIGZpbGw9IiNlMWUxZTEiLz48cGF0aCBkPSJNMTg5LjUgMTQ1LjkzOXYyNCIgY2xhc3M9IkcgSCBJIi8+PHBhdGggZD0iTTIyMS4wNDYgMTY5LjkzOWg1NC45MDhhMy41NDcgMy41NDcgMCAwIDAgMy41NDYtMy41NDZ2LTQ3LjA5MWwtMzEtMTkuMzYzLTMxIDE5LjM2M3Y0Ny4wOTFhMy41NDcgMy41NDcgMCAwIDAgMy41NDYgMy41NDZaIiBmaWxsPSIjZjNmM2YzIi8+PHBhdGggZD0ibTIxOS41IDEyMi42NjYgNi00LjcyN3Y1MmgtNnYtNDcuMjczWiIgZmlsbD0iI2U5ZTllOSIvPjxnIGNsYXNzPSJIIEciPjxwYXRoIGQ9Ik0yMTkuNSAxMjMuOTM5djQ2aDYwdi00NiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9IkkiLz48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJNMjU5LjUgMTUzLjEzOWE3LjIgNy4yIDAgMCAwLTcuMi03LjJoLTUuNmE3LjIgNy4yIDAgMCAwLTcuMiA3LjJ2MTYuOGgyMHYtMTYuOHptLTEwLTE1LjJhNiA2IDAgMSAwIDAtMTIgNiA2IDAgMCAwIDAgMTJ6Ii8+PC9nPjxwYXRoIGQ9Ik0yMTkuNSAxMDUuOTM5YTYgNiAwIDEgMSAwLTEyIDYgNiAwIDAgMSAwIDEyWiIvPjxwYXRoIGQ9Ik0yNjcuNSA5OS45MzloMTQiIGNsYXNzPSJJIi8+PHBhdGggZD0ibTI0NS42NjQgMTAwLjc5LTMxLjM5NSAyMy4zMjdhNi44NiA2Ljg2IDAgMCAwLTIuNzY5IDUuNTA3djMuNTkyYzAgMS45NTIgMi4yMjQgMy4wNyAzLjc5MSAxLjkwNmwzNC4yMDktMjUuNDE4IDM0LjIwOSAyNS40MThjMS41NjcgMS4xNjQgMy43OTEuMDQ2IDMuNzkxLTEuOTA2di0zLjU5MmE2Ljg2IDYuODYgMCAwIDAtMi43NjktNS41MDdsLTMxLjM5NS0yMy4zMjdhNi40MyA2LjQzIDAgMCAwLTcuNjcyIDBaIiBmaWxsPSIjZmZmIi8+PC9nPjwvZz48ZGVmcz48Y2xpcFBhdGggaWQ9IkEiPjxwYXRoIGZpbGw9IiNmZmYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExOS41IDQ5KSIgZD0iTTAgMGgyNDF2MTcySDB6Ii8+PC9jbGlwUGF0aD48L2RlZnM+PC9zdmc+"
+                        decoding="async" data-nimg="fill"
+                        style="position:absolute;top:0;left:0;bottom:0;right:0;box-sizing:border-box;padding:0;border:none;margin:auto;display:block;width:0;height:0;min-width:100%;max-width:100%;min-height:100%;max-height:100%"></span>
+            </div>
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by Iron Valley RE Of Lehigh
+                                    Valley</span></div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/5946-Daniel-St_Allentown_PA_18104_M34223-47497?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0"
+                                aria-label="Details for 5946 Daniel St">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture
+                                        class="Picture_fade__a5shR Picture_bottom__CCmq5 Picture_topOnHover__fvGWh">
+                                        <source
+                                            srcset="https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3524299243rd-w960_h720.webp, https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3524299243rd-w960_h720.webp 2x"
+                                            type="image/webp" data-testid="img-webp" width="100%" height="100%"><img
+                                            data-src="https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3524299243rd-w960_h720.jpg"
+                                            data-testid="picture-img"
+                                            alt="5946 Daniel St, Upper Macungie Township, PA 18104"
+                                            src="https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3524299243rd-w960_h720.jpg"
+                                            srcset="https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3524299243rd-w960_h720.jpg, https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3524299243rd-w960_h720.jpg 2x"
+                                            itemprop="image" data-label="pc-photo" data-atf="false" data-fmp="false"
+                                            loading="lazy" width="100%" height="100%">
+                                    </picture>
+                                    <picture data-lazy="force-loaded"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR Picture_topOnHover__fvGWh">
+                                        <source
+                                            srcset="https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3873650885rd-w960_h720.webp, https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3873650885rd-w960_h720.webp 2x"
+                                            type="image/webp" data-testid="img-webp" width="100%" height="100%"><img
+                                            data-testid="picture-img"
+                                            alt="5946 Daniel St, Upper Macungie Township, PA 18104"
+                                            src="https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3873650885rd-w960_h720.jpg"
+                                            srcset="https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3873650885rd-w960_h720.jpg, https://ap.rdcpix.com/80d2d4124755ef96837bacaeb4c89c75l-m3873650885rd-w960_h720.jpg 2x"
+                                            itemprop="image" data-label="pc-photo" data-atf="true" data-fmp="false"
+                                            loading="eager" width="100%" height="100%" fetchpriority="high">
+                                    </picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new</span></span>
+                                    </div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 5946 Daniel St Upper Macungie Township, PA 18104"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/5946-Daniel-St_Allentown_PA_18104_M34223-47497?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 5946 Daniel St"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">House for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $635,000</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">5</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">3.5</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">3,374</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">3,374 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">4.47</span>acre
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">4.47 acre lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">5946 Daniel St</div>
+                                <div class="truncate-line" data-testid="card-address-2">Upper Macungie Township, PA
+                                    18104</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 5946 Daniel St Upper Macungie Township, PA 18104"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3723244089" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_3723244089" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="BWCNextImage_wrapper___o_xP"><span
+                    style="box-sizing:border-box;display:block;overflow:hidden;width:initial;height:initial;background:none;opacity:1;border:0;margin:0;padding:0;position:absolute;top:0;left:0;bottom:0;right:0"><img
+                        alt=""
+                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0ODAiIGhlaWdodD0iMjcwIiBmaWxsPSJub25lIiB4bWxuczp2PSJodHRwczovL3ZlY3RhLmlvL25hbm8iPjxzdHlsZT48IVtDREFUQVsuR3tzdHJva2Utd2lkdGg6NH0uSHtzdHJva2U6I2UxZTFlMX0uSXtzdHJva2UtbGluZWNhcDpyb3VuZH1dXT48L3N0eWxlPjxwYXRoIGZpbGw9IiNmMmYyZjIiIGQ9Ik0wIDBoNDgwdjI3MEgweiIvPjxnIGNsaXAtcGF0aD0idXJsKCNBKSI+PGcgZmlsbD0iI2Y4ZjhmOCIgY2xhc3M9IkcgSCI+PHBhdGggZD0ibTM0NC4xOTcgOTAuMzA1LTEzNS4yMy0zNi4yMzRjLTkuNjAyLTIuNTczLTE5LjQ3MiAzLjEyNS0yMi4wNDUgMTIuNzI4bC0yNC44NDcgOTIuNzI4Yy0yLjU3MyA5LjYwMyAzLjEyNiAxOS40NzMgMTIuNzI4IDIyLjA0NmwxMzUuMjMgMzYuMjM0YzkuNjAyIDIuNTczIDE5LjQ3Mi0zLjEyNSAyMi4wNDUtMTIuNzI3bDI0Ljg0Ny05Mi43MjljMi41NzMtOS42MDMtMy4xMjYtMTkuNDczLTEyLjcyOC0yMi4wNDZaIi8+PHBhdGggZD0iTTMwMC41IDY5LjkzOWgtMTQwYy05Ljk0MSAwLTE4IDguMDU5LTE4IDE4djk2YzAgOS45NDEgOC4wNTkgMTggMTggMThoMTQwYzkuOTQxIDAgMTgtOC4wNTkgMTgtMTh2LTk2YzAtOS45NDEtOC4wNTktMTgtMTgtMThaIi8+PC9nPjxnIGNsYXNzPSJHIj48cGF0aCBkPSJNMjc3LjE2NCA5OS45MzloLTUuMzI4YTIuMzM2IDIuMzM2IDAgMCAwLTIuMzM2IDIuMzM2djIxLjMyOGEyLjMzNiAyLjMzNiAwIDAgMCAyLjMzNiAyLjMzNmg1LjMyOGEyLjMzNiAyLjMzNiAwIDAgMCAyLjMzNi0yLjMzNnYtMjEuMzI4YTIuMzM2IDIuMzM2IDAgMCAwLTIuMzM2LTIuMzM2WiIgZmlsbD0iI2YzZjNmMyIgc3Ryb2tlPSIjZTllOWU5Ii8+PHBhdGggZD0iTTE2OS41IDE2OS45MzloMTI2IiBjbGFzcz0iSCBJIi8+PC9nPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE5Ny41IDExNy45MzlhNy45NiA3Ljk2IDAgMCAxLTEuMzg1IDQuNSA5Ljk3NiA5Ljk3NiAwIDAgMSAzLjM4NSA3LjUgOS45NSA5Ljk1IDAgMCAxLTEuNDQ3IDUuMTgzIDExLjk2IDExLjk2IDAgMCAxIDMuNDQ3IDguNDE3YzAgNi42MjctNS4zNzMgMTItMTIgMTJzLTEyLTUuMzczLTEyLTEyYTExLjk2IDExLjk2IDAgMCAxIDMuNDQ3LTguNDE3IDkuOTUgOS45NSAwIDAgMS0xLjQ0Ny01LjE4MyA5Ljk3NiA5Ljk3NiAwIDAgMSAzLjM4NS03LjUgOCA4IDAgMSAxIDE0LjYxNS00LjVaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTE5Ni4xMTUgMTIyLjQzOWwtMS42NTItMS4xMjYtLjk5NSAxLjQ1OCAxLjMyMyAxLjE2OCAxLjMyNC0xLjV6bTEuOTM4IDEyLjY4M2wtMS43MDktMS4wMzgtLjgwOCAxLjMzMSAxLjA5MiAxLjExIDEuNDI1LTEuNDAzem0tMTcuMTA2IDBsMS40MjUgMS40MDMgMS4wOTItMS4xMS0uODA4LTEuMzMxLTEuNzA5IDEuMDM4em0xLjkzOC0xMi42ODNsMS4zMjQgMS41IDEuMzIzLTEuMTY4LS45OTUtMS40NTgtMS42NTIgMS4xMjZ6bTE0Ljg4MyAxLjEyN2E5Ljk2NSA5Ljk2NSAwIDAgMCAxLjczMi01LjYyN2gtNGE1Ljk3IDUuOTcgMCAwIDEtMS4wMzcgMy4zNzRsMy4zMDUgMi4yNTN6bTMuNzMyIDYuMzczYzAtMy41ODQtMS41NzQtNi44MDMtNC4wNjEtOC45OTlsLTIuNjQ4IDIuOTk5YTcuOTc2IDcuOTc2IDAgMCAxIDIuNzA5IDZoNHptLTEuNzM3IDYuMjIyYTExLjk1MiAxMS45NTIgMCAwIDAgMS43MzctNi4yMjJoLTRhNy45NTUgNy45NTUgMCAwIDEtMS4xNTYgNC4xNDVsMy40MTkgMi4wNzd6bS0zLjEzNS4zNjRhOS45NjMgOS45NjMgMCAwIDEgMi44NzIgNy4wMTRoNGMwLTMuODI1LTEuNTM2LTcuMjk1LTQuMDIxLTkuODE5bC0yLjg1MSAyLjgwNXptMi44NzIgNy4wMTRhMTAgMTAgMCAwIDEtMTAgMTB2NGM3LjczMiAwIDE0LTYuMjY4IDE0LTE0aC00em0tMTAgMTBhMTAgMTAgMCAwIDEtMTAtMTBoLTRjMCA3LjczMiA2LjI2OCAxNCAxNCAxNHYtNHptLTEwLTEwYTkuOTYzIDkuOTYzIDAgMCAxIDIuODcyLTcuMDE0bC0yLjg1MS0yLjgwNWExMy45NTcgMTMuOTU3IDAgMCAwLTQuMDIxIDkuODE5aDR6bS0yLTEzLjZhMTEuOTUgMTEuOTUgMCAwIDAgMS43MzcgNi4yMjJsMy40MTktMi4wNzdhNy45NTUgNy45NTUgMCAwIDEtMS4xNTYtNC4xNDVoLTR6bTQuMDYxLTguOTk5YTExLjk3OCAxMS45NzggMCAwIDAtNC4wNjEgOC45OTloNGE3Ljk3NiA3Ljk3NiAwIDAgMSAyLjcwOS02bC0yLjY0OC0yLjk5OXptLTIuMDYxLTMuMDAxYzAgMi4wODMuNjM5IDQuMDIzIDEuNzMyIDUuNjI3bDMuMzA1LTIuMjUzYTUuOTcgNS45NyAwIDAgMS0xLjAzNy0zLjM3NGgtNHptMTAtMTBhMTAgMTAgMCAwIDAtMTAgMTBoNGE2IDYgMCAwIDEgNi02di00em0xMCAxMGExMCAxMCAwIDAgMC0xMC0xMHY0YTYgNiAwIDAgMSA2IDZoNHoiIGZpbGw9IiNlMWUxZTEiLz48cGF0aCBkPSJNMTg5LjUgMTQ1LjkzOXYyNCIgY2xhc3M9IkcgSCBJIi8+PHBhdGggZD0iTTIyMS4wNDYgMTY5LjkzOWg1NC45MDhhMy41NDcgMy41NDcgMCAwIDAgMy41NDYtMy41NDZ2LTQ3LjA5MWwtMzEtMTkuMzYzLTMxIDE5LjM2M3Y0Ny4wOTFhMy41NDcgMy41NDcgMCAwIDAgMy41NDYgMy41NDZaIiBmaWxsPSIjZjNmM2YzIi8+PHBhdGggZD0ibTIxOS41IDEyMi42NjYgNi00LjcyN3Y1MmgtNnYtNDcuMjczWiIgZmlsbD0iI2U5ZTllOSIvPjxnIGNsYXNzPSJIIEciPjxwYXRoIGQ9Ik0yMTkuNSAxMjMuOTM5djQ2aDYwdi00NiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9IkkiLz48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJNMjU5LjUgMTUzLjEzOWE3LjIgNy4yIDAgMCAwLTcuMi03LjJoLTUuNmE3LjIgNy4yIDAgMCAwLTcuMiA3LjJ2MTYuOGgyMHYtMTYuOHptLTEwLTE1LjJhNiA2IDAgMSAwIDAtMTIgNiA2IDAgMCAwIDAgMTJ6Ii8+PC9nPjxwYXRoIGQ9Ik0yMTkuNSAxMDUuOTM5YTYgNiAwIDEgMSAwLTEyIDYgNiAwIDAgMSAwIDEyWiIvPjxwYXRoIGQ9Ik0yNjcuNSA5OS45MzloMTQiIGNsYXNzPSJJIi8+PHBhdGggZD0ibTI0NS42NjQgMTAwLjc5LTMxLjM5NSAyMy4zMjdhNi44NiA2Ljg2IDAgMCAwLTIuNzY5IDUuNTA3djMuNTkyYzAgMS45NTIgMi4yMjQgMy4wNyAzLjc5MSAxLjkwNmwzNC4yMDktMjUuNDE4IDM0LjIwOSAyNS40MThjMS41NjcgMS4xNjQgMy43OTEuMDQ2IDMuNzkxLTEuOTA2di0zLjU5MmE2Ljg2IDYuODYgMCAwIDAtMi43NjktNS41MDdsLTMxLjM5NS0yMy4zMjdhNi40MyA2LjQzIDAgMCAwLTcuNjcyIDBaIiBmaWxsPSIjZmZmIi8+PC9nPjwvZz48ZGVmcz48Y2xpcFBhdGggaWQ9IkEiPjxwYXRoIGZpbGw9IiNmZmYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExOS41IDQ5KSIgZD0iTTAgMGgyNDF2MTcySDB6Ii8+PC9jbGlwUGF0aD48L2RlZnM+PC9zdmc+"
+                        decoding="async" data-nimg="fill"
+                        style="position:absolute;top:0;left:0;bottom:0;right:0;box-sizing:border-box;padding:0;border:none;margin:auto;display:block;width:0;height:0;min-width:100%;max-width:100%;min-height:100%;max-height:100%"></span>
+            </div>
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by Berkshire Hathaway HomeServices
+                                    Regency Real Estate</span></div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/751-Benner-Rd_Allentown_PA_18104_M37232-44089?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 751 Benner Rd">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture data-lazy="force-loaded"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR Picture_topOnHover__fvGWh">
+                                        <source
+                                            srcset="https://ap.rdcpix.com/134dd24550833751607d8c04799c330al-m2651632762rd-w960_h720.webp, https://ap.rdcpix.com/134dd24550833751607d8c04799c330al-m2651632762rd-w960_h720.webp 2x"
+                                            type="image/webp" data-testid="img-webp" width="100%" height="100%"><img
+                                            data-testid="picture-img" alt="751 Benner Rd, Allentown, PA 18104"
+                                            src="https://ap.rdcpix.com/134dd24550833751607d8c04799c330al-m2651632762rd-w960_h720.jpg"
+                                            srcset="https://ap.rdcpix.com/134dd24550833751607d8c04799c330al-m2651632762rd-w960_h720.jpg, https://ap.rdcpix.com/134dd24550833751607d8c04799c330al-m2651632762rd-w960_h720.jpg 2x"
+                                            itemprop="image" data-label="pc-photo" data-atf="true" data-fmp="false"
+                                            loading="eager" width="100%" height="100%" fetchpriority="high">
+                                    </picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new - 8 hours
+                                                ago</span></span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 751 Benner Rd Allentown, PA 18104"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/751-Benner-Rd_Allentown_PA_18104_M37232-44089?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 751 Benner Rd"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">House for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $1,945,000</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">7</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">6.5+</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">10,430</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">10,430 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">1.59</span>acre
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">1.59 acre lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">751 Benner Rd</div>
+                                <div class="truncate-line" data-testid="card-address-2">Allentown, PA 18104</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 751 Benner Rd Allentown, PA 18104"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="ad_container_TILELIST1" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI AdCard_card-shadow__XlCXu">
+            <div id="ad-unit-TILELIST1" class="AdCard_adsSrpTileWrap__PZcir fluid_tile_ad" data-label="ads-card"
+                data-unit="TILELIST1">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST1" data-testid="div-gpt-ad-TILELIST1" class="ads "
+                        data-google-query-id="CJC1ovaF_4UDFU3N4wcdgoYMgw">
+                        <div id="google_ads_iframe_/8058/TILE1/RDC4/SRPLIST/SALE/DESK_0__container__"
+                            style="border: 0pt none; display: inline-block; width: 100%; height: auto;"><iframe
+                                frameborder="0"
+                                src="https://03b989d4c2c0ce2e1bf9bbf05661c93a.safeframe.googlesyndication.com/safeframe/1-0-40/html/container.html"
+                                id="google_ads_iframe_/8058/TILE1/RDC4/SRPLIST/SALE/DESK_0" title="3rd party ad content"
+                                name="" scrolling="no" marginwidth="0" marginheight="0" width="0" height="450"
+                                data-is-safeframe="true"
+                                sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
+                                allow="attribution-reporting" aria-label="Advertisement" tabindex="0"
+                                data-google-container-id="3"
+                                style="border: 0px; vertical-align: bottom; min-width: 100%;"
+                                data-load-complete="true"></iframe></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3394111285" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_3394111285" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by Berkshire Hathaway HomeServices
+                                    Regency Real Estate</span></div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/1410-S-Jefferson-St_Allentown_PA_18103_M33941-11285?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0"
+                                aria-label="Details for 1410 S Jefferson St">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture data-lazy="loading"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR Picture_topOnHover__fvGWh">
+                                        <img data-src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            data-testid="picture-img" alt="placeholder"
+                                            src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            role="presentation"></picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new - 20 hours
+                                                ago</span></span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 1410 S Jefferson St Allentown, PA 18103"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/1410-S-Jefferson-St_Allentown_PA_18103_M33941-11285?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0"
+                        aria-label="Details for 1410 S Jefferson St"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">House for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $249,900</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">3</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">1.5</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">1,449</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">1,449 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">5,750</span>sqft
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">5,750 square foot lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">1410 S Jefferson St</div>
+                                <div class="truncate-line" data-testid="card-address-2">Allentown, PA 18103</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 1410 S Jefferson St Allentown, PA 18103"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_9544557405" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_9544557405" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by Iron Valley RE Of Lehigh
+                                    Valley</span></div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/334-N-Law-St_Allentown_PA_18102_M95445-57405?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 334 N Law St">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture data-lazy="loading"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR Picture_topOnHover__fvGWh">
+                                        <img data-src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            data-testid="picture-img" alt="placeholder"
+                                            src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            role="presentation"></picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new</span></span><span
+                                            data-testid="label-open-house"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>open house
+                                                5/11</span></span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 334 N Law St Allentown, PA 18102"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/334-N-Law-St_Allentown_PA_18102_M95445-57405?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 334 N Law St"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">Townhouse for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $540,000</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">10</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">6</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">3,528</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">3,528 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">2,091</span>sqft
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">2,091 square foot lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">334 N Law St</div>
+                                <div class="truncate-line" data-testid="card-address-2">Allentown, PA 18102</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 334 N Law St Allentown, PA 18102"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3454892037" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_3454892037" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by Keller Williams Real Estate</span>
+                            </div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/429-Robin-Rd_Allentown_PA_18104_M34548-92037?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 429 Robin Rd">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture data-lazy="loading"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR Picture_topOnHover__fvGWh">
+                                        <img data-src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            data-testid="picture-img" alt="placeholder"
+                                            src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            role="presentation"></picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new - 6 hours
+                                                ago</span></span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 429 Robin Rd Allentown, PA 18104"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/429-Robin-Rd_Allentown_PA_18104_M34548-92037?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 429 Robin Rd"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">House for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $299,900</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">3</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">2.5</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">2,009</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">2,009 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">6,447</span>sqft
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">6,447 square foot lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">429 Robin Rd</div>
+                                <div class="truncate-line" data-testid="card-address-2">Allentown, PA 18104</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 429 Robin Rd Allentown, PA 18104"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_4940647898" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_4940647898" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by RE/MAX Central</span></div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/2534-S-Church-St_Allentown_PA_18103_M49406-47898?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0"
+                                aria-label="Details for 2534 S Church St">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture data-lazy="loading"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR Picture_topOnHover__fvGWh">
+                                        <img data-src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            data-testid="picture-img" alt="placeholder"
+                                            src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            role="presentation"></picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new - 6 hours
+                                                ago</span></span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 2534 S Church St Allentown, PA 18103"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/2534-S-Church-St_Allentown_PA_18103_M49406-47898?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0" aria-label="Details for 2534 S Church St"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">House for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $949,900</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">4</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">3</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">3,451</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">3,451 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">13.74</span>acre
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">13.74 acre lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">2534 S Church St</div>
+                                <div class="truncate-line" data-testid="card-address-2">Allentown, PA 18103</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 2534 S Church St Allentown, PA 18103"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3213445996" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div id="property_id_3213445996" class="BasePropertyCard_propertyCard__N5tuo">
+            <div class="PropertyCardstyles__StyledCardTitle-rui__sc-7yjdgx-1 fchIlJ"><span
+                    class="card-title-provider-tags">
+                    <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto card-title-wrapper"
+                        data-testid="card-title"><span class="card-title-text">
+                            <div class="BrokerTitle_brokerTitle__sL3w2" data-testid="broker-title"><span
+                                    class="BrokerTitle_titleText__RvFV6">Brokered by Realty One Group Supreme</span>
+                            </div>
+                        </span></div>
+                </span></div>
+            <div
+                class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 cTgdte PropertyCardstyles__StyledCard-rui__sc-7yjdgx-0 dqoEpO">
+                <div data-testid="card-media"
+                    class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                    <div data-testid="aspect-ratio-wrapper"
+                        class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM">
+                        <div class="card-image-wrapper"><a
+                                href="/realestateandhomes-detail/1823-W-Woodlawn-St_Allentown_PA_18104_M32134-45996?from=srp-list-card"
+                                class="LinkComponent_anchor__TetCm" tabindex="0"
+                                aria-label="Details for 1823 W Woodlawn St">
+                                <div class="Picture_photo-wrap__WtwsX" data-testid="pc-photo-wrapper" role="link"
+                                    tabindex="-1">
+                                    <picture data-lazy="loading"
+                                        class="LazyPicturestyles__StyledLazyPicture-rui__mf4y2d-0 iuxMXL Picture_fade__a5shR">
+                                        <img data-src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            data-testid="picture-img" alt="placeholder"
+                                            src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"
+                                            role="presentation"></picture>
+                                </div>
+                            </a></div>
+                        <div data-testid="card-overlay"
+                            class="CardMediaOverlaystyles__StyledCardMediaOverlay-rui__sc-1luw80z-0 eRaPDj">
+                            <div class="CardMediaOverlaystyles__StyledTopComponents-rui__sc-1luw80z-1 gGKrGl top-overlay"
+                                data-testid="top-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC top-left-overlay-component"
+                                    data-testid="top-left-overlay-component">
+                                    <div class="card-label-group"><span data-testid="label-new"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>new</span></span><span
+                                            data-testid="label-open-house"
+                                            class="Tagstyles__StyledTag-rui__sc-1pgo9ys-0 lcSCbL"><span>open house
+                                                5/10</span></span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfRdDq top-right-overlay-component"
+                                    data-testid="top-right-overlay-component"></div>
+                            </div>
+                            <div class="CardMediaOverlaystyles__StyledBottomComponents-rui__sc-1luw80z-2 fkmubw bottom-overlay"
+                                data-testid="bottom-overlay">
+                                <div class="CardMediaOverlaystyles__StyledLeftCol-rui__sc-1luw80z-3 fUZORC bottom-left-overlay-component"
+                                    data-testid="bottom-left-overlay-component">
+                                    <div class="PropertyToursstyles__StyledPropertyTours-rui__snhagd-0 gMa-DQd"><span
+                                            class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf">
+                                            tour available</span></div>
+                                </div>
+                                <div class="CardMediaOverlaystyles__StyledRightCol-rui__sc-1luw80z-4 dfPIPT bottom-right-overlay-component"
+                                    data-testid="bottom-right-overlay-component"><button
+                                        class="base__StyledButton-rui__ermeke-1 jjFTKP IconButtonstyles__StyledIconButton-rui__sc-17rbspu-0 fKTjzT SaveButtonstyles__StyledIconButton-rui__aevtok-0 goOHNF"
+                                        data-testid="card-save" type="button"
+                                        aria-label="save property 1823 W Woodlawn St Allentown, PA 18104"><img
+                                            src="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            alt="https://static.rdc.moveaws.com/rdc-ui/icons/icon-heart.svg"
+                                            class="SavePropertyIconImage_saveIconImage__eCW5c"
+                                            data-testid="save-property-icon-image"></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-testid="card-content"
+                    class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content card-content"><a
+                        href="/realestateandhomes-detail/1823-W-Woodlawn-St_Allentown_PA_18104_M32134-45996?from=srp-list-card"
+                        class="LinkComponent_anchor__TetCm" tabindex="0"
+                        aria-label="Details for 1823 W Woodlawn St"></a>
+                    <div class="StatusBadgestyles__StyledStatusBadge-rui__sc-1wog16p-0 jKLoJy card-description"
+                        data-testid="card-description"><span class="badge" data-testid="badge"></span>
+                        <div class="base__StyledType-rui__sc-108xfm0-0 hRTvWe message">House for sale</div>
+                    </div>
+                    <div class="price-wrapper">
+                        <div class="Pricestyles__StyledPrice-rui__btk3ge-0 kjbIiZ card-price" data-testid="card-price">
+                            $259,900</div>
+                    </div>
+                    <ul class="PropertyMetastyles__StyledPropertyMeta-rui__sc-1g5rdjn-0 iQEvdK card-meta"
+                        data-testid="card-meta">
+                        <li data-testid="property-meta-beds"
+                            class="PropertyBedMetastyles__StyledPropertyBedMeta-rui__a4nnof-0 jkAoUn"><span
+                                data-testid="meta-value">3</span>bed</li>
+                        <li data-testid="property-meta-baths"
+                            class="PropertyBathMetastyles__StyledPropertyBathMeta-rui__sc-67m6bo-0 hGQdFx"><span
+                                data-testid="meta-value">1</span>bath</li>
+                        <li data-testid="property-meta-sqft"
+                            class="PropertySqftMetastyles__StyledPropertySqftMeta-rui__sc-1gdau7i-0 cYyTDO"><span
+                                aria-hidden="true"><span class="meta-value"
+                                    data-testid="meta-value">1,697</span>sqft</span><span
+                                class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">1,697 square feet</span></li>
+                        <li data-testid="property-meta-lot-size"
+                            class="PropertyLotSizeMetastyles__StyledPropertyLotSizeMeta-rui__sc-1cz4zco-0 fPkhUg"><span
+                                aria-hidden="true"><span class="meta-value" data-testid="meta-value">2,396</span>sqft
+                                lot</span><span class="VisuallyHiddenstyles__StyledVisuallyHidden-rui__aoql8k-0 euoXhf"
+                                data-testid="screen-reader-value">2,396 square foot lot</span></li>
+                    </ul>
+                    <div class="content-row">
+                        <div class="content-col-left">
+                            <div class="card-address truncate-line" data-testid="card-address">
+                                <div class="truncate-line" data-testid="card-address-1">1823 W Woodlawn St</div>
+                                <div class="truncate-line" data-testid="card-address-2">Allentown, PA 18104</div>
+                            </div>
+                        </div>
+                        <div class="content-col-right"><button class="base__StyledButton-rui__ermeke-1 kzcuNi"
+                                aria-label="Email Agent about 1823 W Woodlawn St Allentown, PA 18104"
+                                data-testid="card-action" type="button">Email Agent</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="ad_container_TILELIST2" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST2" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST2">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST2" data-testid="div-gpt-ad-TILELIST2" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3505238326" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3108765963" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_INLINELIST1" data-testid="ad_container_INLINELIST1"
+        class="ads_container SrpInlineAd_inline_ad__wjgLC">
+        <div id="div-gpt-ad-INLINELIST1" data-testid="div-gpt-ad-INLINELIST1" class="ads "></div>
+    </div>
+    <div id="placeholder_property_4520920088" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_4933280614" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_4229522432" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_TILELIST3" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST3" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST3">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST3" data-testid="div-gpt-ad-TILELIST3" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3144529896" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_4945529737" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_9209890628" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3560022410" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_4075341700" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_TILELIST4" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST4" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST4">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST4" data-testid="div-gpt-ad-TILELIST4" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3631905264" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_9105566546" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_INLINELIST2" data-testid="ad_container_INLINELIST2"
+        class="ads_container SrpInlineAd_inline_ad__wjgLC">
+        <div id="div-gpt-ad-INLINELIST2" data-testid="div-gpt-ad-INLINELIST2" class="ads "></div>
+    </div>
+    <div id="placeholder_property_3427266601" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3209234944" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_9226290693" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_TILELIST5" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST5" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST5">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST5" data-testid="div-gpt-ad-TILELIST5" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3584319804" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3745603655" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_4477171371" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3065351140" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3001913134" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_TILELIST6" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST6" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST6">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST6" data-testid="div-gpt-ad-TILELIST6" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3057362102" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_4834998951" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_INLINELIST3" data-testid="ad_container_INLINELIST3"
+        class="ads_container SrpInlineAd_inline_ad__wjgLC">
+        <div id="div-gpt-ad-INLINELIST3" data-testid="div-gpt-ad-INLINELIST3" class="ads "></div>
+    </div>
+    <div id="placeholder_property_3409863406" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3346660368" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3035036594" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_TILELIST7" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST7" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST7">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST7" data-testid="div-gpt-ad-TILELIST7" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_3287668381" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3228527330" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3144977087" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3245669664" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3298587302" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_TILELIST8" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST8" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST8">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST8" data-testid="div-gpt-ad-TILELIST8" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="placeholder_property_9922483442" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3741131742" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_INLINELIST4" data-testid="ad_container_INLINELIST4"
+        class="ads_container SrpInlineAd_inline_ad__wjgLC">
+        <div id="div-gpt-ad-INLINELIST4" data-testid="div-gpt-ad-INLINELIST4" class="ads "></div>
+    </div>
+    <div id="placeholder_property_9812849222" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="placeholder_property_3863289501" class="BasePropertyCard_propertyCardWrap__30VCU">
+        <div></div>
+    </div>
+    <div id="ad_container_TILELIST9" class="ads_container">
+        <div class="CardTitle__StyledCardTitle-rui__sc-17n3iwg-0 cDEHto AdCard_cardTitle__jRyYa">Advertisement</div>
+        <div class="Box__StyledBox-rui__sc-16jloov-0 cdaTEC AdCard_card-box__ZstQI false">
+            <div height="100%" width="100%" data-testid="adcard-loading-state"
+                class="Box__StyledBox-rui__sc-16jloov-0 iHgLTX">
+                <div width="100%" style="height:100%"
+                    class="Cardstyles__StyledCard-rui__sc-6oh8yg-0 hIVIZj CardLoaderstyles__StyledCardLoader-rui__sc-1uyrkrm-0 eEHuHi">
+                    <div class="CardMediastyles__StyledCardMedia-rui__sc-1thsg0j-0 ktKYOb card-media">
+                        <div data-testid="aspect-ratio-wrapper"
+                            class="CardMediastyles__StyledAspectRatioContent-rui__sc-1thsg0j-1 gXLrQM"><img
+                                alt="coming-soon"
+                                src="https://static.rdc.moveaws.com/images/common/photos-coming-soon.svg"></div>
+                    </div>
+                    <div class="CardContent__StyledCardContent-rui__sc-7ptz1z-0 kDqsxy card-content">
+                        <div spacing="8px" shape="rectangle"
+                            class="Skeletonstyles__StyledSkeleton-rui__kd9zwf-0 dKmetV">
+                            <div class="block-0"></div>
+                            <div class="block-1"></div>
+                            <div class="block-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ad-unit-TILELIST9" class="AdCard_adsSrpTileWrap__PZcir" data-label="ads-card"
+                data-unit="TILELIST9">
+                <div class="ads-srp-tile">
+                    <div id="div-gpt-ad-TILELIST9" data-testid="div-gpt-ad-TILELIST9" class="ads "></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
