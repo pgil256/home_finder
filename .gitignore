@@ -1,3 +1,10 @@
 node_modules/
 venv/
 .vscode/
+
+# Claude related files
+CLAUDE.md
+.claude/
+claude-code/
+*.claude
+.claudeignore
