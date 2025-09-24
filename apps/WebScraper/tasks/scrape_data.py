@@ -1,106 +1,117 @@
 from celery import shared_task
 from celery_progress.backend import ProgressRecorder
 import logging
-from bs4 import BeautifulSoup
-from .request_manager import make_listing_request, make_search_request
 from apps.WebScraper.models import PropertyListing
+from .pcpao_scraper import PCPAOScraper
+from .tax_collector_scraper import TaxCollectorScraper
 
-# Configure logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
 
 @shared_task(bind=True)
-def scrape_website(self, scrape_config):
+def scrape_pinellas_properties(self, search_criteria, limit=10):
+    """
+    Scrape property data from Pinellas County Property Appraiser
+    """
     progress_recorder = ProgressRecorder(self)
+    progress_recorder.set_progress(0, 100, description="Starting property scraper...")
 
-    if not isinstance(scrape_config, dict):
-        logger.error(f"Invalid scrape_config: Expected dict, got {type(scrape_config).__name__}")
-        return {"status": "Invalid configuration format", "data": scrape_config}
-
-    location = scrape_config.get("Location")
-    if not location:
-        logger.error("Missing location in scrape configuration")
-        return {"status": "Missing location", "data": scrape_config}
-
-    hyperlinks = scrape_main_page(location)
-    total_links = len(hyperlinks)
-    logger.info(f"Scraped the following links: {total_links}")
-
-    if hyperlinks:
-        count = 0
-        for count, hyperlink in enumerate(hyperlinks, 1):
-            new_listing = scrape_listings(hyperlink)
-            if new_listing:
-                PropertyListing.objects.create(**new_listing)
-                logger.info(f"Database updated with new listing from {hyperlink}.")
-            else:
-                logger.error(f"Failed to retrieve listing data from {hyperlink}")
-
-            progress_recorder.set_progress(count, total_links, description=f"Gathering listings... ({count}/{total_links})")
-
-        return {"status": "Scraping completed", "data": scrape_config}
-    else:
-        logger.info("No hyperlinks returned.")
-        return {"status": "No hyperlinks found", "data": scrape_config}
-
-def scrape_listings(hyperlink):
-    url = hyperlink
-    try:
-        response = make_listing_request(url)
-        if response.status_code == 200:
-            listing_soup = BeautifulSoup(response.content, "html.parser")
-            script_content = listing_soup.select_one("#__NEXT_DATA__").text
-            data_json = json.loads(script_content)
-            return extract_listing_details(data_json, hyperlink)
-        else:
-            logger.error(f"HTTP status code {response.status_code} encountered for {url}")
-    except Exception as e:
-        logger.error(f"An unexpected error occurred while processing {url}: {str(e)}")
-        return None
-
-def extract_listing_details(data_json, hyperlink):
-    try:
-        details = data_json["props"]["pageProps"]["initialReduxState"]["propertyDetails"]
-        mortgage = details.get("mortgage", {})
-        description = details.get("description", {})
-        location = details.get("location", {})
-        primary_photo = details.get("primary_photo", {})
-        return {
-            "link": hyperlink,
-            "address": location.get("address", {}).get("line", "Unknown Address"),
-            "image_of_property": primary_photo.get("href", "No image available"),
-            "description": description.get("text", "No description available"),
-            "price": details.get("list_price", "Price not available"),
-            "bedrooms": description.get("beds", "Not specified"),
-            "bathrooms": description.get("baths", "Not specified"),
-            "stories": description.get("stories", "Not specified"),
-            "home_size": description.get("sqft", "Size not specified"),
-            "lot_size": description.get("lot_sqft", "Lot size not specified"),
-            "property_type": description.get("type", "Type not specified"),
-            "price_per_sqft": details.get("price_per_sqft", "Not available"),
-            "garage": description.get("garage", "Garage details not specified"),
-            "year_built": description.get("year_built", "Year not specified"),
-            "time_on_market": details.get("days_on_market", "Time on market not specified"),
-            "estimated_monthly_payment": mortgage.get("estimate", {}).get("monthly_payment", "Not specified"),
-            "home_insurance": mortgage.get("estimate", {}).get("monthly_payment_details", [{}])[1].get("amount", "Not specified"),
-            "hoa_fees": mortgage.get("estimate", {}).get("monthly_payment_details", [{}])[2].get("amount", "Not specified"),
-            "mortgage_insurance": mortgage.get("estimate", {}).get("monthly_payment_details", [{}])[3].get("amount", "Not specified"),
-            "property_tax": mortgage.get("estimate", {}).get("monthly_payment_details", [{}])[4].get("amount", "Not specified"),
-        }
-    except KeyError as e:
-        logger.error(f"Key error in data extraction for hyperlink {hyperlink}: {str(e)}")
-        return None
-    except Exception as e:
-        logger.error(f"An unexpected error occurred during data extraction for hyperlink {hyperlink}: {str(e)}")
-        return None
-
-def scrape_main_page(location):
-    url = f"https://www.realtor.com/realestateandhomes-search/{location}"
-    logger.info(f"Fetching main page for location: {location}")
+    property_ids = []
 
     try:
-        hyperlinks = make_search_request(url)
-        return hyperlinks
+        scraper = PCPAOScraper(headless=True)
+        logger.info(f"Starting PCPAO scraping with criteria: {search_criteria}, limit: {limit}")
+
+        properties = scraper.scrape_by_criteria(search_criteria, limit)
+        total_properties = len(properties)
+        logger.info(f"Found {total_properties} properties to process")
+
+        for i, property_data in enumerate(properties, 1):
+            progress_recorder.set_progress(
+                int((i / total_properties) * 100),
+                100,
+                description=f"Processing property {i}/{total_properties}..."
+            )
+
+            parcel_id = property_data.get('parcel_id')
+            if parcel_id:
+                listing, created = PropertyListing.objects.update_or_create(
+                    parcel_id=parcel_id,
+                    defaults={
+                        'address': property_data.get('address', ''),
+                        'city': property_data.get('city', ''),
+                        'zip_code': property_data.get('zip_code', ''),
+                        'owner_name': property_data.get('owner_name'),
+                        'market_value': property_data.get('market_value'),
+                        'assessed_value': property_data.get('assessed_value'),
+                        'building_sqft': property_data.get('building_sqft'),
+                        'year_built': property_data.get('year_built'),
+                        'bedrooms': property_data.get('bedrooms'),
+                        'bathrooms': property_data.get('bathrooms'),
+                        'property_type': property_data.get('property_type', 'Unknown'),
+                        'land_size': property_data.get('land_size'),
+                        'lot_sqft': property_data.get('lot_sqft'),
+                        'appraiser_url': property_data.get('appraiser_url'),
+                    }
+                )
+                property_ids.append(parcel_id)
+
+        progress_recorder.set_progress(100, 100, description=f"Completed {total_properties} properties")
+
     except Exception as e:
-        logger.error(f"Error fetching main page {url}: {str(e)}")
-        return []
+        logger.error(f"Error in scrape_pinellas_properties: {e}")
+        raise
+
+    return property_ids
+
+
+@shared_task(bind=True)
+def scrape_tax_data(self, property_ids):
+    """
+    Scrape tax information for the given property IDs
+    """
+    progress_recorder = ProgressRecorder(self)
+    progress_recorder.set_progress(0, 100, description="Starting tax data collection...")
+
+    updated_properties = []
+
+    try:
+        scraper = TaxCollectorScraper(headless=True)
+        total_properties = len(property_ids)
+        logger.info(f"Starting tax data collection for {total_properties} properties")
+
+        tax_data_list = scraper.scrape_batch(property_ids)
+
+        for i, tax_data in enumerate(tax_data_list, 1):
+            progress_recorder.set_progress(
+                int((i / total_properties) * 100),
+                100,
+                description=f"Processing tax data {i}/{total_properties}..."
+            )
+
+            parcel_id = tax_data.get('parcel_id')
+            if parcel_id:
+                try:
+                    property_listing = PropertyListing.objects.get(parcel_id=parcel_id)
+                    property_listing.tax_amount = tax_data.get('tax_amount')
+                    property_listing.tax_status = tax_data.get('tax_status', 'Unknown')
+                    property_listing.delinquent = tax_data.get('delinquent', False)
+                    property_listing.tax_year = tax_data.get('tax_year')
+                    property_listing.tax_collector_url = tax_data.get('tax_collector_url')
+                    property_listing.save()
+                    updated_properties.append(parcel_id)
+
+                except PropertyListing.DoesNotExist:
+                    logger.warning(f"Property listing not found for parcel {parcel_id}")
+
+        progress_recorder.set_progress(100, 100, description=f"Completed tax data for {len(updated_properties)} properties")
+
+    except Exception as e:
+        logger.error(f"Error in scrape_tax_data: {e}")
+        raise
+
+    return {
+        'status': 'Tax data collection completed',
+        'updated_properties': updated_properties,
+        'total_processed': len(updated_properties)
+    }

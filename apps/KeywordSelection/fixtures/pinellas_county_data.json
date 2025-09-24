@@ -1,0 +1,122 @@
+[
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 1,
+        "fields": {
+            "name": "City",
+            "data_type": "select",
+            "priority": 10,
+            "is_active": true,
+            "help_text": "Select a city in Pinellas County",
+            "extra_json": "{\"choices\": [\"Clearwater\", \"St. Petersburg\", \"Largo\", \"Pinellas Park\", \"Dunedin\", \"Palm Harbor\", \"Tarpon Springs\", \"Seminole\", \"Safety Harbor\", \"Oldsmar\", \"Gulfport\", \"St. Pete Beach\", \"Treasure Island\", \"Madeira Beach\", \"Indian Rocks Beach\", \"Belleair\", \"Kenneth City\", \"South Pasadena\", \"Indian Shores\", \"Redington Beach\"]}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 2,
+        "fields": {
+            "name": "ZIP Code",
+            "data_type": "text",
+            "priority": 9,
+            "is_active": true,
+            "help_text": "Enter a ZIP code in Pinellas County (e.g., 33755)",
+            "extra_json": "{\"validation\": \"^337[0-8][0-9]$\", \"placeholder\": \"33755\"}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 3,
+        "fields": {
+            "name": "Property Type",
+            "data_type": "select",
+            "priority": 8,
+            "is_active": true,
+            "help_text": "Select the type of property",
+            "extra_json": "{\"choices\": [\"Single Family\", \"Condo\", \"Townhouse\", \"Multi-Family\", \"Vacant Land\", \"Mobile Home\", \"Commercial\"]}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 4,
+        "fields": {
+            "name": "Market Value Min",
+            "data_type": "number",
+            "priority": 7,
+            "is_active": true,
+            "help_text": "Minimum market value",
+            "extra_json": "{\"min\": 0, \"max\": 10000000, \"step\": 10000}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 5,
+        "fields": {
+            "name": "Market Value Max",
+            "data_type": "number",
+            "priority": 6,
+            "is_active": true,
+            "help_text": "Maximum market value",
+            "extra_json": "{\"min\": 0, \"max\": 10000000, \"step\": 10000}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 6,
+        "fields": {
+            "name": "Bedrooms Min",
+            "data_type": "number",
+            "priority": 5,
+            "is_active": true,
+            "help_text": "Minimum number of bedrooms",
+            "extra_json": "{\"min\": 0, \"max\": 10, \"step\": 1}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 7,
+        "fields": {
+            "name": "Bedrooms Max",
+            "data_type": "number",
+            "priority": 4,
+            "is_active": true,
+            "help_text": "Maximum number of bedrooms",
+            "extra_json": "{\"min\": 0, \"max\": 10, \"step\": 1}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 8,
+        "fields": {
+            "name": "Year Built After",
+            "data_type": "number",
+            "priority": 3,
+            "is_active": true,
+            "help_text": "Properties built after this year",
+            "extra_json": "{\"min\": 1900, \"max\": 2024, \"step\": 1}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 9,
+        "fields": {
+            "name": "Tax Status",
+            "data_type": "select",
+            "priority": 2,
+            "is_active": true,
+            "help_text": "Filter by tax payment status",
+            "extra_json": "{\"choices\": [\"All\", \"Paid\", \"Unpaid\", \"Delinquent\"]}"
+        }
+    },
+    {
+        "model": "KeywordSelection.keyword",
+        "pk": 10,
+        "fields": {
+            "name": "Search Limit",
+            "data_type": "number",
+            "priority": 1,
+            "is_active": true,
+            "help_text": "Maximum number of properties to retrieve",
+            "extra_json": "{\"min\": 1, \"max\": 100, \"step\": 1, \"default\": 10}"
+        }
+    }
+]

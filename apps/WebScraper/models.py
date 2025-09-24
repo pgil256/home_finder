@@ -1,26 +1,49 @@
 from django.db import models
 
 class PropertyListing(models.Model):
-    link = models.URLField()
+    # Property Appraiser Data
+    parcel_id = models.CharField(max_length=50, unique=True)
     address = models.CharField(max_length=255)
-    image_of_property = models.URLField()
-    description = models.TextField()
-    price = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    city = models.CharField(max_length=100)
+    zip_code = models.CharField(max_length=10)
+    owner_name = models.CharField(max_length=255, null=True, blank=True)
+
+    # Valuation Data
+    market_value = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    assessed_value = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+
+    # Building Information
+    building_sqft = models.IntegerField(null=True)
+    year_built = models.IntegerField(null=True)
     bedrooms = models.IntegerField(null=True)
     bathrooms = models.DecimalField(max_digits=4, decimal_places=2, null=True)
     stories = models.IntegerField(null=True)
-    home_size = models.IntegerField(null=True)  # in square feet
-    lot_size = models.IntegerField(null=True)  # in square feet
     property_type = models.CharField(max_length=100)
-    price_per_sqft = models.DecimalField(max_digits=12, decimal_places=2, null=True)
-    garage = models.CharField(max_length=50, null=True)
-    year_built = models.IntegerField(null=True)
-    time_on_market = models.IntegerField(null=True)  # in days
-    estimated_monthly_payment = models.DecimalField(max_digits=12, decimal_places=2, null=True)
-    home_insurance = models.DecimalField(max_digits=12, decimal_places=2, null=True)
-    hoa_fees = models.DecimalField(max_digits=12, decimal_places=2, null=True)
-    mortgage_insurance = models.DecimalField(max_digits=12, decimal_places=2, null=True)
-    property_tax = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    garage = models.CharField(max_length=50, null=True, blank=True)
+
+    # Land Information
+    land_size = models.DecimalField(max_digits=10, decimal_places=4, null=True)  # in acres
+    lot_sqft = models.IntegerField(null=True)  # in square feet
+
+    # Tax Collector Data
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    tax_status = models.CharField(max_length=50, default='Unknown')  # Paid, Unpaid, Delinquent
+    delinquent = models.BooleanField(default=False)
+    tax_year = models.IntegerField(null=True)
+
+    # Metadata
+    last_scraped = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # URLs for reference
+    appraiser_url = models.URLField(null=True, blank=True)
+    tax_collector_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
-        return self.address
+        return f"{self.parcel_id} - {self.address}"
+
+    @property
+    def price_per_sqft(self):
+        if self.market_value and self.building_sqft and self.building_sqft > 0:
+            return self.market_value / self.building_sqft
+        return None
