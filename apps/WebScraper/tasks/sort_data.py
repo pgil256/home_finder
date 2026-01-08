@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
@@ -36,9 +37,23 @@ def fetch_property_listings():
     return [(field, field) for field in fields], listings
 
 
+def strip_timezone(value):
+    """Strip timezone info from datetime objects for Excel compatibility."""
+    if hasattr(value, 'tzinfo') and value.tzinfo is not None:
+        return value.replace(tzinfo=None)
+    return value
+
+
 def generate_spreadsheet(columns, listings):
     logger.info("Generating spreadsheet for property listings")
     df = pd.DataFrame(list(listings), columns=[name for _, name in columns])
+
+    # Strip timezone info from datetime columns (Excel doesn't support timezones)
+    for col in df.columns:
+        if df[col].dtype == 'datetime64[ns, UTC]' or df[col].apply(
+            lambda x: hasattr(x, 'tzinfo') and x is not None and getattr(x, 'tzinfo', None) is not None
+        ).any():
+            df[col] = df[col].apply(strip_timezone)
     wb = Workbook()
     ws = wb.active
     header_font = Font(bold=True, color="FFFFFF")
