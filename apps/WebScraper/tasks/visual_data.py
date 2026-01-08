@@ -169,8 +169,8 @@ def analyze_data(self, pdf_result):
             'status': 'Skipped visualization - no PDF available'
         }
 
-    logger.info("Loading data from Excel for analysis")
-    df = pd.read_excel(settings.EXCEL_PATH, sheet_name="Listings")
+    logger.info(f"Loading data from Excel for analysis: {excel_path}")
+    df = pd.read_excel(excel_path, sheet_name="Listings")
 
     total_plots = 8  # Increased the total number of plots
     current_plot = 0

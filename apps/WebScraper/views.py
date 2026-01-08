@@ -44,13 +44,13 @@ def start_processing_pipeline(self, search_criteria, limit=10, user_email=None):
 def web_scraper_view(request):
     """Main view for the property scraper interface"""
     if request.method == 'POST':
-        # Get search criteria from the request
+        # Get search criteria from the request (form field names are capitalized)
         search_criteria = {
-            'city': request.POST.get('city'),
-            'zip_code': request.POST.get('zip_code'),
-            'property_type': request.POST.get('property_type'),
-            'min_value': request.POST.get('min_value'),
-            'max_value': request.POST.get('max_value'),
+            'city': request.POST.get('City'),
+            'zip_code': request.POST.get('Location'),  # Location field used for ZIP
+            'property_type': request.POST.get('Property Type'),
+            'min_value': request.POST.get('Listing Price_min'),
+            'max_value': request.POST.get('Listing Price_max'),
         }
 
         # Remove empty values

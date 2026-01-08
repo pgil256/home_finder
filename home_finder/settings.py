@@ -141,11 +141,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Celery Config
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Default Redis setup
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'memory://'  # In-memory broker for testing
+CELERY_RESULT_BACKEND = 'cache+memory://'  # In-memory result backend
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_ALWAYS_EAGER = True  # Run tasks synchronously (for testing without Redis)
+CELERY_TASK_EAGER_PROPAGATES = True  # Propagate exceptions in eager mode
 
 # Email settings (example using Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
