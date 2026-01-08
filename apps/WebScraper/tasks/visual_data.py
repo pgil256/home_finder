@@ -156,10 +156,18 @@ def generate_plots_and_pdf(dataframe, current_count):
 
 
 @shared_task(bind=True)
-def analyze_data(self, pdf_generation_result):
-    if "PDF generated successfully" not in pdf_generation_result["status"]:
-        logger.info("No PDF passed to analyze data functio.")
-        raise Exception("PDF generation failed, cannot proceed with data analysis.")
+def analyze_data(self, pdf_result):
+    # Extract file paths from chain result
+    pdf_path = pdf_result.get('pdf_path') if isinstance(pdf_result, dict) else None
+    excel_path = pdf_result.get('excel_path', 'PropertyListings.xlsx') if isinstance(pdf_result, dict) else 'PropertyListings.xlsx'
+
+    if not pdf_path:
+        logger.warning("No PDF path provided, skipping visualization")
+        return {
+            'pdf_path': pdf_path,
+            'excel_path': excel_path,
+            'status': 'Skipped visualization - no PDF available'
+        }
 
     logger.info("Loading data from Excel for analysis")
     df = pd.read_excel(settings.EXCEL_PATH, sheet_name="Listings")
@@ -177,7 +185,11 @@ def analyze_data(self, pdf_generation_result):
             current_plot, 100, description=f"Generating visual data ({i}%)"
         )
 
-    return f"Analysis complete. Consolidated report available at: {final_pdf}"
+    return {
+        'pdf_path': final_pdf,
+        'excel_path': excel_path,
+        'status': 'Analysis complete'
+    }
 
 
 def concatenate_pdfs(base_pdf, analysis_pdf):
