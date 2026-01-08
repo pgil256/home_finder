@@ -2,8 +2,6 @@ from celery import shared_task
 from celery_progress.backend import ProgressRecorder
 import logging
 from apps.WebScraper.models import PropertyListing
-from .pcpao_scraper import PCPAOScraper
-from .tax_collector_scraper import TaxCollectorScraper
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +17,8 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
     property_ids = []
 
     try:
+        # Lazy import to avoid loading selenium at startup
+        from .pcpao_scraper import PCPAOScraper
         scraper = PCPAOScraper(headless=True)
         logger.info(f"Starting PCPAO scraping with criteria: {search_criteria}, limit: {limit}")
 
@@ -82,6 +82,8 @@ def scrape_tax_data(self, scrape_result):
     updated_properties = []
 
     try:
+        # Lazy import to avoid loading selenium at startup
+        from .tax_collector_scraper import TaxCollectorScraper
         scraper = TaxCollectorScraper(headless=True)
         total_properties = len(property_ids)
         logger.info(f"Starting tax data collection for {total_properties} properties")
