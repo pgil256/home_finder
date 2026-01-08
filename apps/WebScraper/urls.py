@@ -3,7 +3,6 @@ from . import views
 
 urlpatterns = [
     path("scraper/", views.web_scraper_view, name="scraper"),
-    path("submit-form/", views.submit_form, name="submit-form"),
     path("scraping-progress/<str:task_id>/", views.scraping_progress, name="scraping-progress"),
-    path("submit-email", views.submit_email, name="submit_email"),
+    path("task-status/<str:task_id>/", views.get_task_status, name="task-status"),
 ]
