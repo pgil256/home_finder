@@ -62,16 +62,22 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
         logger.error(f"Error in scrape_pinellas_properties: {e}")
         raise
 
-    return property_ids
+    return {
+        'property_ids': property_ids,
+        'search_criteria': search_criteria
+    }
 
 
 @shared_task(bind=True)
-def scrape_tax_data(self, property_ids):
+def scrape_tax_data(self, scrape_result):
     """
     Scrape tax information for the given property IDs
     """
     progress_recorder = ProgressRecorder(self)
     progress_recorder.set_progress(0, 100, description="Starting tax data collection...")
+
+    property_ids = scrape_result.get('property_ids', [])
+    search_criteria = scrape_result.get('search_criteria', {})
 
     updated_properties = []
 
@@ -113,5 +119,6 @@ def scrape_tax_data(self, property_ids):
     return {
         'status': 'Tax data collection completed',
         'updated_properties': updated_properties,
-        'total_processed': len(updated_properties)
+        'total_processed': len(updated_properties),
+        'search_criteria': search_criteria
     }
