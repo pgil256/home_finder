@@ -10,10 +10,10 @@ from celery.result import AsyncResult
 from celery import chain, shared_task
 from celery_progress.backend import ProgressRecorder
 from .tasks.scrape_data import scrape_pinellas_properties, scrape_tax_data
-from .tasks.sort_data import generate_excel_report
-from .tasks.listings_pdf import generate_pdf_report
-from .tasks.visual_data import create_visualizations
-from .tasks.email_results import send_results_email
+from .tasks.sort_data import generate_sorted_properties
+from .tasks.listings_pdf import generate_listing_pdf
+from .tasks.visual_data import analyze_data
+from .tasks.email_results import send_results_via_email
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +28,14 @@ def start_processing_pipeline(self, search_criteria, limit=10, user_email=None):
     task_chain = chain(
         scrape_pinellas_properties.s(search_criteria, limit),
         scrape_tax_data.s(),
-        generate_excel_report.s(),
-        generate_pdf_report.s(),
-        create_visualizations.s(),
+        generate_sorted_properties.s(),
+        generate_listing_pdf.s(),
+        analyze_data.s(),
     )
 
     # Add email task if recipient provided
     if user_email:
-        task_chain |= send_results_email.s(user_email)
+        task_chain |= send_results_via_email.s(user_email)
 
     result = task_chain.apply_async()
     return result.id
