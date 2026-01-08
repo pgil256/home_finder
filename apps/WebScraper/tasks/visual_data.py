@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from PyPDF2 import PdfFileMerger, PdfFileReader
+from PyPDF2 import PdfMerger, PdfReader
 from django.conf import settings
 import logging
 from celery import shared_task
@@ -22,137 +22,189 @@ def generate_plots_and_pdf(dataframe, current_count):
     current_count = 0
     logger.info("Starting to generate plots and save them to a PDF")
 
+    def has_columns(df, *cols):
+        """Check if dataframe has all required columns with non-null data."""
+        for col in cols:
+            if col not in df.columns:
+                return False
+            if df[col].dropna().empty:
+                return False
+        return True
+
     with PdfPages(pdf_filename) as pdf:
         # Plot 1: Histogram of Listing Prices
-        plt.figure(figsize=(10, 6))
-        plt.hist(
-            dataframe["Listing Price"], bins=30, color="skyblue", edgecolor="black"
-        )
-        plt.title("Distribution of Listing Prices")
-        plt.xlabel("Price ($)")
-        plt.ylabel("Number of Properties")
-        plt.grid(True)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 1 saved, current count: {current_count}")
+        if has_columns(dataframe, "Listing Price"):
+            plt.figure(figsize=(10, 6))
+            plt.hist(
+                dataframe["Listing Price"].dropna(), bins=30, color="skyblue", edgecolor="black"
+            )
+            plt.title("Distribution of Listing Prices")
+            plt.xlabel("Price ($)")
+            plt.ylabel("Number of Properties")
+            plt.grid(True)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 1 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 1: Missing 'Listing Price' column")
 
         # Plot 2: Scatter Plot of Home Size vs. Listing Price
-        plt.figure(figsize=(10, 6))
-        plt.scatter(
-            dataframe["Home Size"],
-            dataframe["Listing Price"],
-            color="purple",
-            alpha=0.5,
-        )
-        plt.title("Home Size vs. Listing Price")
-        plt.xlabel("Home Size (sqft)")
-        plt.ylabel("Listing Price ($)")
-        plt.grid(True)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 2 saved, current count: {current_count}")
+        if has_columns(dataframe, "Home Size", "Listing Price"):
+            plt.figure(figsize=(10, 6))
+            plot_df = dataframe[["Home Size", "Listing Price"]].dropna()
+            plt.scatter(
+                plot_df["Home Size"],
+                plot_df["Listing Price"],
+                color="purple",
+                alpha=0.5,
+            )
+            plt.title("Home Size vs. Listing Price")
+            plt.xlabel("Home Size (sqft)")
+            plt.ylabel("Listing Price ($)")
+            plt.grid(True)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 2 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 2: Missing 'Home Size' or 'Listing Price' column")
 
         # Plot 3: Bar Chart of Property Types
-        plt.figure(figsize=(10, 6))
-        property_types = dataframe["Property Type"].value_counts()
-        property_types.plot(kind="bar", color="teal")
-        plt.title("Number of Listings by Property Type")
-        plt.xlabel("Property Type")
-        plt.ylabel("Number of Listings")
-        plt.xticks(rotation=45)
-        plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 3 saved, current count: {current_count}")
+        if has_columns(dataframe, "Property Type"):
+            plt.figure(figsize=(10, 6))
+            property_types = dataframe["Property Type"].value_counts()
+            property_types.plot(kind="bar", color="teal")
+            plt.title("Number of Listings by Property Type")
+            plt.xlabel("Property Type")
+            plt.ylabel("Number of Listings")
+            plt.xticks(rotation=45)
+            plt.grid(axis="y", linestyle="--", alpha=0.7)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 3 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 3: Missing 'Property Type' column")
 
         # Plot 4: Box Plot for Prices by Property Type
-        plt.figure(figsize=(12, 8))
-        dataframe.boxplot(
-            column="Listing Price", by="Property Type", grid=True, patch_artist=True
-        )
-        plt.title("Listing Prices by Property Type")
-        plt.xlabel("Property Type")
-        plt.ylabel("Listing Price ($)")
-        plt.suptitle("")
-        plt.xticks(rotation=45)
-        plt.grid(True, linestyle="--", alpha=0.5)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 4 saved, current count: {current_count}")
+        if has_columns(dataframe, "Listing Price", "Property Type"):
+            plt.figure(figsize=(12, 8))
+            dataframe.boxplot(
+                column="Listing Price", by="Property Type", grid=True, patch_artist=True
+            )
+            plt.title("Listing Prices by Property Type")
+            plt.xlabel("Property Type")
+            plt.ylabel("Listing Price ($)")
+            plt.suptitle("")
+            plt.xticks(rotation=45)
+            plt.grid(True, linestyle="--", alpha=0.5)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 4 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 4: Missing 'Listing Price' or 'Property Type' column")
 
-        # Plot 5: Scatter Plot of Time on Market vs. Listing Price
-        plt.figure(figsize=(10, 6))
-        plt.scatter(
-            dataframe["Time on Market"],
-            dataframe["Listing Price"],
-            color="orange",
-            alpha=0.5,
-        )
-        plt.title("Time on Market vs. Listing Price")
-        plt.xlabel("Time on Market (days)")
-        plt.ylabel("Listing Price ($)")
-        plt.grid(True)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 5 saved, current count: {current_count}")
+        # Plot 5: Scatter Plot of Year Built vs. Listing Price (replacing Time on Market)
+        if has_columns(dataframe, "Year Built", "Listing Price"):
+            plt.figure(figsize=(10, 6))
+            plot_df = dataframe[["Year Built", "Listing Price"]].dropna()
+            plt.scatter(
+                plot_df["Year Built"],
+                plot_df["Listing Price"],
+                color="orange",
+                alpha=0.5,
+            )
+            plt.title("Year Built vs. Listing Price")
+            plt.xlabel("Year Built")
+            plt.ylabel("Listing Price ($)")
+            plt.grid(True)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 5 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 5: Missing 'Year Built' or 'Listing Price' column")
 
         # Plot 6: Bar Chart of Average Price per Square Foot by Property Type
-        plt.figure(figsize=(12, 8))
-        avg_price_per_sqft = dataframe.groupby("Property Type")["Price Per Sqft"].mean()
-        avg_price_per_sqft.plot(kind="bar", color="skyblue")
-        plt.title("Average Price per Square Foot by Property Type")
-        plt.xlabel("Property Type")
-        plt.ylabel("Average Price per Square Foot ($)")
-        plt.xticks(rotation=45)
-        plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 6 saved, current count: {current_count}")
+        if has_columns(dataframe, "Property Type", "Price Per Sqft"):
+            plt.figure(figsize=(12, 8))
+            avg_price_per_sqft = dataframe.groupby("Property Type")["Price Per Sqft"].mean()
+            avg_price_per_sqft.plot(kind="bar", color="skyblue")
+            plt.title("Average Price per Square Foot by Property Type")
+            plt.xlabel("Property Type")
+            plt.ylabel("Average Price per Square Foot ($)")
+            plt.xticks(rotation=45)
+            plt.grid(axis="y", linestyle="--", alpha=0.7)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 6 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 6: Missing 'Property Type' or 'Price Per Sqft' column")
 
         # Plot 7: Histogram of Year Built
-        plt.figure(figsize=(10, 6))
-        plt.hist(dataframe["Year Built"], bins=30, color="teal", edgecolor="black")
-        plt.title("Distribution of Year Built")
-        plt.xlabel("Year")
-        plt.ylabel("Number of Properties")
-        plt.grid(True)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 7 saved, current count: {current_count}")
+        if has_columns(dataframe, "Year Built"):
+            plt.figure(figsize=(10, 6))
+            plt.hist(dataframe["Year Built"].dropna(), bins=30, color="teal", edgecolor="black")
+            plt.title("Distribution of Year Built")
+            plt.xlabel("Year")
+            plt.ylabel("Number of Properties")
+            plt.grid(True)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 7 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 7: Missing 'Year Built' column")
 
         # Plot 8: Bar Chart of Average Estimated Monthly Payment by Property Type
-        plt.figure(figsize=(12, 8))
-        avg_monthly_payment = dataframe.groupby("Property Type")[
-            "Estimated Monthly Payment"
-        ].mean()
-        avg_monthly_payment.plot(kind="bar", color="purple")
-        plt.title("Average Estimated Monthly Payment by Property Type")
-        plt.xlabel("Property Type")
-        plt.ylabel("Average Estimated Monthly Payment ($)")
-        plt.xticks(rotation=45)
-        plt.grid(axis="y", linestyle="--", alpha=0.7)
-        plt.tight_layout()
-        pdf.savefig()
-        plt.close()
-        current_count += 1
-        logger.debug(f"Plot 8 saved, current count: {current_count}")
+        if has_columns(dataframe, "Property Type", "Estimated Monthly Payment"):
+            plt.figure(figsize=(12, 8))
+            avg_monthly_payment = dataframe.groupby("Property Type")[
+                "Estimated Monthly Payment"
+            ].mean()
+            avg_monthly_payment.plot(kind="bar", color="purple")
+            plt.title("Average Estimated Monthly Payment by Property Type")
+            plt.xlabel("Property Type")
+            plt.ylabel("Average Estimated Monthly Payment ($)")
+            plt.xticks(rotation=45)
+            plt.grid(axis="y", linestyle="--", alpha=0.7)
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close()
+            current_count += 1
+            logger.debug(f"Plot 8 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 8: Missing 'Property Type' or 'Estimated Monthly Payment' column")
 
-    logger.info(f"All plots generated and saved to {pdf_filename}")
+    logger.info(f"Generated {current_count} plots and saved to {pdf_filename}")
     return pdf_filename
+
+
+# Column mapping from model field names to display names for visualization
+COLUMN_MAPPING = {
+    'market_value': 'Listing Price',
+    'building_sqft': 'Home Size',
+    'property_type': 'Property Type',
+    'last_scraped': 'Time on Market',
+    'year_built': 'Year Built',
+    'tax_amount': 'Tax Amount',
+    'assessed_value': 'Assessed Value',
+    'land_size': 'Land Size',
+    'bedrooms': 'Bedrooms',
+    'bathrooms': 'Bathrooms',
+    'city': 'City',
+    'zip_code': 'ZIP Code',
+}
 
 
 @shared_task(bind=True)
@@ -171,6 +223,23 @@ def analyze_data(self, pdf_result):
 
     logger.info(f"Loading data from Excel for analysis: {excel_path}")
     df = pd.read_excel(excel_path, sheet_name=0)  # Use first sheet (default name varies)
+
+    # Rename columns from model field names to display names
+    df = df.rename(columns=COLUMN_MAPPING)
+
+    # Calculate Price Per Sqft if we have the required columns
+    if 'Listing Price' in df.columns and 'Home Size' in df.columns:
+        df['Price Per Sqft'] = df.apply(
+            lambda row: row['Listing Price'] / row['Home Size']
+            if pd.notna(row['Home Size']) and row['Home Size'] > 0 else None,
+            axis=1
+        )
+
+    # Estimate monthly payment (rough estimate: price * 0.006 for mortgage + taxes + insurance)
+    if 'Listing Price' in df.columns:
+        df['Estimated Monthly Payment'] = df['Listing Price'].apply(
+            lambda x: x * 0.006 if pd.notna(x) else None
+        )
 
     total_plots = 8  # Increased the total number of plots
     current_plot = 0
@@ -194,12 +263,11 @@ def analyze_data(self, pdf_result):
 
 def concatenate_pdfs(base_pdf, analysis_pdf):
     logger.info("Concatenating base PDF and analysis PDF into a single document")
-    merger = PdfFileMerger()
-    with open(base_pdf, "rb") as base, open(analysis_pdf, "rb") as analysis:
-        merger.append(PdfFileReader(base))
-        merger.append(PdfFileReader(analysis))
+    merger = PdfMerger()
+    merger.append(base_pdf)
+    merger.append(analysis_pdf)
     output_pdf = "Real_Estate_Report.pdf"
-    with open(output_pdf, "wb") as outfile:
-        merger.write(outfile)
+    merger.write(output_pdf)
+    merger.close()
     logger.info(f"Final PDF report generated at {output_pdf}")
     return output_pdf
