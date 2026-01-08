@@ -4,8 +4,16 @@ PCPAO Bulk Data Importer
 Imports property data from PCPAO CSV downloads.
 Data source: https://www.pcpao.gov/tools-data/data-downloads/raw-database-files
 """
+import os
+import requests
+import logging
 from decimal import Decimal, InvalidOperation
 from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
+
+# PCPAO data download URL pattern
+PCPAO_DATA_URL = "https://www.pcpao.gov/Data/Downloads/{filename}.csv"
 
 
 # PCPAO CSV column to PropertyListing field mapping
@@ -25,6 +33,32 @@ FIELD_MAPPING = {
     'DOR_UC': 'property_type',    # DOR Use Code
     'LAND_SQFT': 'lot_sqft',
 }
+
+
+def download_pcpao_file(filename: str, output_dir: str) -> str:
+    """
+    Download a PCPAO data file.
+
+    Args:
+        filename: Name of the file (e.g., 'RP_PROPERTY_INFO')
+        output_dir: Directory to save the downloaded file
+
+    Returns:
+        Path to the downloaded file
+    """
+    url = PCPAO_DATA_URL.format(filename=filename)
+    output_path = os.path.join(output_dir, f"{filename}.csv")
+
+    logger.info(f"Downloading {filename} from {url}")
+
+    with requests.get(url, stream=True) as response:
+        response.raise_for_status()
+        with open(output_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+    logger.info(f"Downloaded {filename} to {output_path}")
+    return output_path
 
 
 def safe_decimal(value: str) -> Optional[Decimal]:

@@ -1,7 +1,10 @@
 # apps/WebScraper/tests/test_data_import.py
 import pytest
+import tempfile
+import os
+from unittest.mock import patch, MagicMock
 from decimal import Decimal
-from apps.WebScraper.services.pcpao_importer import map_csv_row_to_property
+from apps.WebScraper.services.pcpao_importer import map_csv_row_to_property, download_pcpao_file, PCPAO_DATA_URL
 
 
 class TestCSVFieldMapping:
@@ -85,3 +88,35 @@ class TestCSVFieldMapping:
         assert result['owner_name'] is None
         assert result['market_value'] is None
         assert result['building_sqft'] is None
+
+
+class TestCSVDownload:
+    def test_download_creates_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mock_response = MagicMock()
+            mock_response.iter_content = lambda chunk_size: [b'PARCEL_ID,SITE_ADDR\n', b'123,Main St\n']
+            mock_response.raise_for_status = MagicMock()
+
+            with patch('requests.get', return_value=mock_response) as mock_get:
+                mock_get.return_value.__enter__ = lambda s: mock_response
+                mock_get.return_value.__exit__ = MagicMock(return_value=False)
+
+                filepath = download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
+
+                assert os.path.exists(filepath)
+                assert filepath.endswith('.csv')
+
+    def test_download_uses_correct_url(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mock_response = MagicMock()
+            mock_response.iter_content = lambda chunk_size: [b'data']
+            mock_response.raise_for_status = MagicMock()
+
+            with patch('requests.get', return_value=mock_response) as mock_get:
+                mock_get.return_value.__enter__ = lambda s: mock_response
+                mock_get.return_value.__exit__ = MagicMock(return_value=False)
+
+                download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
+
+                call_url = mock_get.call_args[0][0]
+                assert 'RP_PROPERTY_INFO' in call_url
