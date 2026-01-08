@@ -7,13 +7,19 @@ import time
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+
+# Chrome for Testing paths
+CHROME_BINARY = os.path.expanduser("~/.chrome-for-testing/chrome-linux64/chrome")
+CHROMEDRIVER_BINARY = os.path.expanduser("~/.chrome-for-testing/chromedriver-linux64/chromedriver")
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +35,18 @@ class PCPAOScraper:
 
     def setup_driver(self):
         options = Options()
+        if os.path.exists(CHROME_BINARY):
+            options.binary_location = CHROME_BINARY
         if self.headless:
-            options.add_argument("--headless")
+            options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
         options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--window-size=1920,1080")
 
-        self.driver = webdriver.Chrome(options=options)
+        service = Service(CHROMEDRIVER_BINARY) if os.path.exists(CHROMEDRIVER_BINARY) else None
+        self.driver = webdriver.Chrome(service=service, options=options)
         self.wait = WebDriverWait(self.driver, 20)
         logger.info("Chrome driver initialized for PCPAO scraper")
 
