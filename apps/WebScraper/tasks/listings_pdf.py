@@ -55,8 +55,14 @@ def get_custom_styles():
 
 
 @shared_task(bind=True)
-def generate_listing_pdf(self, sorted_properties, columns):
+def generate_listing_pdf(self, sort_result):
     logger.info("Generating PDF for property listings")
+
+    # Extract data from chain result
+    sorted_properties = sort_result.get('sorted_properties', [])
+    columns = sort_result.get('columns', [])
+    excel_path = sort_result.get('excel_path', 'PropertyListings.xlsx')
+
     filename = "Real_Estate_Listings.pdf"
     doc = SimpleDocTemplate(filename, pagesize=letter)
     story = []
@@ -109,9 +115,14 @@ def generate_listing_pdf(self, sorted_properties, columns):
         progress_recorder.set_progress(75, 100, description="Listing PDF generated")
         logger.info(f"PDF generated successfully at {filename}")
         return {
-            "status": "Listings added to PDF",
-            "data": f"PDF generated successfully at {filename}",
+            "status": "PDF generated successfully",
+            "pdf_path": filename,
+            "excel_path": excel_path
         }
     except Exception as e:
         logger.error(f"Failed to generate PDF: {str(e)}")
-        return f"Failed to generate PDF: {str(e)}"
+        return {
+            "status": f"Failed to generate PDF: {str(e)}",
+            "pdf_path": None,
+            "excel_path": excel_path
+        }
