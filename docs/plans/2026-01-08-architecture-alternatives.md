@@ -1,5 +1,7 @@
 # Home Finder Architecture Alternatives
 
+> **Status:** Implemented - see `apps/WebScraper/services/pcpao_importer.py` and `manage.py import_pcpao_data`
+
 ## Problem Statement
 
 The current Selenium-based scraping setup feels overkill for the application's needs. It requires:
