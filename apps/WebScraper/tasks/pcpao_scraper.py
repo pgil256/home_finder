@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 class PCPAOScraper:
-    BASE_URL = "https://www.pcpao.org/"
-    SEARCH_URL = "https://www.pcpao.org/search"
+    BASE_URL = "https://www.pcpao.gov/"
+    SEARCH_URL = "https://www.pcpao.gov/quick-search"
+    DETAIL_URL = "https://www.pcpao.gov/property-details"
 
     def __init__(self, headless: bool = True):
         self.headless = headless
@@ -56,78 +57,60 @@ class PCPAOScraper:
             logger.info("Driver closed")
 
     def search_properties(self, search_criteria: Dict[str, Any]) -> List[str]:
+        """Search for properties using PCPAO Quick Search."""
         parcel_ids = []
         try:
             self.driver.get(self.SEARCH_URL)
-            time.sleep(2)
-
-            # Try to access advanced search
-            try:
-                advanced_search = self.wait.until(
-                    EC.element_to_be_clickable((By.LINK_TEXT, "Advanced Search"))
-                )
-                advanced_search.click()
-                time.sleep(2)
-            except:
-                pass
-
-            # Fill search criteria
-            if search_criteria.get('city'):
-                try:
-                    city_field = self.driver.find_element(By.NAME, "city")
-                    city_field.clear()
-                    city_field.send_keys(search_criteria['city'])
-                except:
-                    city_select = Select(self.driver.find_element(By.NAME, "city"))
-                    city_select.select_by_visible_text(search_criteria['city'])
-
-            if search_criteria.get('zip_code'):
-                zip_field = self.driver.find_element(By.NAME, "zip")
-                zip_field.clear()
-                zip_field.send_keys(search_criteria['zip_code'])
-
-            if search_criteria.get('property_type'):
-                try:
-                    prop_type_select = Select(self.driver.find_element(By.NAME, "property_use"))
-                    prop_type_select.select_by_visible_text(search_criteria['property_type'])
-                except:
-                    pass
-
-            if search_criteria.get('min_value'):
-                min_val = self.driver.find_element(By.NAME, "min_market_value")
-                min_val.clear()
-                min_val.send_keys(str(search_criteria['min_value']))
-
-            if search_criteria.get('max_value'):
-                max_val = self.driver.find_element(By.NAME, "max_market_value")
-                max_val.clear()
-                max_val.send_keys(str(search_criteria['max_value']))
-
-            # Submit search
-            search_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
-            search_button.click()
             time.sleep(3)
 
-            # Process results
+            # Build search query from criteria
+            search_terms = []
+            if search_criteria.get('address'):
+                search_terms.append(search_criteria['address'])
+            if search_criteria.get('city'):
+                search_terms.append(search_criteria['city'])
+            if search_criteria.get('zip_code'):
+                search_terms.append(search_criteria['zip_code'])
+            if search_criteria.get('owner_name'):
+                search_terms.append(search_criteria['owner_name'])
+
+            search_query = ' '.join(search_terms) if search_terms else 'Clearwater'
+
+            # Use the quick search input
+            search_input = self.driver.find_element(By.ID, "txtKeyWord")
+            search_input.clear()
+            search_input.send_keys(search_query)
+            search_input.send_keys(Keys.RETURN)
+            time.sleep(5)
+
+            # Extract parcel IDs from results - they appear as links with format XX-XX-XX-XXXXX-XXX-XXXX
+            links = self.driver.find_elements(By.TAG_NAME, "a")
+            for link in links:
+                text = link.text.strip()
+                href = link.get_attribute('href') or ''
+                # Parcel IDs match pattern like 14-31-15-91961-004-0110
+                if text and len(text) == 23 and text.count('-') == 5:
+                    if text not in parcel_ids:
+                        parcel_ids.append(text)
+                        logger.debug(f"Found parcel: {text}")
+
+            # Handle pagination if present
             page_num = 1
             while True:
-                logger.info(f"Processing page {page_num}")
-                parcel_links = self.driver.find_elements(By.CSS_SELECTOR, "a[href*='parcel']")
-
-                for link in parcel_links:
-                    href = link.get_attribute('href')
-                    if 'parcel/' in href:
-                        parcel_id = href.split('parcel/')[-1].split('/')[0]
-                        if parcel_id and parcel_id not in parcel_ids:
-                            parcel_ids.append(parcel_id)
-
                 try:
-                    next_button = self.driver.find_element(By.CSS_SELECTOR, "a[aria-label='Next page']")
-                    if 'disabled' in next_button.get_attribute('class'):
-                        break
+                    next_button = self.driver.find_element(By.CSS_SELECTOR, "a.paginate_button.next:not(.disabled)")
                     next_button.click()
                     time.sleep(2)
                     page_num += 1
+                    logger.info(f"Processing page {page_num}")
+
+                    # Re-extract parcel IDs from new page
+                    links = self.driver.find_elements(By.TAG_NAME, "a")
+                    for link in links:
+                        text = link.text.strip()
+                        if text and len(text) == 23 and text.count('-') == 5:
+                            if text not in parcel_ids:
+                                parcel_ids.append(text)
                 except NoSuchElementException:
                     break
 
