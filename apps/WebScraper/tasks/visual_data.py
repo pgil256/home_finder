@@ -170,12 +170,12 @@ def analyze_data(self, pdf_result):
         }
 
     logger.info(f"Loading data from Excel for analysis: {excel_path}")
-    df = pd.read_excel(excel_path, sheet_name="Listings")
+    df = pd.read_excel(excel_path, sheet_name=0)  # Use first sheet (default name varies)
 
     total_plots = 8  # Increased the total number of plots
     current_plot = 0
     logger.debug("Starting to generate plots for data analysis")
-    analysis_pdf = generate_plots_and_pdf(df, self, current_plot)
+    analysis_pdf = generate_plots_and_pdf(df, current_plot)
     final_pdf = concatenate_pdfs("Real_Estate_Listings.pdf", analysis_pdf)
     progress_recorder = ProgressRecorder(self)
 
