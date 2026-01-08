@@ -17,5 +17,8 @@ COPY . .
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Run migrations and start server
-CMD python manage.py migrate && gunicorn home_finder.wsgi --bind 0.0.0.0:${PORT:-8000}
+# Make startup script executable
+RUN chmod +x /app/start.sh
+
+# Run startup script
+CMD ["/app/start.sh"]

@@ -29,6 +29,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '.railway.app', '.up.railway.app', 'localhost', '127.0.0.1']
 
+# CSRF trusted origins for proxied deployments (Django 4.0+)
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.railway.app',
+    'https://*.up.railway.app',
+    'https://*.vercel.app',
+]
+
 # Application definition
 
 INSTALLED_APPS = [

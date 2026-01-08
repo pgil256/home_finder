@@ -2,5 +2,6 @@
 builder = "dockerfile"
 
 [deploy]
+startCommand = "/app/start.sh"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
