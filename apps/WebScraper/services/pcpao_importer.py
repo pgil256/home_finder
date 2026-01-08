@@ -8,7 +8,11 @@ import os
 import requests
 import logging
 from decimal import Decimal, InvalidOperation
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+
+from django.db import transaction
+from apps.WebScraper.models import PropertyListing
+from apps.WebScraper.services.property_types import dor_code_to_description
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +103,7 @@ def map_csv_row_to_property(row: Dict[str, str]) -> Dict[str, Any]:
     result['city'] = row.get('SITE_CITY', '').strip() or None
     result['zip_code'] = row.get('SITE_ZIP', '').strip() or None
     result['owner_name'] = row.get('OWN_NAME', '').strip() or None
-    result['property_type'] = row.get('DOR_UC', '').strip() or 'Unknown'
+    result['property_type'] = dor_code_to_description(row.get('DOR_UC', ''))
 
     # Decimal fields
     result['market_value'] = safe_decimal(row.get('JV', ''))
@@ -119,3 +123,35 @@ def map_csv_row_to_property(row: Dict[str, str]) -> Dict[str, Any]:
         result['land_size'] = None
 
     return result
+
+
+def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1000) -> Dict[str, int]:
+    """
+    Bulk insert or update property records.
+
+    Args:
+        properties: List of property dictionaries with PropertyListing fields
+        batch_size: Number of records to process per batch
+
+    Returns:
+        Dictionary with 'created' and 'updated' counts
+    """
+    stats = {'created': 0, 'updated': 0}
+
+    with transaction.atomic():
+        for prop in properties:
+            parcel_id = prop.get('parcel_id')
+            if not parcel_id:
+                continue
+
+            obj, created = PropertyListing.objects.update_or_create(
+                parcel_id=parcel_id,
+                defaults={k: v for k, v in prop.items() if k != 'parcel_id'}
+            )
+
+            if created:
+                stats['created'] += 1
+            else:
+                stats['updated'] += 1
+
+    return stats
