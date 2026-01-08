@@ -11,3 +11,4 @@ python-decouple==3.8
 celery-progress==0.3
 watchdog==3.0.0
 PyPDF2==3.0.1
+requests==2.31.0
