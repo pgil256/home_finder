@@ -13,7 +13,16 @@ email_host_user = settings.EMAIL_HOST_USER
 
 
 @shared_task
-def send_results_via_email(email, pdf_path, excel_path):
+def send_results_via_email(analysis_result, email):
+    """
+    Send results via email. In the Celery chain:
+    - analysis_result: dict from analyze_data with pdf_path and excel_path
+    - email: user email passed via .s(user_email)
+    """
+    # Extract file paths from chain result
+    pdf_path = analysis_result.get('pdf_path', 'Real_Estate_Report.pdf') if isinstance(analysis_result, dict) else 'Real_Estate_Report.pdf'
+    excel_path = analysis_result.get('excel_path', 'PropertyListings.xlsx') if isinstance(analysis_result, dict) else 'PropertyListings.xlsx'
+
     logger.info(f"Preparing to send results via email to {email}")
     subject = "Your Real Estate Analysis Results"
     body = "Attached are your requested real estate analysis results."
