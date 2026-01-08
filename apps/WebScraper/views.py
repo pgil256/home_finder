@@ -68,7 +68,11 @@ def web_scraper_view(request):
 
     # GET request - show the scraping interface
     keywords = Keyword.objects.filter(is_active=True).order_by('-priority')
-    return render(request, 'WebScraper/web-scraper.html', {'keywords': keywords})
+    context = {
+        'keywords': keywords,
+        'state_options': ['FL'],  # Pinellas County is in Florida
+    }
+    return render(request, 'WebScraper/web-scraper.html', context)
 
 
 def scraping_progress(request, task_id):
