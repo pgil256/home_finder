@@ -120,12 +120,15 @@ def compare_properties(x, y, user_preferences, priority_fields):
 
 
 @shared_task(bind=True)
-def generate_sorted_properties(self, scrape_config):
+def generate_sorted_properties(self, tax_result):
     progress_recorder = ProgressRecorder(self)
 
+    # Extract search_criteria from the chain result
+    scrape_config = tax_result.get('search_criteria', {}) if isinstance(tax_result, dict) else {}
+
     if not scrape_config:
-        logger.error("No scrape configuration provided, cannot proceed")
-        raise ValueError("No scrape configuration provided.")
+        logger.warning("No scrape configuration provided, using empty config")
+        scrape_config = {}
 
     columns, listings = fetch_property_listings()
     progress_recorder.set_progress(25, 100, description="Fetched property listings")
@@ -146,4 +149,8 @@ def generate_sorted_properties(self, scrape_config):
     progress_recorder.set_progress(50, 100, description="Generated PDF")
 
     logger.info("Top 10 sorted properties generated")
-    return sorted_properties[:10]
+    return {
+        'sorted_properties': sorted_properties[:10],
+        'columns': columns,
+        'excel_path': 'PropertyListings.xlsx'
+    }
