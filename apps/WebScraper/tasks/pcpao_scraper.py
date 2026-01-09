@@ -18,9 +18,10 @@ from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Chrome for Testing paths (local development)
-CHROME_BINARY = os.path.expanduser("~/.chrome-for-testing/chrome-linux64/chrome")
-CHROMEDRIVER_BINARY = os.path.expanduser("~/.chrome-for-testing/chromedriver-linux64/chromedriver")
+# Chrome for Testing paths
+# Priority: 1. Environment variables (production), 2. Local dev paths, 3. webdriver-manager fallback
+CHROME_BINARY = os.environ.get('CHROME_BIN') or os.path.expanduser("~/.chrome-for-testing/chrome-linux64/chrome")
+CHROMEDRIVER_BINARY = os.environ.get('CHROMEDRIVER_PATH') or os.path.expanduser("~/.chrome-for-testing/chromedriver-linux64/chromedriver")
 
 logger = logging.getLogger(__name__)
 
