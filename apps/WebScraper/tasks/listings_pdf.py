@@ -95,14 +95,12 @@ def generate_listing_pdf(self, sort_result):
                 story.append(Paragraph("No image available", styles["body"]))
 
         # Constructing the details section directly from the property dictionary
-        details = f"<para style='title'>Property Listing</para>"
-        details += "".join(
-            f"<para style='heading'>{key.replace('_', ' ').title()}:</para> <para style='body'>{value}</para>"
-            for key, value in property_dict.items()
-            if key != "image_of_property"
-        )
-        details += f"<para style='link'><link href='{property_dict.get('link', '#')}' color='blue'>More Details</link></para>"
-        story.append(Paragraph(details, styles["body"]))
+        story.append(Paragraph("Property Listing", styles["title"]))
+
+        for key, value in property_dict.items():
+            if key != "image_of_property":
+                label = key.replace('_', ' ').title()
+                story.append(Paragraph(f"<b>{label}:</b> {value}", styles["body"]))
         story.append(Spacer(1, 12))
         story.append(PageBreak())
         
