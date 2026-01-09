@@ -3,8 +3,9 @@ const path = require('path');
 module.exports = {
   mode: "development",
   entry: {
-    common: "./static/js/dev/common.js", 
-    keywordSelection: "./static/js/dev/keywordSelection.js",  
+    common: "./static/js/dev/common.js",
+    mobile: "./static/js/dev/mobile.js",
+    keywordSelection: "./static/js/dev/keywordSelection.js",
   },
   output: {
     filename: "[name].bundle.js",

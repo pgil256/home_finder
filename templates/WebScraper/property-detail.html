@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ property.address }} - Home Finder{% endblock %}
+
+{% block hero-image-content %}
+<!-- Property Header -->
+<section class="bg-white border-b border-charcoal-100">
+    <div class="container-app py-4">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-charcoal-500 mb-4">
+            <a href="{% url 'dashboard' %}" class="hover:text-primary-500 transition-colors">Properties</a>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-charcoal-700">{{ property.city }}</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-charcoal-800 font-medium truncate">{{ property.address }}</span>
+        </nav>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Main Property Info -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Left Column - Image and Main Details -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Property Image -->
+            <div class="card overflow-hidden">
+                <div class="aspect-video bg-gradient-to-br from-charcoal-200 to-charcoal-300 flex items-center justify-center relative">
+                    <svg class="w-24 h-24 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+
+                    <!-- Property Type Badge -->
+                    <div class="absolute top-4 left-4">
+                        <span class="badge badge-neutral bg-white/90 backdrop-blur-sm text-sm">{{ property.property_type }}</span>
+                    </div>
+
+                    <!-- Tax Status Badge -->
+                    <div class="absolute top-4 right-4">
+                        {% if property.tax_status == 'Paid' %}
+                        <span class="badge badge-success">Taxes Paid</span>
+                        {% elif property.tax_status == 'Delinquent' %}
+                        <span class="badge badge-danger">Tax Delinquent</span>
+                        {% elif property.tax_status == 'Unpaid' %}
+                        <span class="badge badge-warning">Taxes Unpaid</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Property Details Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">Property Details</h2>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {% if property.bedrooms %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Bedrooms</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.bedrooms }}</p>
+                        </div>
+                        {% endif %}
+                        {% if property.bathrooms %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Bathrooms</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.bathrooms|floatformat:1 }}</p>
+                        </div>
+                        {% endif %}
+                        {% if property.building_sqft %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Living Area</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.building_sqft|floatformat:0 }} sqft</p>
+                        </div>
+                        {% endif %}
+                        {% if property.lot_sqft %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Lot Size</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.lot_sqft|floatformat:0 }} sqft</p>
+                        </div>
+                        {% endif %}
+                        {% if property.year_built %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Year Built</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.year_built }}</p>
+                        </div>
+                        {% endif %}
+                        {% if property.stories %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Stories</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.stories }}</p>
+                        </div>
+                        {% endif %}
+                        {% if property.garage %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Garage</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.garage }}</p>
+                        </div>
+                        {% endif %}
+                        {% if property.price_per_sqft %}
+                        <div>
+                            <p class="text-sm text-charcoal-500 mb-1">Price/sqft</p>
+                            <p class="text-lg font-semibold text-charcoal-800">${{ property.price_per_sqft|floatformat:0 }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valuation Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">Valuation & Tax Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold text-charcoal-600 uppercase tracking-wider">Property Values</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
+                                    <span class="text-charcoal-600">Market Value</span>
+                                    <span class="font-semibold text-charcoal-800">${{ property.market_value|floatformat:0|default:"N/A" }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
+                                    <span class="text-charcoal-600">Assessed Value</span>
+                                    <span class="font-semibold text-charcoal-800">${{ property.assessed_value|floatformat:0|default:"N/A" }}</span>
+                                </div>
+                                {% if property.land_size %}
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-charcoal-600">Land Size</span>
+                                    <span class="font-semibold text-charcoal-800">{{ property.land_size|floatformat:2 }} acres</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold text-charcoal-600 uppercase tracking-wider">Tax Information</h3>
+                            <div class="space-y-3">
+                                {% if property.tax_amount %}
+                                <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
+                                    <span class="text-charcoal-600">Annual Tax</span>
+                                    <span class="font-semibold text-charcoal-800">${{ property.tax_amount|floatformat:2 }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
+                                    <span class="text-charcoal-600">Tax Status</span>
+                                    <span>
+                                        {% if property.tax_status == 'Paid' %}
+                                        <span class="badge badge-success">Paid</span>
+                                        {% elif property.tax_status == 'Delinquent' %}
+                                        <span class="badge badge-danger">Delinquent</span>
+                                        {% elif property.tax_status == 'Unpaid' %}
+                                        <span class="badge badge-warning">Unpaid</span>
+                                        {% else %}
+                                        <span class="badge badge-neutral">{{ property.tax_status }}</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% if property.tax_year %}
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-charcoal-600">Tax Year</span>
+                                    <span class="font-semibold text-charcoal-800">{{ property.tax_year }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Owner Information -->
+            {% if property.owner_name %}
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">Owner Information</h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-charcoal-800">{{ property.owner_name }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column - Price and Actions -->
+        <div class="space-y-6">
+            <!-- Price Card -->
+            <div class="card sticky top-24">
+                <div class="card-body">
+                    <div class="text-center mb-6">
+                        <p class="text-sm text-charcoal-500 mb-1">Market Value</p>
+                        <p class="font-display text-display-md text-primary-600">${{ property.market_value|floatformat:0|default:"N/A" }}</p>
+                        {% if property.assessed_value %}
+                        <p class="text-sm text-charcoal-400 mt-1">Assessed: ${{ property.assessed_value|floatformat:0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-3">
+                        <button type="button" onclick="toggleSave('{{ property.parcel_id }}')" class="btn btn-primary w-full">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            Save Property
+                        </button>
+                        <button type="button" onclick="shareProperty()" class="btn btn-secondary w-full">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                            Share
+                        </button>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- Address -->
+                    <div class="mb-4">
+                        <p class="text-sm text-charcoal-500 mb-1">Address</p>
+                        <p class="font-medium text-charcoal-800">{{ property.address }}</p>
+                        <p class="text-charcoal-600">{{ property.city }}, FL {{ property.zip_code }}</p>
+                    </div>
+
+                    <!-- Parcel ID -->
+                    <div class="mb-4">
+                        <p class="text-sm text-charcoal-500 mb-1">Parcel ID</p>
+                        <p class="font-mono text-sm text-charcoal-800">{{ property.parcel_id }}</p>
+                    </div>
+
+                    <!-- Last Updated -->
+                    <div class="text-xs text-charcoal-400">
+                        Last updated: {{ property.last_scraped|date:"M j, Y" }}
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- External Links -->
+                    <div>
+                        <p class="text-sm font-medium text-charcoal-700 mb-3">View on External Sites</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <a href="https://www.zillow.com/homes/{{ property.address|urlencode }}-{{ property.city|urlencode }}-FL-{{ property.zip_code }}_rb/"
+                               target="_blank"
+                               rel="noopener"
+                               class="btn btn-ghost btn-sm justify-start text-charcoal-600">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
+                                </svg>
+                                Zillow
+                            </a>
+                            <a href="https://www.redfin.com/search?location={{ property.address|urlencode }}, {{ property.city|urlencode }}, FL {{ property.zip_code }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="btn btn-ghost btn-sm justify-start text-charcoal-600">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
+                                </svg>
+                                Redfin
+                            </a>
+                            <a href="https://www.realtor.com/realestateandhomes-search/{{ property.address|urlencode|slugify }}_{{ property.city|urlencode }}_FL_{{ property.zip_code }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="btn btn-ghost btn-sm justify-start text-charcoal-600">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
+                                </svg>
+                                Realtor
+                            </a>
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ property.address|urlencode }}, {{ property.city|urlencode }}, FL {{ property.zip_code }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="btn btn-ghost btn-sm justify-start text-charcoal-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Map
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Official Sources -->
+                    <div class="mt-4 pt-4 border-t border-charcoal-100">
+                        <p class="text-sm font-medium text-charcoal-700 mb-3">Official Records</p>
+                        <div class="space-y-2">
+                            {% if property.appraiser_url %}
+                            <a href="{{ property.appraiser_url }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="flex items-center gap-2 text-sm text-primary-500 hover:text-primary-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Property Appraiser Record
+                            </a>
+                            {% endif %}
+                            {% if property.tax_collector_url %}
+                            <a href="{{ property.tax_collector_url }}"
+                               target="_blank"
+                               rel="noopener"
+                               class="flex items-center gap-2 text-sm text-primary-500 hover:text-primary-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Tax Collector Record
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Similar Properties -->
+    {% if similar_properties %}
+    <section class="mt-12">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-display text-display-xs text-charcoal-800">Similar Properties</h2>
+            <a href="{% url 'dashboard' %}?city={{ property.city }}&property_type={{ property.property_type }}"
+               class="text-primary-500 hover:text-primary-600 transition-colors text-sm font-medium">
+                View all in {{ property.city }}
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for similar in similar_properties %}
+            <article class="property-card group">
+                <div class="relative overflow-hidden">
+                    <div class="property-card-image bg-gradient-to-br from-charcoal-200 to-charcoal-300 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-charcoal-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-3">
+                        <a href="{% url 'property-detail' similar.parcel_id %}" class="btn btn-sm bg-white text-charcoal-800 hover:bg-charcoal-100">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <p class="font-display text-lg font-semibold text-primary-600">${{ similar.market_value|floatformat:0|default:"N/A" }}</p>
+                    <p class="text-sm text-charcoal-800 font-medium line-clamp-1 mt-1">{{ similar.address }}</p>
+                    <div class="flex items-center gap-3 mt-2 text-xs text-charcoal-500">
+                        {% if similar.bedrooms %}<span>{{ similar.bedrooms }} bd</span>{% endif %}
+                        {% if similar.bathrooms %}<span>{{ similar.bathrooms|floatformat:0 }} ba</span>{% endif %}
+                        {% if similar.building_sqft %}<span>{{ similar.building_sqft|floatformat:0 }} sqft</span>{% endif %}
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+    function toggleSave(parcelId) {
+        showToast('Property saved to your list');
+    }
+
+    function shareProperty() {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ property.address }}',
+                text: 'Check out this property in {{ property.city }}, FL',
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            showToast('Link copied to clipboard');
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-info fixed bottom-4 right-4 z-50';
+        toast.innerHTML = `
+            <svg class="w-5 h-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

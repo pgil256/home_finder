@@ -1,0 +1,752 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Property Dashboard - Home Finder{% endblock %}
+
+{% block hero-image-content %}
+<!-- Dashboard Header -->
+<section class="bg-white border-b border-charcoal-100">
+    <div class="container-app py-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <!-- Results Info -->
+            <div>
+                <h1 class="font-display text-display-sm text-charcoal-800">
+                    {% if search_criteria %}
+                        Properties in {{ search_criteria.city|default:"Pinellas County" }}
+                    {% else %}
+                        All Properties
+                    {% endif %}
+                </h1>
+                <p class="text-charcoal-500 mt-1">
+                    <span class="font-semibold text-charcoal-700">{{ total_count|default:"0" }}</span> properties found
+                    {% if search_criteria %}
+                        <span class="mx-2 text-charcoal-300">|</span>
+                        <a href="{% url 'scraper' %}" class="text-primary-500 hover:text-primary-600 transition-colors">
+                            Modify search
+                        </a>
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- View Controls -->
+            <div class="flex items-center gap-4">
+                <!-- Sort Dropdown -->
+                <div class="relative">
+                    <label for="sort-select" class="sr-only">Sort by</label>
+                    <select id="sort-select"
+                            onchange="updateSort(this.value)"
+                            class="select pr-10 min-w-[180px]">
+                        <option value="-market_value" {% if sort == '-market_value' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="market_value" {% if sort == 'market_value' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>Oldest First</option>
+                        <option value="-building_sqft" {% if sort == '-building_sqft' %}selected{% endif %}>Largest (sqft)</option>
+                        <option value="building_sqft" {% if sort == 'building_sqft' %}selected{% endif %}>Smallest (sqft)</option>
+                        <option value="-year_built" {% if sort == '-year_built' %}selected{% endif %}>Newest Built</option>
+                    </select>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="flex items-center bg-charcoal-100 rounded-lg p-1">
+                    <button type="button"
+                            onclick="setView('grid')"
+                            class="view-toggle p-2 rounded-md transition-all duration-200"
+                            data-view="grid"
+                            aria-label="Grid view">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                    </button>
+                    <button type="button"
+                            onclick="setView('list')"
+                            class="view-toggle p-2 rounded-md transition-all duration-200"
+                            data-view="list"
+                            aria-label="List view">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row gap-6 -mt-4">
+
+    <!-- Filter Sidebar -->
+    <aside id="filter-sidebar" class="hidden md:block w-full md:w-72 lg:w-80 flex-shrink-0">
+        <div class="card sticky top-24">
+            <div class="card-header flex items-center justify-between">
+                <h2 class="font-display font-semibold text-charcoal-800">Filters</h2>
+                <button type="button" onclick="clearFilters()" class="text-sm text-primary-500 hover:text-primary-600 transition-colors">
+                    Clear all
+                </button>
+            </div>
+
+            <form id="filter-form" method="get" class="card-body space-y-6">
+                <!-- Preserve sort -->
+                <input type="hidden" name="sort" value="{{ sort|default:'-market_value' }}">
+
+                <!-- City Filter -->
+                <div>
+                    <label for="filter-city" class="label">City</label>
+                    <select id="filter-city" name="city" class="select">
+                        <option value="">All Cities</option>
+                        {% for city in cities %}
+                        <option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>{{ city }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Property Type Filter -->
+                <div>
+                    <label class="label">Property Type</label>
+                    <div class="space-y-2">
+                        {% for ptype in property_types %}
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox"
+                                   name="property_type"
+                                   value="{{ ptype }}"
+                                   {% if ptype in selected_property_types %}checked{% endif %}
+                                   class="checkbox">
+                            <span class="text-sm text-charcoal-600 group-hover:text-charcoal-800 transition-colors">{{ ptype }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Price Range -->
+                <div>
+                    <label class="label">Price Range</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                            <input type="number"
+                                   name="min_price"
+                                   value="{{ request.GET.min_price }}"
+                                   placeholder="Min"
+                                   class="input input-sm pl-7">
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                            <input type="number"
+                                   name="max_price"
+                                   value="{{ request.GET.max_price }}"
+                                   placeholder="Max"
+                                   class="input input-sm pl-7">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bedrooms -->
+                <div>
+                    <label class="label">Bedrooms</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for num in "0,1,2,3,4,5"|make_list %}
+                        {% with num|add:"0" as bed_num %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="beds" value="{{ bed_num }}" class="sr-only peer" {% if request.GET.beds == bed_num %}checked{% endif %}>
+                            <span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all duration-200 hover:border-charcoal-300">
+                                {% if bed_num == "0" %}Any{% else %}{{ bed_num }}+{% endif %}
+                            </span>
+                        </label>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Bathrooms -->
+                <div>
+                    <label class="label">Bathrooms</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for num in "0,1,2,3,4"|make_list %}
+                        {% with num|add:"0" as bath_num %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="baths" value="{{ bath_num }}" class="sr-only peer" {% if request.GET.baths == bath_num %}checked{% endif %}>
+                            <span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all duration-200 hover:border-charcoal-300">
+                                {% if bath_num == "0" %}Any{% else %}{{ bath_num }}+{% endif %}
+                            </span>
+                        </label>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Year Built -->
+                <div>
+                    <label for="filter-year" class="label">Year Built (after)</label>
+                    <input type="number"
+                           id="filter-year"
+                           name="year_built"
+                           value="{{ request.GET.year_built }}"
+                           placeholder="e.g., 2000"
+                           min="1900"
+                           max="2024"
+                           class="input input-sm">
+                </div>
+
+                <!-- Tax Status -->
+                <div>
+                    <label for="filter-tax" class="label">Tax Status</label>
+                    <select id="filter-tax" name="tax_status" class="select">
+                        <option value="">All</option>
+                        <option value="Paid" {% if request.GET.tax_status == 'Paid' %}selected{% endif %}>Paid</option>
+                        <option value="Unpaid" {% if request.GET.tax_status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+                        <option value="Delinquent" {% if request.GET.tax_status == 'Delinquent' %}selected{% endif %}>Delinquent</option>
+                    </select>
+                </div>
+
+                <!-- Apply Filters Button -->
+                <button type="submit" class="btn btn-primary w-full">
+                    Apply Filters
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0">
+        {% if properties %}
+        <!-- Property Grid -->
+        <div id="property-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            {% for property in properties %}
+            <article class="property-card group animate-fade-in-up" style="animation-delay: {{ forloop.counter0|divisibleby:3 }}00ms">
+                <!-- Property Image -->
+                <div class="relative overflow-hidden">
+                    <div class="property-card-image bg-gradient-to-br from-charcoal-200 to-charcoal-300 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </div>
+
+                    <!-- Tax Status Badge -->
+                    <div class="absolute top-3 left-3">
+                        {% if property.tax_status == 'Paid' %}
+                        <span class="badge badge-success">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Taxes Paid
+                        </span>
+                        {% elif property.tax_status == 'Delinquent' %}
+                        <span class="badge badge-danger">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            Delinquent
+                        </span>
+                        {% elif property.tax_status == 'Unpaid' %}
+                        <span class="badge badge-warning">Unpaid</span>
+                        {% else %}
+                        <span class="badge badge-neutral">{{ property.tax_status }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Property Type Badge -->
+                    <div class="absolute top-3 right-3">
+                        <span class="badge badge-neutral bg-white/90 backdrop-blur-sm">{{ property.property_type }}</span>
+                    </div>
+
+                    <!-- Hover Overlay with Actions -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'property-detail' property.parcel_id %}"
+                               class="btn btn-sm bg-white text-charcoal-800 hover:bg-charcoal-100">
+                                View Details
+                            </a>
+                            <button type="button"
+                                    onclick="toggleSave('{{ property.parcel_id }}')"
+                                    class="btn btn-sm btn-icon bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
+                                    aria-label="Save property">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Property Content -->
+                <div class="property-card-content">
+                    <!-- Price -->
+                    <div class="flex items-baseline gap-2">
+                        <span class="property-card-price">
+                            ${{ property.market_value|floatformat:0|default:"N/A" }}
+                        </span>
+                        {% if property.assessed_value %}
+                        <span class="text-xs text-charcoal-400">
+                            Assessed: ${{ property.assessed_value|floatformat:0 }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Address -->
+                    <h3 class="property-card-address line-clamp-2">
+                        {{ property.address }}
+                    </h3>
+                    <p class="text-sm text-charcoal-500">{{ property.city }}, FL {{ property.zip_code }}</p>
+
+                    <!-- Property Stats -->
+                    <div class="property-card-details">
+                        {% if property.bedrooms %}
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            {{ property.bedrooms }} bd
+                        </span>
+                        {% endif %}
+                        {% if property.bathrooms %}
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                            </svg>
+                            {{ property.bathrooms|floatformat:1 }} ba
+                        </span>
+                        {% endif %}
+                        {% if property.building_sqft %}
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                            </svg>
+                            {{ property.building_sqft|floatformat:0 }} sqft
+                        </span>
+                        {% endif %}
+                        {% if property.year_built %}
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {{ property.year_built }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- External Links -->
+                    <div class="mt-4 pt-4 border-t border-charcoal-100 flex items-center gap-3">
+                        <span class="text-xs text-charcoal-400">View on:</span>
+                        <a href="https://www.zillow.com/homes/{{ property.address|urlencode }}-{{ property.city|urlencode }}-FL-{{ property.zip_code }}_rb/"
+                           target="_blank"
+                           rel="noopener"
+                           class="text-xs text-charcoal-500 hover:text-primary-500 transition-colors">
+                            Zillow
+                        </a>
+                        <a href="https://www.redfin.com/search?location={{ property.address|urlencode }}, {{ property.city|urlencode }}, FL {{ property.zip_code }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="text-xs text-charcoal-500 hover:text-primary-500 transition-colors">
+                            Redfin
+                        </a>
+                        <a href="https://www.realtor.com/realestateandhomes-search/{{ property.address|urlencode|slugify }}_{{ property.city|urlencode }}_FL_{{ property.zip_code }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="text-xs text-charcoal-500 hover:text-primary-500 transition-colors">
+                            Realtor
+                        </a>
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ property.address|urlencode }}, {{ property.city|urlencode }}, FL {{ property.zip_code }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="text-xs text-charcoal-500 hover:text-primary-500 transition-colors">
+                            Map
+                        </a>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <!-- List View (hidden by default) -->
+        <div id="property-list" class="hidden space-y-3">
+            {% for property in properties %}
+            <article class="card card-hover p-4 animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}0ms">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <!-- Thumbnail -->
+                    <div class="w-full sm:w-32 h-24 bg-gradient-to-br from-charcoal-200 to-charcoal-300 rounded-lg flex-shrink-0 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                            <div>
+                                <h3 class="font-medium text-charcoal-800 line-clamp-1">{{ property.address }}</h3>
+                                <p class="text-sm text-charcoal-500">{{ property.city }}, FL {{ property.zip_code }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-display text-lg font-semibold text-primary-600">${{ property.market_value|floatformat:0|default:"N/A" }}</span>
+                                {% if property.tax_status == 'Paid' %}
+                                <span class="badge badge-success ml-2">Paid</span>
+                                {% elif property.tax_status == 'Delinquent' %}
+                                <span class="badge badge-danger ml-2">Delinquent</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4 mt-2 text-sm text-charcoal-500">
+                            {% if property.bedrooms %}<span>{{ property.bedrooms }} bed</span>{% endif %}
+                            {% if property.bathrooms %}<span>{{ property.bathrooms|floatformat:1 }} bath</span>{% endif %}
+                            {% if property.building_sqft %}<span>{{ property.building_sqft|floatformat:0 }} sqft</span>{% endif %}
+                            {% if property.year_built %}<span>Built {{ property.year_built }}</span>{% endif %}
+                            <span class="badge badge-neutral">{{ property.property_type }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex sm:flex-col items-center gap-2">
+                        <a href="{% url 'property-detail' property.parcel_id %}" class="btn btn-primary btn-sm">
+                            Details
+                        </a>
+                        <button type="button" onclick="toggleSave('{{ property.parcel_id }}')" class="btn btn-secondary btn-sm btn-icon" aria-label="Save">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if properties.has_other_pages %}
+        <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
+            {% if properties.has_previous %}
+            <a href="?page={{ properties.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="btn btn-secondary btn-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Previous
+            </a>
+            {% endif %}
+
+            <div class="flex items-center gap-1">
+                {% for num in properties.paginator.page_range %}
+                    {% if properties.number == num %}
+                    <span class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary-500 text-white font-medium">{{ num }}</span>
+                    {% elif num > properties.number|add:'-3' and num < properties.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                       class="w-10 h-10 flex items-center justify-center rounded-lg text-charcoal-600 hover:bg-charcoal-100 transition-colors">
+                        {{ num }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if properties.has_next %}
+            <a href="?page={{ properties.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="btn btn-secondary btn-sm">
+                Next
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="card p-12 text-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-charcoal-100 flex items-center justify-center">
+                <svg class="w-10 h-10 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <h3 class="font-display text-xl font-semibold text-charcoal-800 mb-2">No Properties Found</h3>
+            <p class="text-charcoal-500 mb-6 max-w-md mx-auto">
+                We couldn't find any properties matching your criteria. Try adjusting your filters or search for a different area.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button type="button" onclick="clearFilters()" class="btn btn-secondary">
+                    Clear Filters
+                </button>
+                <a href="{% url 'scraper' %}" class="btn btn-primary">
+                    New Search
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+
+<!-- Mobile Filter Bottom Sheet -->
+<div id="mobile-filter-sheet" class="bottom-sheet md:hidden">
+    <div class="bottom-sheet-handle">
+        <div class="bottom-sheet-handle-bar"></div>
+    </div>
+    <div class="bottom-sheet-content p-4 pb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-display font-semibold text-lg">Filter Properties</h2>
+            <button type="button" onclick="clearFilters()" class="text-sm text-primary-500 hover:text-primary-600">
+                Clear all
+            </button>
+        </div>
+
+        <form method="get" class="space-y-6">
+            <input type="hidden" name="sort" value="{{ sort|default:'-market_value' }}">
+
+            <!-- City Filter -->
+            <div>
+                <label class="label">City</label>
+                <select name="city" class="select">
+                    <option value="">All Cities</option>
+                    {% for city in cities %}
+                    <option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>{{ city }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Price Range -->
+            <div>
+                <label class="label">Price Range</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                        <input type="number" name="min_price" value="{{ request.GET.min_price }}" placeholder="Min" class="input pl-7">
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                        <input type="number" name="max_price" value="{{ request.GET.max_price }}" placeholder="Max" class="input pl-7">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bedrooms - Horizontal Scroll -->
+            <div>
+                <label class="label">Bedrooms</label>
+                <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                    <label class="cursor-pointer flex-shrink-0">
+                        <input type="radio" name="beds" value="" class="sr-only peer" {% if not request.GET.beds %}checked{% endif %}>
+                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
+                            Any
+                        </span>
+                    </label>
+                    {% for num in "1234" %}
+                    <label class="cursor-pointer flex-shrink-0">
+                        <input type="radio" name="beds" value="{{ num }}" class="sr-only peer" {% if request.GET.beds == num %}checked{% endif %}>
+                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
+                            {{ num }}+
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Bathrooms - Horizontal Scroll -->
+            <div>
+                <label class="label">Bathrooms</label>
+                <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                    <label class="cursor-pointer flex-shrink-0">
+                        <input type="radio" name="baths" value="" class="sr-only peer" {% if not request.GET.baths %}checked{% endif %}>
+                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
+                            Any
+                        </span>
+                    </label>
+                    {% for num in "1234" %}
+                    <label class="cursor-pointer flex-shrink-0">
+                        <input type="radio" name="baths" value="{{ num }}" class="sr-only peer" {% if request.GET.baths == num %}checked{% endif %}>
+                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
+                            {{ num }}+
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Property Type Chips -->
+            <div>
+                <label class="label">Property Type</label>
+                <div class="flex flex-wrap gap-2">
+                    {% for ptype in property_types %}
+                    <label class="cursor-pointer">
+                        <input type="checkbox" name="property_type" value="{{ ptype }}" class="sr-only peer" {% if ptype in selected_property_types %}checked{% endif %}>
+                        <span class="inline-flex items-center h-10 px-4 text-sm rounded-full border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
+                            {{ ptype }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Tax Status -->
+            <div>
+                <label class="label">Tax Status</label>
+                <select name="tax_status" class="select">
+                    <option value="">All</option>
+                    <option value="Paid" {% if request.GET.tax_status == 'Paid' %}selected{% endif %}>Paid</option>
+                    <option value="Unpaid" {% if request.GET.tax_status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+                    <option value="Delinquent" {% if request.GET.tax_status == 'Delinquent' %}selected{% endif %}>Delinquent</option>
+                </select>
+            </div>
+
+            <!-- Action Buttons - Sticky at bottom -->
+            <div class="sticky bottom-0 bg-white pt-4 pb-2 -mx-4 px-4 border-t border-charcoal-100 mt-6">
+                <div class="flex gap-3">
+                    <button type="button" onclick="mobileFilterSheet.close(); clearFilters();" class="btn btn-secondary flex-1 h-12">
+                        Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary flex-1 h-12">
+                        Show Results
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Mobile Filter FAB -->
+<button type="button"
+        onclick="mobileFilterSheet.open()"
+        class="mobile-filter-fab md:hidden"
+        aria-label="Open filters">
+    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+    </svg>
+    {% if request.GET.city or request.GET.min_price or request.GET.beds or request.GET.tax_status %}
+    <span class="absolute -top-1 -right-1 w-5 h-5 bg-coral-500 text-white text-xs rounded-full flex items-center justify-center">
+        !
+    </span>
+    {% endif %}
+</button>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+    // Mobile filter bottom sheet
+    let mobileFilterSheet = null;
+
+    // View toggle
+    function setView(view) {
+        const grid = document.getElementById('property-grid');
+        const list = document.getElementById('property-list');
+        const buttons = document.querySelectorAll('.view-toggle');
+
+        buttons.forEach(btn => {
+            btn.classList.toggle('bg-white', btn.dataset.view === view);
+            btn.classList.toggle('shadow-soft-sm', btn.dataset.view === view);
+            btn.classList.toggle('text-charcoal-800', btn.dataset.view === view);
+            btn.classList.toggle('text-charcoal-500', btn.dataset.view !== view);
+        });
+
+        if (view === 'grid') {
+            grid.classList.remove('hidden');
+            list.classList.add('hidden');
+        } else {
+            grid.classList.add('hidden');
+            list.classList.remove('hidden');
+        }
+
+        localStorage.setItem('propertyView', view);
+    }
+
+    // Update sort
+    function updateSort(value) {
+        const url = new URL(window.location);
+        url.searchParams.set('sort', value);
+        window.location = url;
+    }
+
+    // Clear filters
+    function clearFilters() {
+        window.location = window.location.pathname;
+    }
+
+    // Toggle save property with haptic feedback
+    function toggleSave(parcelId) {
+        // Haptic feedback on touch devices
+        if (window.HomeFinder && window.HomeFinder.hapticFeedback) {
+            window.HomeFinder.hapticFeedback('success');
+        }
+        // Show toast notification
+        if (window.Toast) {
+            window.Toast.success('Property saved to your list');
+        }
+    }
+
+    // Initialize swipe gestures for property cards on mobile
+    function initSwipeGestures() {
+        if (!window.HomeFinder || !window.HomeFinder.isTouchDevice || !window.HomeFinder.isTouchDevice()) {
+            return;
+        }
+
+        document.querySelectorAll('.property-card').forEach(card => {
+            new window.HomeFinder.SwipeHandler(card, {
+                threshold: 80,
+                onSwipeLeft: (el) => {
+                    // Quick action - view details
+                    const detailLink = el.querySelector('a[href*="property"]');
+                    if (detailLink) {
+                        window.HomeFinder.hapticFeedback('light');
+                        window.location.href = detailLink.href;
+                    }
+                },
+                onSwipeRight: (el) => {
+                    // Quick action - save property
+                    const parcelId = el.querySelector('[onclick*="toggleSave"]')?.onclick?.toString().match(/'([^']+)'/)?.[1];
+                    if (parcelId) {
+                        toggleSave(parcelId);
+                    }
+                }
+            });
+        });
+    }
+
+    // Initialize pull-to-refresh on mobile
+    function initPullToRefresh() {
+        if (!window.HomeFinder || !window.HomeFinder.isTouchDevice || !window.HomeFinder.isTouchDevice()) {
+            return;
+        }
+
+        const mainContent = document.querySelector('main');
+        if (mainContent) {
+            new window.HomeFinder.PullToRefresh(mainContent, {
+                onRefresh: (done) => {
+                    // Reload the page
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            });
+        }
+    }
+
+    // Initialize on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize view from localStorage
+        const savedView = localStorage.getItem('propertyView') || 'grid';
+        setView(savedView);
+
+        // Initialize mobile filter bottom sheet
+        const filterSheetEl = document.getElementById('mobile-filter-sheet');
+        if (filterSheetEl && window.HomeFinder && window.HomeFinder.BottomSheet) {
+            mobileFilterSheet = new window.HomeFinder.BottomSheet(filterSheetEl, {
+                snapPoints: [0, 0.6, 0.9],
+                defaultSnap: 0
+            });
+        }
+
+        // Initialize swipe gestures
+        initSwipeGestures();
+
+        // Initialize pull-to-refresh
+        initPullToRefresh();
+
+        // Add swipe hint on first visit
+        if (!localStorage.getItem('swipeHintShown') && window.HomeFinder && window.HomeFinder.isTouchDevice && window.HomeFinder.isTouchDevice()) {
+            setTimeout(() => {
+                if (window.Toast) {
+                    window.Toast.info('Swipe cards left to view details, right to save');
+                }
+                localStorage.setItem('swipeHintShown', 'true');
+            }, 2000);
+        }
+    });
+</script>
+{% endblock %}

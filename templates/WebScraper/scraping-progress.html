@@ -1,70 +1,399 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Processing Your Request - Home Finder{% endblock %}
+
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    {% if download_links %}
-    <div class="text-center">
-        <h2 class="text-4xl font-semibold text-gray-800 mb-4">Download Your Files:</h2>
-        <div class="flex flex-col items-center space-y-2">
-            <a href="{{ download_links.excel }}"
-                class="block w-1/2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-center transition-colors duration-300 ease-in-out">
-                Download Excel
-            </a>
-            <a href="{{ download_links.pdf }}"
-                class="block w-1/2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-center transition-colors duration-300 ease-in-out">
-                Download PDF
+<div class="max-w-2xl mx-auto">
+
+    <!-- Progress Section -->
+    <div id="progress-section" class="card animate-fade-in-up">
+        <div class="card-body text-center">
+
+            <!-- Animated Icon -->
+            <div class="mb-6">
+                <div id="status-icon" class="w-20 h-20 mx-auto rounded-full bg-primary-100 flex items-center justify-center">
+                    <!-- Searching animation -->
+                    <svg id="icon-searching" class="w-10 h-10 text-primary-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <!-- Success icon (hidden by default) -->
+                    <svg id="icon-success" class="w-10 h-10 text-success-600 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <!-- Error icon (hidden by default) -->
+                    <svg id="icon-error" class="w-10 h-10 text-danger-600 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <h1 class="font-display text-display-md text-charcoal-800 mb-2">
+                <span id="status-title">Processing Your Search</span>
+            </h1>
+            <p id="status-message" class="text-charcoal-500 mb-8">
+                Gathering property data from official county records...
+            </p>
+
+            <!-- Progress Bar -->
+            <div class="mb-8">
+                <div class="flex justify-between text-sm text-charcoal-600 mb-2">
+                    <span id="progress-step">Initializing...</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="w-full h-3 bg-charcoal-100 rounded-full overflow-hidden">
+                    <div id="progress-bar"
+                         class="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out relative"
+                         style="width: 0%;">
+                        <div class="absolute inset-0 bg-white/20 animate-shimmer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pipeline Steps -->
+            <div class="grid grid-cols-5 gap-2 mb-8">
+                <div class="step-item" data-step="1">
+                    <div class="step-dot bg-charcoal-200" id="step-1-dot"></div>
+                    <span class="text-xs text-charcoal-500 mt-1 hidden sm:block">Search</span>
+                </div>
+                <div class="step-item" data-step="2">
+                    <div class="step-dot bg-charcoal-200" id="step-2-dot"></div>
+                    <span class="text-xs text-charcoal-500 mt-1 hidden sm:block">Tax Data</span>
+                </div>
+                <div class="step-item" data-step="3">
+                    <div class="step-dot bg-charcoal-200" id="step-3-dot"></div>
+                    <span class="text-xs text-charcoal-500 mt-1 hidden sm:block">Sorting</span>
+                </div>
+                <div class="step-item" data-step="4">
+                    <div class="step-dot bg-charcoal-200" id="step-4-dot"></div>
+                    <span class="text-xs text-charcoal-500 mt-1 hidden sm:block">Reports</span>
+                </div>
+                <div class="step-item" data-step="5">
+                    <div class="step-dot bg-charcoal-200" id="step-5-dot"></div>
+                    <span class="text-xs text-charcoal-500 mt-1 hidden sm:block">Complete</span>
+                </div>
+            </div>
+
+            <!-- Estimated time -->
+            <div id="time-estimate" class="bg-charcoal-50 rounded-xl p-4 text-sm text-charcoal-600">
+                <svg class="w-4 h-4 inline-block mr-1 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span id="time-text">Estimated time: Calculating...</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Success Section (hidden by default) -->
+    <div id="success-section" class="card hidden animate-scale-in">
+        <div class="card-body text-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-success-100 flex items-center justify-center">
+                <svg class="w-10 h-10 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+
+            <h2 class="font-display text-display-md text-charcoal-800 mb-2">Search Complete!</h2>
+            <p id="results-count" class="text-charcoal-500 mb-8">Found X properties matching your criteria.</p>
+
+            <!-- Download buttons -->
+            <div class="space-y-3 mb-8">
+                <a href="#" id="btn-view-dashboard" class="btn btn-primary btn-lg w-full justify-center">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span>View Properties Dashboard</span>
+                </a>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="#" id="btn-download-excel" class="btn btn-secondary justify-center">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Excel</span>
+                    </a>
+                    <a href="#" id="btn-download-pdf" class="btn btn-secondary justify-center">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span>PDF</span>
+                    </a>
+                </div>
+            </div>
+
+            <a href="{% url 'scraper' %}" class="text-primary-600 hover:text-primary-700 font-medium transition-colors">
+                Start a New Search
             </a>
         </div>
     </div>
-    {% else %}
-    <div class="text-center">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Scraping Progress</h1>
-        <div class="py-4">
-            <div class="w-full bg-gray-200 rounded-full">
-                <div id="progress-bar"
-                    class="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full transition-width duration-500 ease-in-out"
-                    style="width: 0%;"> 0% </div>
+
+    <!-- Error Section (hidden by default) -->
+    <div id="error-section" class="card hidden animate-fade-in">
+        <div class="card-body text-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-danger-100 flex items-center justify-center">
+                <svg class="w-10 h-10 text-danger-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+
+            <h2 class="font-display text-display-md text-charcoal-800 mb-2">Something Went Wrong</h2>
+            <p id="error-message" class="text-charcoal-500 mb-8">An error occurred while processing your request.</p>
+
+            <div class="space-y-3">
+                <a href="{% url 'scraper' %}" class="btn btn-primary w-full justify-center">
+                    Try Again
+                </a>
+                <a href="{% url 'help' %}" class="btn btn-ghost text-charcoal-600 w-full justify-center">
+                    Get Help
+                </a>
             </div>
         </div>
-        <p id="progress-bar-message" class="text-md text-gray-600 mt-3">Waiting for progress...</p>
-        <div class="py-4">
-            <p class="text-xl font-semibold text-gray-800 mt-6 py-2">Can't wait?</p>
-            <p class="text-lg text-gray-600 py-1">Send us your email, and we'll notify you directly:</p>
-            <form action="/submit-email" method="POST" class="mt-4">
-                <div class="flex justify-center items-center space-x-4">
-                    <input type="email" name="email" placeholder="Enter your email" required
-                        class="px-4 py-2 w-full max-w-sm text-gray-700 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
-                        Submit
-                    </button>
+    </div>
+
+    <!-- Email notification card -->
+    <div id="email-card" class="card mt-6 animate-fade-in-up stagger-1">
+        <div class="card-body">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-coral-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-coral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
                 </div>
-            </form>
+                <div class="flex-1">
+                    <h3 class="font-display font-semibold text-charcoal-800 mb-1">Get notified when complete</h3>
+                    <p class="text-sm text-charcoal-500 mb-3">We'll send you an email with your results when the search is done.</p>
+                    <form id="email-form" class="flex gap-2">
+                        <input type="email"
+                               name="email"
+                               placeholder="your@email.com"
+                               required
+                               class="input flex-1">
+                        <button type="submit" data-loading-text="Sending..." class="btn btn-secondary">
+                            Notify Me
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
+
 </div>
 {% endblock content %}
 
-{% block scripts %}>
+{% block scripts %}
+{{ block.super }}
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
-        CeleryProgressBar.initProgressBar(progressUrl);
-    });
+    const taskId = '{{ task_id }}';
+    const statusUrl = '{% url "task-status" task_id %}';
+    const dashboardUrl = '{% url "dashboard" %}';
 
-    function checkDownloadLinks(taskId) {
-            fetch(`/WebDriver/scraping-progress/${taskId}/links`)
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        document.getElementById('excel-download').href = data.download_links.excel;
-                        document.getElementById('pdf-download').href = data.download_links.pdf;
-                    }
-                })
-                .catch((error) => console.error('Error fetching download links:', error));
+    let pollInterval = null;
+    let startTime = Date.now();
+
+    // Pipeline step mappings
+    const stepMappings = {
+        'scrape_pinellas': 1,
+        'scrape_tax': 2,
+        'generate_sorted': 3,
+        'generate_listing': 4,
+        'analyze_data': 4,
+        'send_results': 5
+    };
+
+    function updateProgress(data) {
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const progressStep = document.getElementById('progress-step');
+        const statusMessage = document.getElementById('status-message');
+
+        const current = data.current || 0;
+        const total = data.total || 100;
+        const percent = Math.round((current / total) * 100);
+
+        // Update progress bar
+        progressBar.style.width = percent + '%';
+        progressPercent.textContent = percent + '%';
+
+        // Update status message
+        if (data.status) {
+            progressStep.textContent = data.status;
+            statusMessage.textContent = getStatusDescription(data.status);
         }
 
+        // Update pipeline steps
+        updatePipelineSteps(data.status);
+
+        // Update time estimate
+        updateTimeEstimate(percent);
+
+        // Handle completion states
+        if (data.state === 'SUCCESS') {
+            showSuccess(data);
+        } else if (data.state === 'FAILURE') {
+            showError(data.status || 'An unexpected error occurred');
+        }
+    }
+
+    function getStatusDescription(status) {
+        const descriptions = {
+            'Pending...': 'Initializing your search request...',
+            'Searching properties...': 'Querying the Property Appraiser database...',
+            'Fetching tax data...': 'Retrieving tax information for each property...',
+            'Generating reports...': 'Creating your Excel and PDF reports...',
+            'Analyzing data...': 'Running market analysis on your results...',
+            'Sending email...': 'Preparing your email notification...'
+        };
+        return descriptions[status] || 'Processing your request...';
+    }
+
+    function updatePipelineSteps(status) {
+        // Determine current step from status
+        let currentStep = 1;
+        for (const [key, step] of Object.entries(stepMappings)) {
+            if (status && status.toLowerCase().includes(key.replace('_', ' '))) {
+                currentStep = step;
+                break;
+            }
+        }
+
+        // Update step indicators
+        for (let i = 1; i <= 5; i++) {
+            const dot = document.getElementById(`step-${i}-dot`);
+            if (i < currentStep) {
+                dot.className = 'step-dot bg-success-500';
+            } else if (i === currentStep) {
+                dot.className = 'step-dot bg-primary-500 animate-pulse';
+            } else {
+                dot.className = 'step-dot bg-charcoal-200';
+            }
+        }
+    }
+
+    function updateTimeEstimate(percent) {
+        const elapsed = Date.now() - startTime;
+        const timeText = document.getElementById('time-text');
+
+        if (percent > 5 && percent < 100) {
+            const estimated = (elapsed / percent) * (100 - percent);
+            const minutes = Math.ceil(estimated / 60000);
+            if (minutes > 1) {
+                timeText.textContent = `Estimated time remaining: ~${minutes} minutes`;
+            } else {
+                timeText.textContent = 'Almost done...';
+            }
+        } else if (percent >= 100) {
+            timeText.textContent = 'Complete!';
+        }
+    }
+
+    function showSuccess(data) {
+        clearInterval(pollInterval);
+
+        // Hide progress section, show success
+        document.getElementById('progress-section').classList.add('hidden');
+        document.getElementById('email-card').classList.add('hidden');
+        document.getElementById('success-section').classList.remove('hidden');
+
+        // Update dashboard link
+        document.getElementById('btn-view-dashboard').href = dashboardUrl;
+
+        // Update download links if available
+        if (data.result) {
+            if (data.result.excel) {
+                document.getElementById('btn-download-excel').href = data.result.excel;
+            }
+            if (data.result.pdf) {
+                document.getElementById('btn-download-pdf').href = data.result.pdf;
+            }
+            if (data.result.count) {
+                document.getElementById('results-count').textContent =
+                    `Found ${data.result.count} properties matching your criteria.`;
+            }
+        }
+
+        // Show toast
+        window.Toast.success('Your property search is complete!');
+    }
+
+    function showError(message) {
+        clearInterval(pollInterval);
+
+        // Update icons
+        document.getElementById('icon-searching').classList.add('hidden');
+        document.getElementById('icon-error').classList.remove('hidden');
+        document.getElementById('status-icon').className =
+            'w-20 h-20 mx-auto rounded-full bg-danger-100 flex items-center justify-center';
+
+        // Hide progress, show error
+        document.getElementById('progress-section').classList.add('hidden');
+        document.getElementById('email-card').classList.add('hidden');
+        document.getElementById('error-section').classList.remove('hidden');
+        document.getElementById('error-message').textContent = message;
+
+        // Show toast
+        window.Toast.error('An error occurred during processing');
+    }
+
+    function pollStatus() {
+        fetch(statusUrl)
+            .then(response => response.json())
+            .then(data => {
+                updateProgress(data);
+
+                // Continue polling if not complete
+                if (data.state !== 'SUCCESS' && data.state !== 'FAILURE') {
+                    pollInterval = setTimeout(pollStatus, 1500);
+                }
+            })
+            .catch(error => {
+                console.error('Error polling status:', error);
+                pollInterval = setTimeout(pollStatus, 3000);
+            });
+    }
+
+    // Email form handler
+    document.getElementById('email-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = this.querySelector('input[name="email"]').value;
+        const btn = this.querySelector('button');
+
+        HomeFinder.LoadingButton.start(btn);
+
+        // Simulate API call (replace with actual endpoint)
+        setTimeout(() => {
+            HomeFinder.LoadingButton.stop(btn);
+            window.Toast.success('We\'ll notify you when your search is complete!');
+            this.reset();
+        }, 1000);
+    });
+
+    // Start polling on load
+    document.addEventListener('DOMContentLoaded', pollStatus);
 </script>
+
+<style>
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .step-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .animate-shimmer {
+        animation: shimmer 1.5s infinite;
+    }
+</style>
 {% endblock scripts %}
