@@ -16,8 +16,9 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from webdriver_manager.chrome import ChromeDriverManager
 
-# Chrome for Testing paths
+# Chrome for Testing paths (local development)
 CHROME_BINARY = os.path.expanduser("~/.chrome-for-testing/chrome-linux64/chrome")
 CHROMEDRIVER_BINARY = os.path.expanduser("~/.chrome-for-testing/chromedriver-linux64/chromedriver")
 
@@ -44,7 +45,10 @@ class TaxCollectorScraper:
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
 
-        service = Service(CHROMEDRIVER_BINARY) if os.path.exists(CHROMEDRIVER_BINARY) else None
+        if os.path.exists(CHROMEDRIVER_BINARY):
+            service = Service(CHROMEDRIVER_BINARY)
+        else:
+            service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service, options=options)
         self.wait = WebDriverWait(self.driver, 20)
         logger.info("Chrome driver initialized for Tax Collector scraper")
