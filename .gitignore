@@ -8,3 +8,7 @@ CLAUDE.md
 claude-code/
 *.claude
 .claudeignore
+.vercel
+
+# Worktrees
+.worktrees/
