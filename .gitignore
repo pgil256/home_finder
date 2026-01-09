@@ -2,6 +2,25 @@ node_modules/
 venv/
 .vscode/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment
+.env
+.env.*
+
+# Database
+db.sqlite3
+*.sqlite3
+
+# Generated files
+PropertyListings.xlsx
+*.xlsx
+staticfiles/
+
 # Claude related files
 CLAUDE.md
 .claude/
