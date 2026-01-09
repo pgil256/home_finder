@@ -20,7 +20,7 @@
             "priority": 9,
             "is_active": true,
             "help_text": "Enter a ZIP code in Pinellas County (e.g., 33755)",
-            "extra_json": "{\"validation\": \"^337[0-8][0-9]$\", \"placeholder\": \"33755\"}"
+            "extra_json": "{\"validation\": \"^(337[0-9]{2}|346(77|8[34589]|9[58]))$\", \"placeholder\": \"33755\"}"
         }
     },
     {
