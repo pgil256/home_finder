@@ -19,6 +19,7 @@ db.sqlite3
 # Generated files
 PropertyListings.xlsx
 *.xlsx
+*.pdf
 staticfiles/
 
 # Claude related files
