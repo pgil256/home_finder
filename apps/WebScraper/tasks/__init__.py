@@ -1,0 +1,1 @@
+# WebScraper tasks package
