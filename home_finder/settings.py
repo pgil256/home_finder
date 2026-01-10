@@ -154,18 +154,18 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Celery Config
-# Set CELERY_BROKER_URL in .env for production (e.g., redis://localhost:6379/0)
-# Leave unset or empty to use in-memory broker for testing
-CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='memory://')
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='cache+memory://')
+# Uses CELERY_BROKER_URL if set, falls back to REDIS_URL, then memory:// for local dev
+_redis_url = config('CELERY_BROKER_URL', default=config('REDIS_URL', default=''))
+CELERY_BROKER_URL = _redis_url if _redis_url else 'memory://'
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default=_redis_url if _redis_url else 'cache+memory://')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
-# Run tasks synchronously when using in-memory broker (for testing without Redis)
-# Set to False in production with Redis
-CELERY_TASK_ALWAYS_EAGER = config('CELERY_TASK_ALWAYS_EAGER', default=True, cast=bool)
+# Run tasks synchronously when no Redis is available (for local dev without Redis)
+# Auto-detects: uses eager mode only when using memory broker
+CELERY_TASK_ALWAYS_EAGER = config('CELERY_TASK_ALWAYS_EAGER', default=not bool(_redis_url), cast=bool)
 CELERY_TASK_EAGER_PROPAGATES = True
 
 # Email settings (example using Gmail SMTP)
