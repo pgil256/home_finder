@@ -118,11 +118,12 @@ def get_task_status(request, task_id):
             'status': 'Pending...'
         }
     elif task.state != 'FAILURE':
+        info = task.info if isinstance(task.info, dict) else {}
         response = {
             'state': task.state,
-            'current': task.info.get('current', 0),
-            'total': task.info.get('total', 100),
-            'status': task.info.get('status', '')
+            'current': info.get('current', 0),
+            'total': info.get('total', 100),
+            'status': info.get('status', '')
         }
         if task.state == 'SUCCESS':
             response['result'] = task.result
