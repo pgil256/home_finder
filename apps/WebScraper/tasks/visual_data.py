@@ -263,11 +263,38 @@ def analyze_data(self, pdf_result):
 
 def concatenate_pdfs(base_pdf, analysis_pdf):
     logger.info("Concatenating base PDF and analysis PDF into a single document")
-    merger = PdfMerger()
-    merger.append(base_pdf)
-    merger.append(analysis_pdf)
     output_pdf = "Real_Estate_Report.pdf"
-    merger.write(output_pdf)
-    merger.close()
-    logger.info(f"Final PDF report generated at {output_pdf}")
-    return output_pdf
+    merger = PdfMerger()
+
+    # Check if base PDF exists and has pages
+    try:
+        base_reader = PdfReader(base_pdf)
+        if len(base_reader.pages) > 0:
+            merger.append(base_pdf)
+            logger.debug(f"Added base PDF with {len(base_reader.pages)} pages")
+        else:
+            logger.warning("Base PDF has no pages, skipping")
+    except Exception as e:
+        logger.warning(f"Could not read base PDF: {e}")
+
+    # Check if analysis PDF exists and has pages
+    try:
+        analysis_reader = PdfReader(analysis_pdf)
+        if len(analysis_reader.pages) > 0:
+            merger.append(analysis_pdf)
+            logger.debug(f"Added analysis PDF with {len(analysis_reader.pages)} pages")
+        else:
+            logger.warning("Analysis PDF has no pages, skipping")
+    except Exception as e:
+        logger.warning(f"Could not read analysis PDF: {e}")
+
+    # Only write if we have pages to write
+    if len(merger.pages) > 0:
+        merger.write(output_pdf)
+        merger.close()
+        logger.info(f"Final PDF report generated at {output_pdf}")
+        return output_pdf
+    else:
+        merger.close()
+        logger.warning("No pages to merge, returning base PDF path")
+        return base_pdf
