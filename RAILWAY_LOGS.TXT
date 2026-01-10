@@ -1,0 +1,652 @@
+2026-01-10T01:46:52.804477700Z [inf]  1:M 10 Jan 2026 01:46:47.074 * 1 changes in 60 seconds. Saving...
+2026-01-10T01:46:52.804485177Z [inf]  1:M 10 Jan 2026 01:46:47.075 * Background saving started by pid 99
+2026-01-10T01:46:52.804497691Z [inf]  99:C 10 Jan 2026 01:46:47.106 * DB saved on disk
+2026-01-10T01:46:52.804505778Z [inf]  99:C 10 Jan 2026 01:46:47.107 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+2026-01-10T01:46:52.804513306Z [inf]  1:M 10 Jan 2026 01:46:47.177 * Background saving terminated with success
+2026-01-10T01:47:07.000000000Z [inf]  Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/1e5003ae-88d6-402c-81e3-963d2f8e68bb/vol_1vudsjbiskob03lv
+2026-01-10T01:47:08.000000000Z [inf]  Starting Container
+2026-01-10T01:47:09.787517347Z [inf]  The files belonging to this database system will be owned by user "postgres".
+2026-01-10T01:47:09.787524869Z [inf]  This user must also own the server process.
+2026-01-10T01:47:09.787585059Z [inf]  
+2026-01-10T01:47:09.787597816Z [inf]  The database cluster will be initialized with locale "en_US.utf8".
+2026-01-10T01:47:09.787606594Z [inf]  The default database encoding has accordingly been set to "UTF8".
+2026-01-10T01:47:09.787614663Z [inf]  The default text search configuration will be set to "english".
+2026-01-10T01:47:09.787622176Z [inf]  
+2026-01-10T01:47:09.787629517Z [inf]  Data page checksums are disabled.
+2026-01-10T01:47:09.787635703Z [inf]  
+2026-01-10T01:47:09.787706159Z [inf]  fixing permissions on existing directory /var/lib/postgresql/data/pgdata ... ok
+2026-01-10T01:47:09.787717264Z [inf]  creating subdirectories ... ok
+2026-01-10T01:47:09.787734335Z [inf]  selecting dynamic shared memory implementation ... posix
+2026-01-10T01:47:09.787748399Z [inf]  selecting default "max_connections" ... 100
+2026-01-10T01:47:09.787756703Z [inf]  selecting default "shared_buffers" ... 128MB
+2026-01-10T01:47:09.787763703Z [inf]  selecting default time zone ... Etc/UTC
+2026-01-10T01:47:09.787770791Z [inf]  creating configuration files ... ok
+2026-01-10T01:47:09.787777245Z [inf]  running bootstrap script ... ok
+2026-01-10T01:47:09.787783767Z [inf]  performing post-bootstrap initialization ... ok
+2026-01-10T01:47:10.835360276Z [err]  +++++++++++
+2026-01-10T01:47:10.835371914Z [err]  +++++++++++
+2026-01-10T01:47:10.835398346Z [err]  .....+.......+......+++++++++++++++
+2026-01-10T01:47:10.835416291Z [err]  ++++*...+......+.........
+2026-01-10T01:47:10.835427015Z [err]  +...........+.++++
+2026-01-10T01:47:10.835433158Z [err]  ++
+2026-01-10T01:47:10.835637721Z [inf]  syncing data to disk ... ok
+2026-01-10T01:47:10.835644652Z [inf]  
+2026-01-10T01:47:10.835651813Z [inf]  
+2026-01-10T01:47:10.835658981Z [inf]  Success. You can now start the database server using:
+2026-01-10T01:47:10.835665398Z [inf]  
+2026-01-10T01:47:10.835675358Z [inf]      pg_ctl -D /var/lib/postgresql/data/pgdata -l logfile start
+2026-01-10T01:47:10.835682613Z [inf]  
+2026-01-10T01:47:10.835688871Z [err]  initdb: warning: enabling "trust" authentication for local connections
+2026-01-10T01:47:10.835695265Z [err]  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-01-10T01:47:10.835701434Z [inf]  waiting for server to start....2026-01-10 01:47:10.037 UTC [46] LOG:  starting PostgreSQL 17.7 (Debian 17.7-3.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-01-10T01:47:10.835711487Z [inf]  2026-01-10 01:47:10.040 UTC [46] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-01-10T01:47:10.835720726Z [inf]  2026-01-10 01:47:10.056 UTC [49] LOG:  database system was shut down at 2026-01-10 01:47:08 UTC
+2026-01-10T01:47:10.835728386Z [inf]  2026-01-10 01:47:10.069 UTC [46] LOG:  database system is ready to accept connections
+2026-01-10T01:47:10.835734698Z [inf]   done
+2026-01-10T01:47:10.835741441Z [inf]  server started
+2026-01-10T01:47:10.835747681Z [inf]  CREATE DATABASE
+2026-01-10T01:47:10.835754603Z [inf]  
+2026-01-10T01:47:10.835760503Z [inf]  
+2026-01-10T01:47:10.835767012Z [inf]  /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init-ssl.sh
+2026-01-10T01:47:10.835998369Z [err]  ......+....+..+......+...+.++++++++++++++++++++++++++++++
+2026-01-10T01:47:10.836005039Z [err]  +++++++++*..+..+...+++++++++++++++
+2026-01-10T01:47:10.836011618Z [err]  ++++++++++
+2026-01-10T01:47:10.836024127Z [err]  ++++++++++
+2026-01-10T01:47:10.836107762Z [err]  ++*.....+..+.......++++++
+2026-01-10T01:47:10.836113942Z [err]  ++++++++++
+2026-01-10T01:47:10.836124206Z [err]  ++++++++++
+2026-01-10T01:47:10.836130576Z [err]  ++++++++++
+2026-01-10T01:47:10.838129498Z [err]  +++*........
+2026-01-10T01:47:10.838143501Z [err]  .....+...+...+.........................+...+
+2026-01-10T01:47:10.838151045Z [err]  ...........+.+...+++++
+2026-01-10T01:47:10.838160255Z [err]  +
+2026-01-10T01:47:10.838166472Z [err]  -----
+2026-01-10T01:47:10.838173238Z [err]  .................+......+.+...+++++++++++
+2026-01-10T01:47:10.841126774Z [err]  +++++++++++++++++++++
+2026-01-10T01:47:10.841134848Z [err]  +++++++*..+.......++++++
+2026-01-10T01:47:10.841140561Z [err]  ++++++++++
+2026-01-10T01:47:10.841145530Z [err]  ++++++++++
+2026-01-10T01:47:10.841150890Z [err]  ++++++++++
+2026-01-10T01:47:10.844433393Z [err]  +++*...+...+...........
+2026-01-10T01:47:10.844442865Z [err]  ....+.......+..+.+
+2026-01-10T01:47:10.844448722Z [err]  ..+....+...+..+.........+.........+
+2026-01-10T01:47:10.844455083Z [err]  ..........+......+......+...........
+2026-01-10T01:47:10.846823853Z [err]  ..........+...
+2026-01-10T01:47:10.846831972Z [err]  .........+
+2026-01-10T01:47:10.846839762Z [err]  ......+.....+.........+...+....+........+
+2026-01-10T01:47:10.846845408Z [err]  ...............+.......+........+.............
+2026-01-10T01:47:10.850109372Z [err]  .....+..........+.....+....+.....
+2026-01-10T01:47:10.850118466Z [err]  .+............+..+
+2026-01-10T01:47:10.850124603Z [err]  .+...+..+.........+....+..
+2026-01-10T01:47:10.850130220Z [err]  ...+.+...+...+.....+...+.........
+2026-01-10T01:47:10.850136762Z [err]  +.......+.................
+2026-01-10T01:47:10.853400045Z [err]  ...+...+...+.......+...+...
+2026-01-10T01:47:10.853407367Z [err]  +.............
+2026-01-10T01:47:10.853412928Z [err]  .+.+...........+...+......+....
+2026-01-10T01:47:10.853417674Z [err]  ...............+...+
+2026-01-10T01:47:10.856518282Z [err]  ...+............+..+......+
+2026-01-10T01:47:10.856526867Z [err]  .+.....+................+...+..++
+2026-01-10T01:47:10.856532409Z [err]  ++++
+2026-01-10T01:47:10.856537277Z [err]  ...+..+...+............+......+....+...+........
+2026-01-10T01:47:10.856541829Z [err]  +....+..+.............+.....+..........++++
+2026-01-10T01:47:10.862007849Z [err]  ++++++++++
+2026-01-10T01:47:10.862016711Z [err]  +++++++++++
+2026-01-10T01:47:10.862022894Z [err]  ++++++++++++
+2026-01-10T01:47:10.862028972Z [err]  ++*.+....++++++++
+2026-01-10T01:47:10.862034110Z [err]  ++++++++++
+2026-01-10T01:47:10.866768031Z [err]  ++++++++++
+2026-01-10T01:47:10.866777361Z [err]  ++++++++++
+2026-01-10T01:47:10.866783914Z [err]  +*.........+...+
+2026-01-10T01:47:10.866789906Z [err]  .+...+......+.....+.+
+2026-01-10T01:47:10.869901014Z [err]  .....+.+...+..+...+....+...+
+2026-01-10T01:47:10.869909879Z [err]  ........+....+......+.....+......+
+2026-01-10T01:47:10.869915853Z [err]  .............+..+......+...+.....
+2026-01-10T01:47:10.869921560Z [err]  .............
+2026-01-10T01:47:10.873296126Z [err]  ....+..+......+.+.......
+2026-01-10T01:47:10.873303073Z [err]  ..+......+...+.....+....
+2026-01-10T01:47:10.873307511Z [err]  ...+...+..+......+...+.......
+2026-01-10T01:47:10.873311933Z [err]  +..+.+......+.........+......+
+2026-01-10T01:47:10.873315862Z [err]  .........+..+.........
+2026-01-10T01:47:11.897707702Z [err]  ....+..........
+2026-01-10T01:47:11.897715186Z [err]  .+.+............
+2026-01-10T01:47:11.897721658Z [err]  ..+.+..+.............+..............
+2026-01-10T01:47:11.897728008Z [err]  +...+...+....+...........
+2026-01-10T01:47:13.139355741Z [err]  ....+....................+...+.......
+2026-01-10T01:47:13.139362156Z [err]  +......+...........
+2026-01-10T01:47:13.139369382Z [err]  .+...+.....+.........+....+..+...+....
+2026-01-10T01:47:13.139375186Z [err]  +...+...+..+.......+...........+....
+2026-01-10T01:47:14.507546145Z [err]  +........+...+.+......+...
+2026-01-10T01:47:14.507551802Z [err]  ............+..+...+
+2026-01-10T01:47:14.507557770Z [err]  ....+...+.....+.......+...+...........
+2026-01-10T01:47:14.507563511Z [err]  +....+........+............+.+
+2026-01-10T01:47:14.507568678Z [err]  ..+....+......+..+....
+2026-01-10T01:47:15.757737496Z [err]  ......+..+......
+2026-01-10T01:47:15.757744234Z [err]  ....+.....+.+........+....
+2026-01-10T01:47:15.757751035Z [err]  +...+........+.+.....+....
+2026-01-10T01:47:15.757757973Z [err]  +...........+..................
+2026-01-10T01:47:16.774344861Z [err]  +.+..+.......+.........
+2026-01-10T01:47:16.774351013Z [err]  ..+......+....+.....+.+........
+2026-01-10T01:47:16.774357008Z [err]  +..........+........+.......+..+.+...
+2026-01-10T01:47:16.774363713Z [err]  ..............
+2026-01-10T01:47:16.774371323Z [err]  .+..+....+.....+...+..........
+2026-01-10T01:47:17.850695406Z [err]  ...+...............+........+.......
+2026-01-10T01:47:17.850710656Z [err]  ..+.+.....+.......+...............
+2026-01-10T01:47:17.851653351Z [err]  +.....+.......+...+..+.+
+2026-01-10T01:47:17.851660030Z [err]  ...+.....+.+.....+..........+
+2026-01-10T01:47:18.947701895Z [err]  ...+...+......+.....+.+..+
+2026-01-10T01:47:18.947708256Z [err]  .+.....+...............+
+2026-01-10T01:47:18.947715082Z [err]  .+...+..+.+........+....+
+2026-01-10T01:47:18.947720700Z [err]  ....................
+2026-01-10T01:47:19.619198462Z [err]  +.+...........+....+..+.
+2026-01-10T01:47:19.619206066Z [err]  ...+...+............+.......
+2026-01-10T01:47:19.619212766Z [err]  ..+.....+.......+.........+...
+2026-01-10T01:47:19.619220780Z [err]  +............+...+........+...+
+2026-01-10T01:47:19.619227549Z [err]  .......+..+...+.......+......
+2026-01-10T01:47:19.622362844Z [err]  ..+...+.+......+..+......+...
+2026-01-10T01:47:19.622370080Z [err]  .+..+.........+............
+2026-01-10T01:47:19.622377756Z [err]  ...+.+...........
+2026-01-10T01:47:19.622385657Z [err]  +.........+.+.....+...
+2026-01-10T01:47:19.623765984Z [inf]  2026-01-10 01:47:10.602 UTC [47] LOG:  shutting down
+2026-01-10T01:47:19.623782663Z [inf]  2026-01-10 01:47:10.604 UTC [47] LOG:  checkpoint starting: shutdown immediate
+2026-01-10T01:47:19.623793046Z [inf]  2026-01-10 01:47:10.836 UTC [47] LOG:  checkpoint complete: wrote 925 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.020 s, sync=0.201 s, total=0.235 s; sync files=301, longest=0.041 s, average=0.001 s; distance=4256 kB, estimate=4256 kB; lsn=0/1915960, redo lsn=0/1915960
+2026-01-10T01:47:19.623898167Z [err]  +......+...+...+....+.....
+2026-01-10T01:47:19.623904788Z [err]  +......+..........+
+2026-01-10T01:47:19.623911469Z [err]  +++++
+2026-01-10T01:47:19.623919024Z [err]  -----
+2026-01-10T01:47:19.623925418Z [err]  Certificate request self-signature ok
+2026-01-10T01:47:19.623931407Z [err]  subject=CN=localhost
+2026-01-10T01:47:19.623936614Z [inf]  
+2026-01-10T01:47:19.623941152Z [inf]  waiting for server to shut down....2026-01-10 01:47:10.584 UTC [46] LOG:  received fast shutdown request
+2026-01-10T01:47:19.623965714Z [inf]  2026-01-10 01:47:10.598 UTC [46] LOG:  aborting any active transactions
+2026-01-10T01:47:19.623978518Z [inf]  2026-01-10 01:47:10.601 UTC [46] LOG:  background worker "logical replication launcher" (PID 52) exited with exit code 1
+2026-01-10T01:47:19.626879055Z [inf]  2026-01-10 01:47:10.845 UTC [46] LOG:  database system is shut down
+2026-01-10T01:47:19.626883373Z [inf]   done
+2026-01-10T01:47:19.626887558Z [inf]  server stopped
+2026-01-10T01:47:19.626891534Z [inf]  
+2026-01-10T01:47:19.626895792Z [inf]  PostgreSQL init process complete; ready for start up.
+2026-01-10T01:47:19.626900481Z [inf]  
+2026-01-10T01:47:19.626904286Z [err]  2026-01-10 01:47:10.921 UTC [3] LOG:  starting PostgreSQL 17.7 (Debian 17.7-3.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-01-10T01:47:19.626908568Z [err]  2026-01-10 01:47:10.921 UTC [3] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-01-10T01:47:19.626913059Z [err]  2026-01-10 01:47:10.921 UTC [3] LOG:  listening on IPv6 address "::", port 5432
+2026-01-10T01:47:19.626917181Z [err]  2026-01-10 01:47:10.927 UTC [3] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-01-10T01:47:19.626921727Z [err]  2026-01-10 01:47:10.938 UTC [78] LOG:  database system was shut down at 2026-01-10 01:47:10 UTC
+2026-01-10T01:47:19.626925902Z [err]  2026-01-10 01:47:10.950 UTC [3] LOG:  database system is ready to accept connections
+2026-01-10T01:47:36.000000000Z [inf]  Starting Container
+2026-01-10T01:47:37.000000000Z [inf]  Starting Container
+2026-01-10T01:47:37.022272109Z [err]  === Starting application ===
+2026-01-10T01:47:37.022276049Z [err]  PORT is: 8080
+2026-01-10T01:47:37.022279538Z [err]  === Running migrations ===
+2026-01-10T01:47:37.397050729Z [err]  2026-01-10 01:47:37,395 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:47:37.403047971Z [err]  2026-01-10 01:47:37,400 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:47:37.403051791Z [err]  2026-01-10 01:47:37,401 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:47:37.403055631Z [err]  2026-01-10 01:47:37,401 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:47:37.433877844Z [err]  2026-01-10 01:47:37,431 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:47:37.433881434Z [err]  2026-01-10 01:47:37,431 - matplotlib.font_manager - DEBUG - font search path [PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/ttf'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/afm'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/pdfcorefonts')]
+2026-01-10T01:47:37.527569817Z [err]  2026-01-10 01:47:37,524 - matplotlib.font_manager - INFO - generated new fontManager
+2026-01-10T01:47:38.032312134Z [inf]  Operations to perform:
+2026-01-10T01:47:38.032316154Z [inf]    Apply all migrations: KeywordSelection, WebScraper, admin, auth, contenttypes, sessions
+2026-01-10T01:47:38.032319843Z [inf]  Running migrations:
+2026-01-10T01:47:38.032324993Z [inf]    Applying KeywordSelection.0001_initial... OK
+2026-01-10T01:47:38.032328813Z [inf]    Applying WebScraper.0001_initial... OK
+2026-01-10T01:47:38.032332613Z [inf]    Applying contenttypes.0001_initial... OK
+2026-01-10T01:47:38.032336843Z [inf]    Applying auth.0001_initial... OK
+2026-01-10T01:47:38.032340523Z [inf]    Applying admin.0001_initial... OK
+2026-01-10T01:47:38.032344083Z [inf]    Applying admin.0002_logentry_remove_auto_add... OK
+2026-01-10T01:47:38.032347803Z [inf]    Applying admin.0003_logentry_add_action_flag_choices... OK
+2026-01-10T01:47:38.032351863Z [inf]    Applying contenttypes.0002_remove_content_type_name... OK
+2026-01-10T01:47:38.032355383Z [inf]    Applying auth.0002_alter_permission_name_max_length... OK
+2026-01-10T01:47:38.032359363Z [inf]    Applying auth.0003_alter_user_email_max_length... OK
+2026-01-10T01:47:38.032365293Z [inf]    Applying auth.0004_alter_user_username_opts... OK
+2026-01-10T01:47:38.032368653Z [inf]    Applying auth.0005_alter_user_last_login_null... OK
+2026-01-10T01:47:38.032373513Z [inf]    Applying auth.0006_require_contenttypes_0002... OK
+2026-01-10T01:47:38.033109621Z [inf]    Applying auth.0007_alter_validators_add_error_messages... OK
+2026-01-10T01:47:38.033112791Z [inf]    Applying auth.0008_alter_user_username_max_length... OK
+2026-01-10T01:47:38.033115581Z [inf]    Applying auth.0009_alter_user_last_name_max_length... OK
+2026-01-10T01:47:38.033117911Z [inf]    Applying auth.0010_alter_group_name_max_length... OK
+2026-01-10T01:47:38.033120421Z [inf]    Applying auth.0011_update_proxy_permissions... OK
+2026-01-10T01:47:38.033122901Z [inf]    Applying auth.0012_alter_user_first_name_max_length... OK
+2026-01-10T01:47:38.033125421Z [inf]    Applying sessions.0001_initial... OK
+2026-01-10T01:47:38.343880620Z [err]  === Migrations complete! ===
+2026-01-10T01:47:38.343883830Z [err]  === Starting gunicorn on port 8080 ===
+2026-01-10T01:47:38.406077749Z [err]  [2026-01-10 01:47:38 +0000] [1] [INFO] Starting gunicorn 21.2.0
+2026-01-10T01:47:38.406083139Z [err]  [2026-01-10 01:47:38 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+2026-01-10T01:47:38.406086549Z [err]  [2026-01-10 01:47:38 +0000] [1] [INFO] Using worker: sync
+2026-01-10T01:47:38.412520594Z [err]  [2026-01-10 01:47:38 +0000] [53] [INFO] Booting worker with pid: 53
+2026-01-10T01:47:38.790138659Z [err]  === Starting Celery Worker ===
+2026-01-10T01:47:38.790143141Z [err]  === Running migrations ===
+2026-01-10T01:47:39.476368588Z [err]  2026-01-10 01:47:39,472 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:47:39.483070623Z [err]  2026-01-10 01:47:39,478 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:47:39.483077456Z [err]  2026-01-10 01:47:39,479 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:47:39.483084466Z [err]  2026-01-10 01:47:39,480 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:47:39.536962768Z [err]  2026-01-10 01:47:39,529 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:47:39.536966571Z [err]  2026-01-10 01:47:39,529 - matplotlib.font_manager - DEBUG - font search path [PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/ttf'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/afm'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/pdfcorefonts')]
+2026-01-10T01:47:39.803121479Z [err]  2026-01-10 01:47:39,701 - matplotlib.font_manager - INFO - generated new fontManager
+2026-01-10T01:47:40.000000000Z [inf]  Stopping Container
+2026-01-10T01:47:40.392087014Z [inf]  Operations to perform:
+2026-01-10T01:47:40.392094047Z [inf]    Apply all migrations: KeywordSelection, WebScraper, admin, auth, contenttypes, sessions
+2026-01-10T01:47:40.392100019Z [inf]  Running migrations:
+2026-01-10T01:47:40.400387021Z [inf]    Applying KeywordSelection.0001_initial... OK
+2026-01-10T01:47:40.415581211Z [inf]    Applying WebScraper.0001_initial... OK
+2026-01-10T01:47:40.419798054Z [inf]    Applying contenttypes.0001_initial... OK
+2026-01-10T01:47:40.439152660Z [inf]    Applying auth.0001_initial... OK
+2026-01-10T01:47:40.456340183Z [inf]    Applying admin.0001_initial... OK
+2026-01-10T01:47:40.467797191Z [inf]    Applying admin.0002_logentry_remove_auto_add... OK
+2026-01-10T01:47:40.479553895Z [inf]    Applying admin.0003_logentry_add_action_flag_choices... OK
+2026-01-10T01:47:40.505065619Z [inf]    Applying contenttypes.0002_remove_content_type_name... OK
+2026-01-10T01:47:40.514407973Z [inf]    Applying auth.0002_alter_permission_name_max_length... OK
+2026-01-10T01:47:40.525097031Z [inf]    Applying auth.0003_alter_user_email_max_length... OK
+2026-01-10T01:47:40.534407694Z [inf]    Applying auth.0004_alter_user_username_opts... OK
+2026-01-10T01:47:40.545048606Z [inf]    Applying auth.0005_alter_user_last_login_null... OK
+2026-01-10T01:47:40.549607191Z [inf]    Applying auth.0006_require_contenttypes_0002... OK
+2026-01-10T01:47:40.560390522Z [inf]    Applying auth.0007_alter_validators_add_error_messages... OK
+2026-01-10T01:47:40.571310506Z [inf]    Applying auth.0008_alter_user_username_max_length... OK
+2026-01-10T01:47:40.582382824Z [inf]    Applying auth.0009_alter_user_last_name_max_length... OK
+2026-01-10T01:47:40.597947677Z [inf]    Applying auth.0010_alter_group_name_max_length... OK
+2026-01-10T01:47:40.608857089Z [inf]    Applying auth.0011_update_proxy_permissions... OK
+2026-01-10T01:47:40.619354769Z [inf]    Applying auth.0012_alter_user_first_name_max_length... OK
+2026-01-10T01:47:40.824617427Z [inf]    Applying sessions.0001_initial... OK
+2026-01-10T01:47:41.013696893Z [err]  === Starting Celery ===
+2026-01-10T01:47:42.155050000Z [err]  2026-01-10 01:47:42,151 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:47:42.159844064Z [err]  2026-01-10 01:47:42,155 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:47:42.159852274Z [err]  2026-01-10 01:47:42,156 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:47:42.159858556Z [err]  2026-01-10 01:47:42,156 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:47:42.205754429Z [err]  2026-01-10 01:47:42,202 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:47:42.205758489Z [err]  2026-01-10 01:47:42,203 - matplotlib.font_manager - DEBUG - Using fontManager instance from /root/.cache/matplotlib/fontlist-v330.json
+2026-01-10T01:47:42.667636104Z [err]  2026-01-10 01:47:42,664 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667644173Z [err]      return 1
+2026-01-10T01:47:42.667648196Z [err]  def chunks(task, it, n):
+2026-01-10T01:47:42.667657678Z [err]      return 1
+2026-01-10T01:47:42.667657836Z [err]      return 1
+2026-01-10T01:47:42.667660649Z [err]  
+2026-01-10T01:47:42.667663259Z [err]      return 1
+2026-01-10T01:47:42.667668116Z [err]  
+2026-01-10T01:47:42.667670424Z [err]  
+2026-01-10T01:47:42.667671427Z [err]  2026-01-10 01:47:42,665 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667673536Z [err]  
+2026-01-10T01:47:42.667673657Z [err]  
+2026-01-10T01:47:42.667681433Z [err]  def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+2026-01-10T01:47:42.667681600Z [err]  2026-01-10 01:47:42,665 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667682303Z [err]  2026-01-10 01:47:42,666 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667684820Z [err]  2026-01-10 01:47:42,666 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667689900Z [err]  2026-01-10 01:47:42,666 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667691574Z [err]  def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+2026-01-10T01:47:42.667691679Z [err]      return 1
+2026-01-10T01:47:42.667693655Z [err]  def scrape_pinellas_properties(self, search_criteria, limit=0):
+2026-01-10T01:47:42.667694152Z [err]  2026-01-10 01:47:42,665 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667695539Z [err]  def accumulate(self, *args, **kwargs):
+2026-01-10T01:47:42.667699062Z [err]  
+2026-01-10T01:47:42.667700794Z [err]  def start_processing_pipeline(self, search_criteria, limit=0, user_email=1):
+2026-01-10T01:47:42.667704789Z [err]  def backend_cleanup():
+2026-01-10T01:47:42.667709626Z [err]      return 1
+2026-01-10T01:47:42.667713165Z [err]      return 1
+2026-01-10T01:47:42.667719500Z [err]  
+2026-01-10T01:47:42.667720886Z [err]  
+2026-01-10T01:47:42.667729798Z [err]  2026-01-10 01:47:42,666 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.667739202Z [err]  def chain(*args, **kwargs):
+2026-01-10T01:47:42.667748965Z [err]      return 1
+2026-01-10T01:47:42.668217060Z [err]  2026-01-10 01:47:42,667 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.668225024Z [err]  def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+2026-01-10T01:47:42.668231960Z [err]      return 1
+2026-01-10T01:47:42.668238686Z [err]  
+2026-01-10T01:47:42.668245969Z [err]  2026-01-10 01:47:42,667 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.668252622Z [err]  def generate_listing_pdf(self, sort_result):
+2026-01-10T01:47:42.668259236Z [err]      return 1
+2026-01-10T01:47:42.668265816Z [err]  
+2026-01-10T01:47:42.668713216Z [err]  2026-01-10 01:47:42,667 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.668718287Z [err]  def send_results_via_email(analysis_result, email):
+2026-01-10T01:47:42.668722781Z [err]      return 1
+2026-01-10T01:47:42.668726797Z [err]  
+2026-01-10T01:47:42.668731138Z [err]  2026-01-10 01:47:42,668 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.668736117Z [err]  def scrape_tax_data(self, scrape_result):
+2026-01-10T01:47:42.668740034Z [err]      return 1
+2026-01-10T01:47:42.668743979Z [err]  
+2026-01-10T01:47:42.669285259Z [err]  2026-01-10 01:47:42,668 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.669290497Z [err]  def analyze_data(self, pdf_result):
+2026-01-10T01:47:42.669294504Z [err]      return 1
+2026-01-10T01:47:42.669298320Z [err]  
+2026-01-10T01:47:42.669302051Z [err]  2026-01-10 01:47:42,668 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.669305914Z [err]  def xmap(task, it):
+2026-01-10T01:47:42.669309700Z [err]      return 1
+2026-01-10T01:47:42.669313281Z [err]  
+2026-01-10T01:47:42.669907932Z [err]  2026-01-10 01:47:42,668 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.669912512Z [err]  def xstarmap(task, it):
+2026-01-10T01:47:42.669916444Z [err]      return 1
+2026-01-10T01:47:42.669920134Z [err]  
+2026-01-10T01:47:42.669923987Z [err]  2026-01-10 01:47:42,669 - celery.utils.functional - DEBUG - 
+2026-01-10T01:47:42.669927740Z [err]  def generate_sorted_properties(self, tax_result):
+2026-01-10T01:47:42.669931374Z [err]      return 1
+2026-01-10T01:47:42.669935937Z [err]  
+2026-01-10T01:47:42.674372889Z [err]  /usr/local/lib/python3.12/site-packages/celery/platforms.py:829: SecurityWarning: You're running the worker with superuser privileges: this is
+2026-01-10T01:47:42.674384649Z [err]  absolutely not recommended!
+2026-01-10T01:47:42.674391079Z [err]  
+2026-01-10T01:47:42.674397431Z [err]  Please specify a different user using the --uid option.
+2026-01-10T01:47:42.674403401Z [err]  
+2026-01-10T01:47:42.674410638Z [err]  User information: uid=0 euid=0 gid=0 egid=0
+2026-01-10T01:47:42.674418002Z [err]  
+2026-01-10T01:47:42.674424435Z [err]    warnings.warn(SecurityWarning(ROOT_DISCOURAGED.format(
+2026-01-10T01:47:42.831237474Z [inf]  - ** ---------- [config]
+2026-01-10T01:47:42.831250900Z [inf]   -------------- [queues]
+2026-01-10T01:47:42.831251552Z [inf]  
+2026-01-10T01:47:42.831252509Z [inf]  - ** ---------- .> app:         home_finder:0x7f111ecdf710
+2026-01-10T01:47:42.831255867Z [inf]    . apps.WebScraper.tasks.scrape_data.scrape_tax_data
+2026-01-10T01:47:42.831260856Z [inf]                  .> celery           exchange=celery(direct) key=celery
+2026-01-10T01:47:42.831263256Z [inf]  - ** ---------- .> transport:   redis://default:**@redis.railway.internal:6379//
+2026-01-10T01:47:42.831265960Z [inf]    . apps.WebScraper.tasks.sort_data.generate_sorted_properties
+2026-01-10T01:47:42.831266072Z [inf]  -- ******* ---- .> task events: ON
+2026-01-10T01:47:42.831269862Z [inf]                  
+2026-01-10T01:47:42.831272942Z [inf]    . apps.WebScraper.tasks.visual_data.analyze_data
+2026-01-10T01:47:42.831273660Z [inf]  - ** ---------- .> results:     redis://default:**@redis.railway.internal:6379/
+2026-01-10T01:47:42.831276187Z [inf]  --- ***** ----- 
+2026-01-10T01:47:42.831277552Z [inf]  
+2026-01-10T01:47:42.831282737Z [inf]    . apps.WebScraper.views.start_processing_pipeline
+2026-01-10T01:47:42.831282845Z [inf]  [tasks]
+2026-01-10T01:47:42.831283995Z [inf]  - *** --- * --- .> concurrency: 2 (prefork)
+2026-01-10T01:47:42.831288475Z [inf]    . apps.WebScraper.tasks.email_results.send_results_via_email
+2026-01-10T01:47:42.831293893Z [inf]    . apps.WebScraper.tasks.listings_pdf.generate_listing_pdf
+2026-01-10T01:47:42.831298335Z [inf]    . apps.WebScraper.tasks.scrape_data.scrape_pinellas_properties
+2026-01-10T01:47:42.831332836Z [inf]   
+2026-01-10T01:47:42.831338029Z [inf]   -------------- celery@06db2636fb30 v5.3.6 (emerald-rush)
+2026-01-10T01:47:42.831342803Z [inf]  --- ***** ----- 
+2026-01-10T01:47:42.831346729Z [inf]  -- ******* ---- Linux-6.1.0-40-cloud-amd64-x86_64-with-glibc2.41 2026-01-10 01:47:42
+2026-01-10T01:47:42.831352227Z [inf]  - *** --- * --- 
+2026-01-10T01:47:42.994508986Z [err]  [2026-01-10 01:47:42,991: INFO/MainProcess] Connected to redis://default:**@redis.railway.internal:6379//
+2026-01-10T01:47:43.000000000Z [inf]  Stopping Container
+2026-01-10T01:47:43.005019256Z [err]  [2026-01-10 01:47:43,003: INFO/MainProcess] mingle: searching for neighbors
+2026-01-10T01:47:44.053617069Z [err]  [2026-01-10 01:47:44,040: INFO/MainProcess] mingle: all alone
+2026-01-10T01:47:44.111960905Z [err]  [2026-01-10 01:47:44,107: INFO/MainProcess] celery@06db2636fb30 ready.
+2026-01-10T01:47:45.861027183Z [err]  [2026-01-10 01:47:40 +0000] [1] [INFO] Handling signal: term
+2026-01-10T01:47:45.861030923Z [err]  [2026-01-10 01:47:40 +0000] [37] [INFO] Worker exiting (pid: 37)
+2026-01-10T01:47:45.861034453Z [err]  [2026-01-10 01:47:40 +0000] [1] [INFO] Shutting down: Master
+2026-01-10T01:47:47.716137400Z [err]  
+2026-01-10T01:47:47.716145446Z [err]  worker: Warm shutdown (MainProcess)
+2026-01-10T01:47:53.571332920Z [inf]  1:M 10 Jan 2026 01:47:48.088 * Background saving started by pid 100
+2026-01-10T01:47:53.571345934Z [inf]  100:C 10 Jan 2026 01:47:48.119 * DB saved on disk
+2026-01-10T01:47:53.571354773Z [inf]  100:C 10 Jan 2026 01:47:48.120 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+2026-01-10T01:47:53.571360814Z [inf]  1:M 10 Jan 2026 01:47:48.190 * Background saving terminated with success
+2026-01-10T01:47:53.571419916Z [inf]  1:M 10 Jan 2026 01:47:48.087 * 1 changes in 60 seconds. Saving...
+2026-01-10T01:49:13.915338337Z [inf]  1:M 10 Jan 2026 01:49:13.051 * 1 changes in 60 seconds. Saving...
+2026-01-10T01:49:13.915345303Z [inf]  1:M 10 Jan 2026 01:49:13.052 * Background saving started by pid 101
+2026-01-10T01:49:13.915353353Z [inf]  101:C 10 Jan 2026 01:49:13.084 * DB saved on disk
+2026-01-10T01:49:13.915365716Z [inf]  101:C 10 Jan 2026 01:49:13.085 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+2026-01-10T01:49:13.915374442Z [inf]  1:M 10 Jan 2026 01:49:13.152 * Background saving terminated with success
+2026-01-10T01:49:29.000000000Z [inf]  Starting Container
+2026-01-10T01:49:30.245499844Z [err]  === Starting Celery Worker ===
+2026-01-10T01:49:30.245509394Z [err]  === Running migrations ===
+2026-01-10T01:49:30.435817708Z [err]  2026-01-10 01:49:30,433 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:49:30.439607512Z [err]  2026-01-10 01:49:30,437 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:49:30.439611822Z [err]  2026-01-10 01:49:30,438 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:49:30.439614762Z [err]  2026-01-10 01:49:30,438 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:49:30.471268513Z [err]  2026-01-10 01:49:30,466 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:49:30.471272703Z [err]  2026-01-10 01:49:30,466 - matplotlib.font_manager - DEBUG - font search path [PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/ttf'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/afm'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/pdfcorefonts')]
+2026-01-10T01:49:30.561768635Z [err]  2026-01-10 01:49:30,560 - matplotlib.font_manager - INFO - generated new fontManager
+2026-01-10T01:49:30.932470971Z [inf]  Operations to perform:
+2026-01-10T01:49:30.932474750Z [inf]    Apply all migrations: KeywordSelection, WebScraper, admin, auth, contenttypes, sessions
+2026-01-10T01:49:30.932478240Z [inf]  Running migrations:
+2026-01-10T01:49:30.944607622Z [inf]    Applying KeywordSelection.0001_initial... OK
+2026-01-10T01:49:30.952239528Z [inf]    Applying WebScraper.0001_initial... OK
+2026-01-10T01:49:30.961992724Z [inf]    Applying contenttypes.0001_initial... OK
+2026-01-10T01:49:31.009334863Z [inf]    Applying auth.0001_initial... OK
+2026-01-10T01:49:31.024506269Z [inf]    Applying admin.0001_initial... OK
+2026-01-10T01:49:31.029506806Z [inf]    Applying admin.0002_logentry_remove_auto_add... OK
+2026-01-10T01:49:31.035638985Z [inf]    Applying admin.0003_logentry_add_action_flag_choices... OK
+2026-01-10T01:49:31.043444939Z [inf]    Applying contenttypes.0002_remove_content_type_name... OK
+2026-01-10T01:49:31.049491699Z [inf]    Applying auth.0002_alter_permission_name_max_length... OK
+2026-01-10T01:49:31.267065021Z [inf]    Applying auth.0009_alter_user_last_name_max_length... OK
+2026-01-10T01:49:31.267074611Z [inf]    Applying auth.0010_alter_group_name_max_length... OK
+2026-01-10T01:49:31.267081681Z [inf]    Applying auth.0011_update_proxy_permissions... OK
+2026-01-10T01:49:31.267082341Z [inf]    Applying auth.0003_alter_user_email_max_length... OK
+2026-01-10T01:49:31.267087971Z [inf]    Applying auth.0012_alter_user_first_name_max_length... OK
+2026-01-10T01:49:31.267088651Z [inf]    Applying auth.0004_alter_user_username_opts... OK
+2026-01-10T01:49:31.267094931Z [inf]    Applying sessions.0001_initial... OK
+2026-01-10T01:49:31.267095941Z [inf]    Applying auth.0005_alter_user_last_login_null... OK
+2026-01-10T01:49:31.267102491Z [inf]    Applying auth.0006_require_contenttypes_0002... OK
+2026-01-10T01:49:31.267108931Z [inf]    Applying auth.0007_alter_validators_add_error_messages... OK
+2026-01-10T01:49:31.267116370Z [inf]    Applying auth.0008_alter_user_username_max_length... OK
+2026-01-10T01:49:31.598769474Z [err]  === Starting Celery ===
+2026-01-10T01:49:32.545733974Z [err]  2026-01-10 01:49:32,543 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:49:32.548459234Z [err]  2026-01-10 01:49:32,546 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:49:32.548464504Z [err]  2026-01-10 01:49:32,547 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:49:32.548467894Z [err]  2026-01-10 01:49:32,547 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:49:32.577520544Z [err]  2026-01-10 01:49:32,576 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:49:32.577524034Z [err]  2026-01-10 01:49:32,576 - matplotlib.font_manager - DEBUG - Using fontManager instance from /root/.cache/matplotlib/fontlist-v330.json
+2026-01-10T01:49:32.915734541Z [err]  
+2026-01-10T01:49:32.915740151Z [err]  2026-01-10 01:49:32,915 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.915743981Z [err]  def backend_cleanup():
+2026-01-10T01:49:32.915747841Z [err]      return 1
+2026-01-10T01:49:32.915752971Z [err]  
+2026-01-10T01:49:32.915771981Z [err]  2026-01-10 01:49:32,914 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.915776770Z [err]  def chunks(task, it, n):
+2026-01-10T01:49:32.915780810Z [err]      return 1
+2026-01-10T01:49:32.915786590Z [err]  
+2026-01-10T01:49:32.915791560Z [err]  2026-01-10 01:49:32,914 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.915795460Z [err]  def scrape_pinellas_properties(self, search_criteria, limit=0):
+2026-01-10T01:49:32.915799660Z [err]      return 1
+2026-01-10T01:49:32.915804220Z [err]  
+2026-01-10T01:49:32.915809040Z [err]  2026-01-10 01:49:32,914 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.915813540Z [err]  def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+2026-01-10T01:49:32.915817320Z [err]      return 1
+2026-01-10T01:49:32.919581964Z [err]      return 1
+2026-01-10T01:49:32.919589644Z [err]  
+2026-01-10T01:49:32.919594554Z [err]  2026-01-10 01:49:32,916 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.919598774Z [err]  def send_results_via_email(analysis_result, email):
+2026-01-10T01:49:32.919602834Z [err]      return 1
+2026-01-10T01:49:32.919607394Z [err]  
+2026-01-10T01:49:32.919611594Z [err]  2026-01-10 01:49:32,916 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.919620324Z [err]  def start_processing_pipeline(self, search_criteria, limit=0, user_email=1):
+2026-01-10T01:49:32.919634813Z [err]  2026-01-10 01:49:32,915 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.919638753Z [err]  def chain(*args, **kwargs):
+2026-01-10T01:49:32.919643293Z [err]      return 1
+2026-01-10T01:49:32.919647433Z [err]  
+2026-01-10T01:49:32.919651983Z [err]  2026-01-10 01:49:32,915 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.919656613Z [err]  def accumulate(self, *args, **kwargs):
+2026-01-10T01:49:32.919661143Z [err]      return 1
+2026-01-10T01:49:32.919666233Z [err]  
+2026-01-10T01:49:32.919670273Z [err]  2026-01-10 01:49:32,915 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.919674073Z [err]  def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+2026-01-10T01:49:32.919677813Z [err]      return 1
+2026-01-10T01:49:32.919681983Z [err]  
+2026-01-10T01:49:32.919686583Z [err]  2026-01-10 01:49:32,915 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.919690973Z [err]  def generate_listing_pdf(self, sort_result):
+2026-01-10T01:49:32.919694832Z [err]      return 1
+2026-01-10T01:49:32.919698722Z [err]  
+2026-01-10T01:49:32.919702752Z [err]  2026-01-10 01:49:32,916 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.919706532Z [err]  def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+2026-01-10T01:49:32.921554245Z [err]      return 1
+2026-01-10T01:49:32.921558065Z [err]  
+2026-01-10T01:49:32.921569624Z [err]  2026-01-10 01:49:32,916 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.921573364Z [err]  def xmap(task, it):
+2026-01-10T01:49:32.921576744Z [err]      return 1
+2026-01-10T01:49:32.921579904Z [err]  
+2026-01-10T01:49:32.921584364Z [err]  2026-01-10 01:49:32,916 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.921587814Z [err]  def scrape_tax_data(self, scrape_result):
+2026-01-10T01:49:32.921591474Z [err]      return 1
+2026-01-10T01:49:32.921595164Z [err]  
+2026-01-10T01:49:32.921598654Z [err]  2026-01-10 01:49:32,917 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.921603314Z [err]  def generate_sorted_properties(self, tax_result):
+2026-01-10T01:49:32.921606554Z [err]      return 1
+2026-01-10T01:49:32.921610024Z [err]  
+2026-01-10T01:49:32.921613464Z [err]  2026-01-10 01:49:32,917 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.921618244Z [err]  def analyze_data(self, pdf_result):
+2026-01-10T01:49:32.921621774Z [err]      return 1
+2026-01-10T01:49:32.921625594Z [err]  
+2026-01-10T01:49:32.921630043Z [err]  2026-01-10 01:49:32,917 - celery.utils.functional - DEBUG - 
+2026-01-10T01:49:32.921633673Z [err]  def xstarmap(task, it):
+2026-01-10T01:49:32.921638833Z [err]      return 1
+2026-01-10T01:49:32.921641853Z [err]  
+2026-01-10T01:49:32.921645853Z [err]  /usr/local/lib/python3.12/site-packages/celery/platforms.py:829: SecurityWarning: You're running the worker with superuser privileges: this is
+2026-01-10T01:49:32.921649503Z [err]  absolutely not recommended!
+2026-01-10T01:49:32.921653983Z [err]  
+2026-01-10T01:49:32.921657443Z [err]  Please specify a different user using the --uid option.
+2026-01-10T01:49:32.921660783Z [err]  
+2026-01-10T01:49:32.921663773Z [err]  User information: uid=0 euid=0 gid=0 egid=0
+2026-01-10T01:49:32.922652939Z [err]  
+2026-01-10T01:49:32.922657089Z [err]    warnings.warn(SecurityWarning(ROOT_DISCOURAGED.format(
+2026-01-10T01:49:32.968412341Z [inf]  - ** ---------- .> app:         home_finder:0x7f966fe061b0
+2026-01-10T01:49:32.968503100Z [inf]   
+2026-01-10T01:49:32.968506400Z [inf]   -------------- celery@67c81ab9a96e v5.3.6 (emerald-rush)
+2026-01-10T01:49:32.968509650Z [inf]  --- ***** ----- 
+2026-01-10T01:49:32.968512540Z [inf]  -- ******* ---- Linux-6.12.12+bpo-cloud-amd64-x86_64-with-glibc2.41 2026-01-10 01:49:32
+2026-01-10T01:49:32.968515530Z [inf]  - *** --- * --- 
+2026-01-10T01:49:32.968519589Z [inf]  - ** ---------- [config]
+2026-01-10T01:49:32.968707207Z [inf]  - ** ---------- .> transport:   redis://default:**@redis.railway.internal:6379//
+2026-01-10T01:49:32.968710806Z [inf]  - ** ---------- .> results:     redis://default:**@redis.railway.internal:6379/
+2026-01-10T01:49:32.968714416Z [inf]  - *** --- * --- .> concurrency: 2 (prefork)
+2026-01-10T01:49:32.968717856Z [inf]  -- ******* ---- .> task events: ON
+2026-01-10T01:49:32.968722176Z [inf]  --- ***** ----- 
+2026-01-10T01:49:32.968726436Z [inf]   -------------- [queues]
+2026-01-10T01:49:32.968729826Z [inf]                  .> celery           exchange=celery(direct) key=celery
+2026-01-10T01:49:32.968733386Z [inf]                  
+2026-01-10T01:49:32.968737546Z [inf]  
+2026-01-10T01:49:32.968741136Z [inf]  [tasks]
+2026-01-10T01:49:32.968744946Z [inf]    . apps.WebScraper.tasks.email_results.send_results_via_email
+2026-01-10T01:49:32.968747896Z [inf]    . apps.WebScraper.tasks.listings_pdf.generate_listing_pdf
+2026-01-10T01:49:32.968751476Z [inf]    . apps.WebScraper.tasks.scrape_data.scrape_pinellas_properties
+2026-01-10T01:49:32.968755186Z [inf]    . apps.WebScraper.tasks.scrape_data.scrape_tax_data
+2026-01-10T01:49:32.968758746Z [inf]    . apps.WebScraper.tasks.sort_data.generate_sorted_properties
+2026-01-10T01:49:32.968762126Z [inf]    . apps.WebScraper.tasks.visual_data.analyze_data
+2026-01-10T01:49:32.968765236Z [inf]    . apps.WebScraper.views.start_processing_pipeline
+2026-01-10T01:49:32.969675403Z [inf]  
+2026-01-10T01:49:33.271888602Z [err]  [2026-01-10 01:49:33,268: INFO/MainProcess] Connected to redis://default:**@redis.railway.internal:6379//
+2026-01-10T01:49:33.273807513Z [err]  [2026-01-10 01:49:33,272: INFO/MainProcess] mingle: searching for neighbors
+2026-01-10T01:49:34.000000000Z [inf]  Starting Container
+2026-01-10T01:49:34.291174373Z [err]  [2026-01-10 01:49:34,286: INFO/MainProcess] mingle: all alone
+2026-01-10T01:49:34.319108130Z [err]  [2026-01-10 01:49:34,318: INFO/MainProcess] celery@67c81ab9a96e ready.
+2026-01-10T01:49:34.538354948Z [err]  
+2026-01-10T01:49:34.538367916Z [err]  worker: Warm shutdown (MainProcess)
+2026-01-10T01:49:34.797501061Z [err]  === Starting application ===
+2026-01-10T01:49:34.797509849Z [err]  PORT is: 8080
+2026-01-10T01:49:34.797516396Z [err]  === Running migrations ===
+2026-01-10T01:49:35.000000000Z [inf]  Stopping Container
+2026-01-10T01:49:37.000000000Z [inf]  Stopping Container
+2026-01-10T01:49:37.860825517Z [err]  2026-01-10 01:49:37,854 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:49:37.860830120Z [err]  2026-01-10 01:49:37,860 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:49:37.865979974Z [err]  2026-01-10 01:49:37,861 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:49:37.865992016Z [err]  2026-01-10 01:49:37,861 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:49:37.914297926Z [err]  2026-01-10 01:49:37,912 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:49:37.914307335Z [err]  2026-01-10 01:49:37,912 - matplotlib.font_manager - DEBUG - font search path [PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/ttf'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/afm'), PosixPath('/usr/local/lib/python3.12/site-packages/matplotlib/mpl-data/fonts/pdfcorefonts')]
+2026-01-10T01:49:38.170756853Z [err]  2026-01-10 01:49:38,167 - matplotlib.font_manager - INFO - generated new fontManager
+2026-01-10T01:49:38.620090563Z [err]  2026-01-10 01:49:35,658 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:49:38.620095233Z [err]  2026-01-10 01:49:35,661 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:49:38.620099233Z [err]  2026-01-10 01:49:35,662 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:49:38.620103333Z [err]  2026-01-10 01:49:35,662 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:49:38.620107873Z [err]  2026-01-10 01:49:35,700 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:49:38.620112023Z [err]  2026-01-10 01:49:35,701 - matplotlib.font_manager - DEBUG - Using fontManager instance from /root/.cache/matplotlib/fontlist-v330.json
+2026-01-10T01:49:38.620116393Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:36 +0000] "GET / HTTP/1.1" 200 41959 "https://web-production-0e103.up.railway.app/scraper/progress/4253058b-c7b7-4098-b298-fc2fc9d815e4/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:38.620120903Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:36 +0000] "GET / HTTP/1.1" 200 41959 "https://web-production-0e103.up.railway.app/scraper/progress/4253058b-c7b7-4098-b298-fc2fc9d815e4/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:38.620124803Z [err]  [2026-01-10 01:49:37 +0000] [1] [INFO] Handling signal: term
+2026-01-10T01:49:38.620128953Z [err]  [2026-01-10 01:49:37 +0000] [53] [INFO] Worker exiting (pid: 53)
+2026-01-10T01:49:38.620132713Z [err]  [2026-01-10 01:49:37 +0000] [1] [INFO] Shutting down: Master
+2026-01-10T01:49:39.035978273Z [inf]  Operations to perform:
+2026-01-10T01:49:39.035989431Z [inf]    Apply all migrations: KeywordSelection, WebScraper, admin, auth, contenttypes, sessions
+2026-01-10T01:49:39.035997085Z [inf]  Running migrations:
+2026-01-10T01:49:39.036002489Z [inf]    No migrations to apply.
+2026-01-10T01:49:39.455403149Z [err]  === Migrations complete! ===
+2026-01-10T01:49:39.455410708Z [err]  === Starting gunicorn on port 8080 ===
+2026-01-10T01:49:39.557659538Z [err]  [2026-01-10 01:49:39 +0000] [1] [INFO] Starting gunicorn 21.2.0
+2026-01-10T01:49:39.557664942Z [err]  [2026-01-10 01:49:39 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+2026-01-10T01:49:39.557669974Z [err]  [2026-01-10 01:49:39 +0000] [1] [INFO] Using worker: sync
+2026-01-10T01:49:39.557673802Z [err]  [2026-01-10 01:49:39 +0000] [37] [INFO] Booting worker with pid: 37
+2026-01-10T01:49:48.055298710Z [err]  2026-01-10 01:49:48,053 - matplotlib - DEBUG - matplotlib data path: /usr/local/lib/python3.12/site-packages/matplotlib/mpl-data
+2026-01-10T01:49:48.061421576Z [err]  2026-01-10 01:49:48,058 - matplotlib - DEBUG - CONFIGDIR=/root/.config/matplotlib
+2026-01-10T01:49:48.061431913Z [err]  2026-01-10 01:49:48,059 - matplotlib - DEBUG - interactive is False
+2026-01-10T01:49:48.061438298Z [err]  2026-01-10 01:49:48,059 - matplotlib - DEBUG - platform is linux
+2026-01-10T01:49:48.112745871Z [err]  2026-01-10 01:49:48,108 - matplotlib - DEBUG - CACHEDIR=/root/.cache/matplotlib
+2026-01-10T01:49:48.112751695Z [err]  2026-01-10 01:49:48,108 - matplotlib.font_manager - DEBUG - Using fontManager instance from /root/.cache/matplotlib/fontlist-v330.json
+2026-01-10T01:49:48.573417750Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:48 +0000] "GET / HTTP/1.1" 200 41959 "https://web-production-0e103.up.railway.app/scraper/progress/4253058b-c7b7-4098-b298-fc2fc9d815e4/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:48.665940384Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:48 +0000] "GET /static/css/style.css HTTP/1.1" 200 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:48.944539111Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:48 +0000] "GET /static/img/house.jpg HTTP/1.1" 200 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:48.944553569Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:48 +0000] "GET /static/js/dist/common.bundle.js HTTP/1.1" 200 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:48.945311785Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:48 +0000] "GET /static/js/dist/mobile.bundle.js HTTP/1.1" 200 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:52.077078366Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:52 +0000] "GET / HTTP/1.1" 200 41959 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:52.186216395Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:52 +0000] "GET /static/css/style.css HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:52.186223971Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:52 +0000] "GET /static/img/house.jpg HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:52.201933357Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:52 +0000] "GET /static/js/dist/common.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:52.324302343Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:52 +0000] "GET /static/js/dist/mobile.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:54.369961402Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:54 +0000] "GET /scraper/ HTTP/1.1" 200 42941 "https://web-production-0e103.up.railway.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:54.486153855Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:54 +0000] "GET /static/css/style.css HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:54.486162944Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:54 +0000] "GET /static/js/dist/common.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:49:54.490663935Z [inf]  100.64.0.2 - - [10/Jan/2026:01:49:54 +0000] "GET /static/js/dist/mobile.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.369009203Z [err]  [2026-01-10 01:50:08,982: INFO/MainProcess] Task apps.WebScraper.views.start_processing_pipeline[20466f59-c443-47f3-83c3-c1b90b8e2d27] received
+2026-01-10T01:50:14.369013733Z [err]  [2026-01-10 01:50:09,073: INFO/MainProcess] Task apps.WebScraper.tasks.scrape_data.scrape_pinellas_properties[2aabd91d-02cc-4a28-a454-e65523c0b515] received
+2026-01-10T01:50:14.369017613Z [err]  [2026-01-10 01:50:09,074: INFO/ForkPoolWorker-2] Task apps.WebScraper.views.start_processing_pipeline[20466f59-c443-47f3-83c3-c1b90b8e2d27] succeeded in 0.0893897379282862s: 'b8438a90-7033-44b7-bc2a-d7e757bea96e'
+2026-01-10T01:50:14.369021693Z [err]  [2026-01-10 01:50:09,107: INFO/ForkPoolWorker-1] Starting PCPAO scraping with criteria: {'city': 'Oldsmar', 'zip_code': '34677', 'property_type': 'Townhouse', 'min_value': '200000', 'max_value': '400000'}, limit: 50
+2026-01-10T01:50:14.369025483Z [err]  [2026-01-10 01:50:09,407: INFO/ForkPoolWorker-1] Chrome driver initialized for PCPAO scraper
+2026-01-10T01:50:14.478302585Z [err]  def chain(*args, **kwargs):
+2026-01-10T01:50:14.478310775Z [err]      return 1
+2026-01-10T01:50:14.478316675Z [err]  
+2026-01-10T01:50:14.478322076Z [err]  2026-01-10 01:50:08,842 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.478326885Z [err]  def generate_sorted_properties(self, tax_result):
+2026-01-10T01:50:14.478331548Z [err]  2026-01-10 01:50:08,840 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.478333836Z [err]      return 1
+2026-01-10T01:50:14.478337165Z [err]  def backend_cleanup():
+2026-01-10T01:50:14.478339514Z [err]  
+2026-01-10T01:50:14.478342879Z [err]      return 1
+2026-01-10T01:50:14.478348955Z [err]  2026-01-10 01:50:08,843 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.478348985Z [err]  
+2026-01-10T01:50:14.478355397Z [err]  2026-01-10 01:50:08,842 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.478359539Z [err]  def accumulate(self, *args, **kwargs):
+2026-01-10T01:50:14.478362587Z [err]  def start_processing_pipeline(self, search_criteria, limit=0, user_email=1):
+2026-01-10T01:50:14.478368607Z [err]      return 1
+2026-01-10T01:50:14.478368656Z [err]      return 1
+2026-01-10T01:50:14.478373908Z [err]  
+2026-01-10T01:50:14.478377371Z [err]  
+2026-01-10T01:50:14.478379238Z [err]  2026-01-10 01:50:08,842 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.478385125Z [err]  2026-01-10 01:50:08,843 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.478392599Z [err]  def analyze_data(self, pdf_result):
+2026-01-10T01:50:14.478399281Z [err]      return 1
+2026-01-10T01:50:14.478404875Z [err]  
+2026-01-10T01:50:14.478409764Z [err]  2026-01-10 01:50:08,843 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.478414445Z [err]  def chord(self, header, body, partial_args=0, interval=1, countdown=2, max_retries=3, eager=4, **kwargs):
+2026-01-10T01:50:14.478419815Z [err]      return 1
+2026-01-10T01:50:14.479708338Z [err]  
+2026-01-10T01:50:14.479713111Z [err]  2026-01-10 01:50:08,844 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.479713381Z [err]  2026-01-10 01:50:08,845 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.479718299Z [err]  def unlock_chord(self, group_id, callback, interval=0, max_retries=1, result=2, Result=3, GroupResult=4, result_from_tuple=5, **kwargs):
+2026-01-10T01:50:14.479724182Z [err]      return 1
+2026-01-10T01:50:14.479726889Z [err]  def scrape_pinellas_properties(self, search_criteria, limit=0):
+2026-01-10T01:50:14.479729665Z [err]  
+2026-01-10T01:50:14.479733890Z [err]  2026-01-10 01:50:08,844 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.479737821Z [err]  def generate_listing_pdf(self, sort_result):
+2026-01-10T01:50:14.479741483Z [err]      return 1
+2026-01-10T01:50:14.479745206Z [err]  
+2026-01-10T01:50:14.479749946Z [err]  2026-01-10 01:50:08,844 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.479753656Z [err]  def xmap(task, it):
+2026-01-10T01:50:14.479758604Z [err]      return 1
+2026-01-10T01:50:14.479761921Z [err]  
+2026-01-10T01:50:14.479765416Z [err]  2026-01-10 01:50:08,844 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.479768962Z [err]  def scrape_tax_data(self, scrape_result):
+2026-01-10T01:50:14.479772698Z [err]      return 1
+2026-01-10T01:50:14.479776474Z [err]  
+2026-01-10T01:50:14.479780562Z [err]  2026-01-10 01:50:08,844 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.479784009Z [err]  def xstarmap(task, it):
+2026-01-10T01:50:14.479787583Z [err]      return 1
+2026-01-10T01:50:14.479792531Z [err]  
+2026-01-10T01:50:14.479796131Z [err]  2026-01-10 01:50:08,845 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.479799558Z [err]  def chunks(task, it, n):
+2026-01-10T01:50:14.479803240Z [err]      return 1
+2026-01-10T01:50:14.479913289Z [err]  
+2026-01-10T01:50:14.480469365Z [err]      return 1
+2026-01-10T01:50:14.480480931Z [err]  
+2026-01-10T01:50:14.480491989Z [err]  2026-01-10 01:50:08,845 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.480499116Z [err]  def group(self, tasks, result, group_id, partial_args, add_to_parent=0):
+2026-01-10T01:50:14.480505096Z [err]      return 1
+2026-01-10T01:50:14.480511380Z [err]  
+2026-01-10T01:50:14.480516890Z [err]  2026-01-10 01:50:08,845 - celery.utils.functional - DEBUG - 
+2026-01-10T01:50:14.480523506Z [err]  def send_results_via_email(analysis_result, email):
+2026-01-10T01:50:14.480529090Z [err]      return 1
+2026-01-10T01:50:14.480534509Z [err]  
+2026-01-10T01:50:14.480540299Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:08 +0000] "POST /scraper/ HTTP/1.1" 302 0 "https://web-production-0e103.up.railway.app/scraper/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.480545700Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:09 +0000] "GET /scraper/progress/20466f59-c443-47f3-83c3-c1b90b8e2d27/ HTTP/1.1" 200 31521 "https://web-production-0e103.up.railway.app/scraper/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.480552170Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:09 +0000] "GET /static/css/style.css HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/progress/20466f59-c443-47f3-83c3-c1b90b8e2d27/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.480557613Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:09 +0000] "GET /static/js/dist/mobile.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/progress/20466f59-c443-47f3-83c3-c1b90b8e2d27/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.481508409Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:09 +0000] "GET /static/js/dist/common.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/progress/20466f59-c443-47f3-83c3-c1b90b8e2d27/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.481515886Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:09 +0000] "GET /scraper/status/20466f59-c443-47f3-83c3-c1b90b8e2d27/ HTTP/1.1" 200 112 "https://web-production-0e103.up.railway.app/scraper/progress/20466f59-c443-47f3-83c3-c1b90b8e2d27/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.798881364Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:14 +0000] "GET /scraper/dashboard/ HTTP/1.1" 200 59533 "https://web-production-0e103.up.railway.app/scraper/progress/20466f59-c443-47f3-83c3-c1b90b8e2d27/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.876003213Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:14 +0000] "GET /static/css/style.css HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/dashboard/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.887634500Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:14 +0000] "GET /static/js/dist/common.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/dashboard/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:14.887640746Z [inf]  100.64.0.2 - - [10/Jan/2026:01:50:14 +0000] "GET /static/js/dist/mobile.bundle.js HTTP/1.1" 304 0 "https://web-production-0e103.up.railway.app/scraper/dashboard/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2026-01-10T01:50:15.054005711Z [inf]  1:M 10 Jan 2026 01:50:14.199 * Background saving terminated with success
+2026-01-10T01:50:15.054092156Z [inf]  1:M 10 Jan 2026 01:50:14.097 * 1 changes in 60 seconds. Saving...
+2026-01-10T01:50:15.054106111Z [inf]  1:M 10 Jan 2026 01:50:14.098 * Background saving started by pid 102
+2026-01-10T01:50:15.054116582Z [inf]  102:C 10 Jan 2026 01:50:14.140 * DB saved on disk
+2026-01-10T01:50:15.054124307Z [inf]  102:C 10 Jan 2026 01:50:14.142 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB

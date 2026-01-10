@@ -65,8 +65,10 @@ class PCPAOScraper:
         """Search for properties using PCPAO Quick Search."""
         parcel_ids = []
         try:
+            logger.info(f"Navigating to {self.SEARCH_URL}")
             self.driver.get(self.SEARCH_URL)
             time.sleep(3)
+            logger.info(f"Page loaded, title: {self.driver.title}")
 
             # Build search query from criteria
             search_terms = []
@@ -80,12 +82,14 @@ class PCPAOScraper:
                 search_terms.append(search_criteria['owner_name'])
 
             search_query = ' '.join(search_terms) if search_terms else 'Clearwater'
+            logger.info(f"Searching for: {search_query}")
 
             # Use the quick search input
             search_input = self.driver.find_element(By.ID, "txtKeyWord")
             search_input.clear()
             search_input.send_keys(search_query)
             search_input.send_keys(Keys.RETURN)
+            logger.info("Search submitted, waiting for results...")
             time.sleep(5)
 
             # Extract parcel IDs from results - they appear as links with format XX-XX-XX-XXXXX-XXX-XXXX
@@ -120,7 +124,13 @@ class PCPAOScraper:
                     break
 
         except Exception as e:
-            logger.error(f"Error searching properties: {e}")
+            logger.error(f"Error searching properties: {e}", exc_info=True)
+            # Log page source for debugging
+            try:
+                logger.error(f"Current URL: {self.driver.current_url}")
+                logger.error(f"Page title: {self.driver.title}")
+            except:
+                pass
 
         logger.info(f"Found {len(parcel_ids)} parcels")
         return parcel_ids
