@@ -9,8 +9,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from apps.KeywordSelection.models import Keyword
 from celery.result import AsyncResult
-from celery import chain, shared_task
-from celery_progress.backend import ProgressRecorder
+from celery import chain
 from .models import PropertyListing
 from .tasks.scrape_data import scrape_pinellas_properties, scrape_tax_data
 from .tasks.sort_data import generate_sorted_properties
@@ -35,12 +34,10 @@ PROPERTY_TYPES = [
 ]
 
 
-@shared_task(bind=True)
-def start_processing_pipeline(self, search_criteria, limit=10, user_email=None):
-    """Start the complete Pinellas County property data pipeline"""
-    progress_recorder = ProgressRecorder(self)
-    progress_recorder.set_progress(0, 100, description="Starting property data pipeline...")
-
+def build_processing_pipeline(search_criteria, limit=10, user_email=None):
+    """Build and launch the complete Pinellas County property data pipeline.
+    Returns the chain's AsyncResult for tracking progress of the first task.
+    """
     # Build the chain: Property data -> Tax data -> Reports
     task_chain = chain(
         scrape_pinellas_properties.s(search_criteria, limit),
@@ -54,8 +51,7 @@ def start_processing_pipeline(self, search_criteria, limit=10, user_email=None):
     if user_email:
         task_chain |= send_results_via_email.s(user_email)
 
-    result = task_chain.apply_async()
-    return result.id
+    return task_chain.apply_async()
 
 
 def web_scraper_view(request):
@@ -84,12 +80,10 @@ def web_scraper_view(request):
         limit = int(request.POST.get('limit', 50))
         user_email = request.POST.get('email', '')
 
-        # Start the pipeline
-        task = start_processing_pipeline.apply_async(
-            args=[search_criteria, limit, user_email]
-        )
+        # Start the pipeline - track the chain's first task for progress
+        result = build_processing_pipeline(search_criteria, limit, user_email)
 
-        return redirect('scraping-progress', task_id=task.id)
+        return redirect('scraping-progress', task_id=result.id)
 
     # GET request - show the unified search interface
     context = {
