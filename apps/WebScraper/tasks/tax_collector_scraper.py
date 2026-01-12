@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementNotInteractableException
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Chrome for Testing paths
@@ -88,9 +88,25 @@ class TaxCollectorScraper:
                     logger.error(f"Could not find search input for parcel {parcel_id}")
                     return tax_data
 
-            search_input.clear()
-            search_input.send_keys(parcel_id)
-            search_input.send_keys(Keys.RETURN)
+            # Scroll element into view and wait for it to be interactable
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", search_input)
+            time.sleep(0.5)
+
+            # Try standard interaction first, then JavaScript fallback
+            try:
+                search_input.clear()
+                search_input.send_keys(parcel_id)
+                search_input.send_keys(Keys.RETURN)
+            except ElementNotInteractableException:
+                # Use JavaScript to set value and submit
+                self.driver.execute_script("arguments[0].value = arguments[1];", search_input, parcel_id)
+                # Try to find and click search button, or trigger form submit
+                try:
+                    search_btn = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit'], .search-button")
+                    self.driver.execute_script("arguments[0].click();", search_btn)
+                except:
+                    # Trigger form submit via JavaScript
+                    self.driver.execute_script("arguments[0].form.submit();", search_input)
             time.sleep(3)
 
             tax_data['tax_collector_url'] = self.driver.current_url

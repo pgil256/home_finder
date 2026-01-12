@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Chrome for Testing paths
@@ -95,13 +95,15 @@ class PCPAOScraper:
             # Extract parcel IDs from results - they appear as links with format XX-XX-XX-XXXXX-XXX-XXXX
             links = self.driver.find_elements(By.TAG_NAME, "a")
             for link in links:
-                text = link.text.strip()
-                href = link.get_attribute('href') or ''
-                # Parcel IDs match pattern like 14-31-15-91961-004-0110
-                if text and len(text) == 23 and text.count('-') == 5:
-                    if text not in parcel_ids:
-                        parcel_ids.append(text)
-                        logger.debug(f"Found parcel: {text}")
+                try:
+                    text = link.text.strip()
+                    # Parcel IDs match pattern like 14-31-15-91961-004-0110
+                    if text and len(text) == 23 and text.count('-') == 5:
+                        if text not in parcel_ids:
+                            parcel_ids.append(text)
+                            logger.debug(f"Found parcel: {text}")
+                except StaleElementReferenceException:
+                    continue
 
             # Handle pagination if present
             page_num = 1
@@ -116,12 +118,20 @@ class PCPAOScraper:
                     # Re-extract parcel IDs from new page
                     links = self.driver.find_elements(By.TAG_NAME, "a")
                     for link in links:
-                        text = link.text.strip()
-                        if text and len(text) == 23 and text.count('-') == 5:
-                            if text not in parcel_ids:
-                                parcel_ids.append(text)
+                        try:
+                            text = link.text.strip()
+                            if text and len(text) == 23 and text.count('-') == 5:
+                                if text not in parcel_ids:
+                                    parcel_ids.append(text)
+                        except StaleElementReferenceException:
+                            continue
                 except NoSuchElementException:
                     break
+                except StaleElementReferenceException:
+                    # Page updated during navigation, re-fetch links
+                    logger.warning(f"Stale element on page {page_num}, retrying...")
+                    time.sleep(1)
+                    continue
 
         except Exception as e:
             logger.error(f"Error searching properties: {e}", exc_info=True)
