@@ -93,45 +93,76 @@ class PCPAOScraper:
             time.sleep(5)
 
             # Extract parcel IDs from results - they appear as links with format XX-XX-XX-XXXXX-XXX-XXXX
-            links = self.driver.find_elements(By.TAG_NAME, "a")
-            for link in links:
-                try:
-                    text = link.text.strip()
-                    # Parcel IDs match pattern like 14-31-15-91961-004-0110
-                    if text and len(text) == 23 and text.count('-') == 5:
-                        if text not in parcel_ids:
-                            parcel_ids.append(text)
-                            logger.debug(f"Found parcel: {text}")
-                except StaleElementReferenceException:
-                    continue
+            # Wait for DataTable to load
+            time.sleep(3)
 
-            # Handle pagination if present
+            def extract_parcel_ids_from_page():
+                """Extract parcel IDs from the current page's DataTable."""
+                found_on_page = []
+                links = self.driver.find_elements(By.TAG_NAME, "a")
+                logger.info(f"Found {len(links)} total links on page")
+
+                for link in links:
+                    try:
+                        text = link.text.strip()
+                        # Parcel IDs match pattern like 14-31-15-91961-004-0110
+                        if text and len(text) == 23 and text.count('-') == 5:
+                            if text not in parcel_ids:
+                                found_on_page.append(text)
+                                parcel_ids.append(text)
+                    except StaleElementReferenceException:
+                        continue
+
+                return found_on_page
+
+            # Extract from first page
+            first_page_parcels = extract_parcel_ids_from_page()
+            logger.info(f"Page 1: Found {len(first_page_parcels)} NEW parcel IDs (total: {len(parcel_ids)})")
+
+            # Log some sample link texts to debug what we're seeing
+            try:
+                sample_links = self.driver.find_elements(By.TAG_NAME, "a")[:20]
+                sample_texts = [l.text.strip()[:50] for l in sample_links if l.text.strip()]
+                logger.info(f"Sample link texts: {sample_texts[:10]}")
+            except Exception as e:
+                logger.warning(f"Could not get sample links: {e}")
+
+            # Handle pagination if present - with safety limit
             page_num = 1
-            while True:
+            MAX_PAGES = 100  # Safety limit to prevent infinite loops
+            consecutive_empty_pages = 0
+
+            while page_num < MAX_PAGES:
                 try:
                     next_button = self.driver.find_element(By.CSS_SELECTOR, "a.paginate_button.next:not(.disabled)")
                     next_button.click()
-                    time.sleep(2)
+                    time.sleep(3)  # Wait longer for AJAX content to load
                     page_num += 1
-                    logger.info(f"Processing page {page_num}")
 
-                    # Re-extract parcel IDs from new page
-                    links = self.driver.find_elements(By.TAG_NAME, "a")
-                    for link in links:
-                        try:
-                            text = link.text.strip()
-                            if text and len(text) == 23 and text.count('-') == 5:
-                                if text not in parcel_ids:
-                                    parcel_ids.append(text)
-                        except StaleElementReferenceException:
-                            continue
+                    # Extract parcel IDs from new page
+                    page_parcels = extract_parcel_ids_from_page()
+                    logger.info(f"Page {page_num}: Found {len(page_parcels)} NEW parcel IDs (total: {len(parcel_ids)})")
+
+                    # If we're getting empty pages, something might be wrong
+                    if len(page_parcels) == 0:
+                        consecutive_empty_pages += 1
+                        if consecutive_empty_pages >= 3:
+                            logger.warning(f"3 consecutive empty pages, stopping pagination")
+                            break
+                    else:
+                        consecutive_empty_pages = 0
+
                 except NoSuchElementException:
+                    logger.info(f"No more pages (next button disabled or not found)")
                     break
                 except StaleElementReferenceException:
                     # Page updated during navigation, re-fetch links
                     logger.warning(f"Stale element on page {page_num}, retrying...")
                     time.sleep(1)
                     continue
+
+            if page_num >= MAX_PAGES:
+                logger.warning(f"Hit max page limit ({MAX_PAGES}), stopping pagination")
 
         except Exception as e:
             logger.error(f"Error searching properties: {e}", exc_info=True)
