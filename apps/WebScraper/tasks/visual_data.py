@@ -254,9 +254,16 @@ def analyze_data(self, pdf_result):
             current_plot, 100, description=f"Generating visual data ({i}%)"
         )
 
+    # Get the property count from database
+    from apps.WebScraper.models import PropertyListing
+    property_count = PropertyListing.objects.count()
+
     return {
+        'pdf': f'/static/reports/{final_pdf}' if final_pdf else None,
+        'excel': f'/static/reports/{excel_path}' if excel_path else None,
         'pdf_path': final_pdf,
         'excel_path': excel_path,
+        'count': property_count,
         'status': 'Analysis complete'
     }
 
