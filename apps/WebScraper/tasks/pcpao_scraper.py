@@ -92,26 +92,51 @@ class PCPAOScraper:
             logger.info("Search submitted, waiting for results...")
             time.sleep(5)
 
-            # Extract parcel IDs from results - they appear as links with format XX-XX-XX-XXXXX-XXX-XXXX
+            # Extract parcel IDs from DataTable results
+            # Parcel IDs are in table cells, NOT in anchor tags
             # Wait for DataTable to load
             time.sleep(3)
 
             def extract_parcel_ids_from_page():
                 """Extract parcel IDs from the current page's DataTable."""
                 found_on_page = []
-                links = self.driver.find_elements(By.TAG_NAME, "a")
-                logger.info(f"Found {len(links)} total links on page")
 
-                for link in links:
+                # Try multiple strategies to find parcel IDs
+                # Strategy 1: Look in table cells (DataTable rows)
+                try:
+                    cells = self.driver.find_elements(By.CSS_SELECTOR, "table tbody td")
+                    logger.info(f"Found {len(cells)} table cells on page")
+
+                    for cell in cells:
+                        try:
+                            text = cell.text.strip()
+                            # Parcel IDs match pattern like 14-31-15-91961-004-0110
+                            if text and len(text) == 23 and text.count('-') == 5:
+                                # Validate it looks like a parcel ID (starts with 2 digits)
+                                if text[:2].isdigit():
+                                    if text not in parcel_ids:
+                                        found_on_page.append(text)
+                                        parcel_ids.append(text)
+                        except StaleElementReferenceException:
+                            continue
+                except Exception as e:
+                    logger.warning(f"Error extracting from table cells: {e}")
+
+                # Strategy 2: Also check anchor tags (in case some are clickable)
+                if len(found_on_page) == 0:
                     try:
-                        text = link.text.strip()
-                        # Parcel IDs match pattern like 14-31-15-91961-004-0110
-                        if text and len(text) == 23 and text.count('-') == 5:
-                            if text not in parcel_ids:
-                                found_on_page.append(text)
-                                parcel_ids.append(text)
-                    except StaleElementReferenceException:
-                        continue
+                        links = self.driver.find_elements(By.TAG_NAME, "a")
+                        for link in links:
+                            try:
+                                text = link.text.strip()
+                                if text and len(text) == 23 and text.count('-') == 5:
+                                    if text[:2].isdigit() and text not in parcel_ids:
+                                        found_on_page.append(text)
+                                        parcel_ids.append(text)
+                            except StaleElementReferenceException:
+                                continue
+                    except Exception as e:
+                        logger.warning(f"Error extracting from links: {e}")
 
                 return found_on_page
 
@@ -119,13 +144,13 @@ class PCPAOScraper:
             first_page_parcels = extract_parcel_ids_from_page()
             logger.info(f"Page 1: Found {len(first_page_parcels)} NEW parcel IDs (total: {len(parcel_ids)})")
 
-            # Log some sample link texts to debug what we're seeing
+            # Log some sample cell texts to debug what we're seeing
             try:
-                sample_links = self.driver.find_elements(By.TAG_NAME, "a")[:20]
-                sample_texts = [l.text.strip()[:50] for l in sample_links if l.text.strip()]
-                logger.info(f"Sample link texts: {sample_texts[:10]}")
+                sample_cells = self.driver.find_elements(By.CSS_SELECTOR, "table tbody td")[:20]
+                sample_texts = [c.text.strip()[:50] for c in sample_cells if c.text.strip()]
+                logger.info(f"Sample cell texts: {sample_texts[:10]}")
             except Exception as e:
-                logger.warning(f"Could not get sample links: {e}")
+                logger.warning(f"Could not get sample cells: {e}")
 
             # Handle pagination if present - with safety limit
             page_num = 1
