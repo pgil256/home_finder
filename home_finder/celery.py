@@ -18,4 +18,7 @@ app.conf.update(
     task_send_sent_event=True,
     worker_send_task_events=True,
     result_persistent=True,
+    task_soft_time_limit=300,
+    task_time_limit=360,
+    worker_max_tasks_per_child=50,
 )

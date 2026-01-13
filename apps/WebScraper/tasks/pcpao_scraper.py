@@ -51,6 +51,10 @@ class PCPAOScraper:
         options.add_argument("--disable-gpu")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--window-size=1920,1080")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-plugins")
+        options.add_argument("--single-process")
+        options.add_argument("--memory-pressure-off")
 
         if os.path.exists(CHROMEDRIVER_BINARY):
             service = Service(CHROMEDRIVER_BINARY)

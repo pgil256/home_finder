@@ -35,4 +35,5 @@ print(f'Database name: {connection.settings_dict.get(\"NAME\", \"unknown\")}')
 echo "=== Starting Celery ===" >&2
 exec celery -A home_finder worker \
     --loglevel=info \
-    --concurrency=2
+    --concurrency=1 \
+    --max-memory-per-child=400000
