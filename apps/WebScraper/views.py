@@ -36,7 +36,7 @@ PROPERTY_TYPES = [
 
 def build_processing_pipeline(search_criteria, limit=10, user_email=None):
     """Build and launch the complete Pinellas County property data pipeline.
-    Returns the chain's AsyncResult for tracking progress of the first task.
+    Returns the AsyncResult for the first task to enable progress tracking.
     """
     # Build the chain: Property data -> Tax data -> Reports
     task_chain = chain(
@@ -51,7 +51,32 @@ def build_processing_pipeline(search_criteria, limit=10, user_email=None):
     if user_email:
         task_chain |= send_results_via_email.s(user_email)
 
-    return task_chain.apply_async()
+    # Freeze the chain to assign task IDs before applying
+    # This works in production (parent chain not available until execution)
+    frozen_chain = task_chain.freeze()
+
+    # Collect task IDs by traversing the frozen chain
+    task_ids = []
+    current = frozen_chain
+    while current:
+        task_ids.append(current.id)
+        # For chains, the next task is in .parent (reverse order)
+        current = getattr(current, 'parent', None)
+
+    # Reverse so first task is at index 0
+    task_ids.reverse()
+
+    # Store chain info in cache BEFORE applying
+    first_task_id = task_ids[0]
+    cache.set(f'chain:{first_task_id}', {
+        'task_ids': task_ids,
+        'total_tasks': len(task_ids),
+    }, timeout=3600)  # 1 hour TTL
+
+    # Now apply the frozen chain
+    task_chain.apply_async()
+
+    return AsyncResult(first_task_id)
 
 
 def web_scraper_view(request):
@@ -101,7 +126,19 @@ def scraping_progress(request, task_id):
 
 @csrf_exempt
 def get_task_status(request, task_id):
-    """API endpoint to get task status"""
+    """API endpoint to get task status with chain progress aggregation."""
+    # Check if this is part of a chain
+    chain_info = cache.get(f'chain:{task_id}')
+
+    if chain_info:
+        return _get_chain_status(task_id, chain_info)
+
+    # Single task progress (fallback)
+    return _get_single_task_status(task_id)
+
+
+def _get_single_task_status(task_id):
+    """Get status for a single task."""
     task = AsyncResult(task_id)
 
     if task.state == 'PENDING':
@@ -130,6 +167,81 @@ def get_task_status(request, task_id):
         }
 
     return JsonResponse(response)
+
+
+def _get_chain_status(first_task_id, chain_info):
+    """Get aggregated status across all tasks in a chain."""
+    task_ids = chain_info['task_ids']
+    total_tasks = chain_info['total_tasks']
+
+    # Find the currently active task and calculate overall progress
+    completed_tasks = 0
+    active_task = None
+    active_task_index = 0
+    last_result = None
+    failed = False
+    failure_info = None
+
+    for i, tid in enumerate(task_ids):
+        task = AsyncResult(tid)
+
+        if task.state == 'FAILURE':
+            failed = True
+            failure_info = str(task.info)
+            break
+        elif task.state == 'SUCCESS':
+            completed_tasks += 1
+            last_result = task.result
+        elif task.state in ('PENDING', 'STARTED', 'PROGRESS'):
+            active_task = task
+            active_task_index = i
+            break
+
+    if failed:
+        return JsonResponse({
+            'state': 'FAILURE',
+            'current': 100,
+            'total': 100,
+            'status': failure_info,
+        })
+
+    # All tasks completed
+    if completed_tasks == total_tasks:
+        return JsonResponse({
+            'state': 'SUCCESS',
+            'current': 100,
+            'total': 100,
+            'status': 'All tasks completed',
+            'result': last_result,
+        })
+
+    # Calculate overall progress
+    # Each task contributes equally to total progress
+    task_weight = 100 / total_tasks
+    base_progress = completed_tasks * task_weight
+
+    # Add progress from the active task
+    task_progress = 0
+    status = 'Processing...'
+
+    if active_task:
+        if active_task.state == 'PENDING':
+            status = f'Waiting for task {active_task_index + 1}/{total_tasks}...'
+        else:
+            info = active_task.info if isinstance(active_task.info, dict) else {}
+            task_progress = info.get('current', 0) / 100 * task_weight
+            status = info.get('status', f'Running task {active_task_index + 1}/{total_tasks}...')
+
+    overall_progress = int(base_progress + task_progress)
+
+    return JsonResponse({
+        'state': 'PROGRESS',
+        'current': overall_progress,
+        'total': 100,
+        'status': status,
+        'step': active_task_index + 1,
+        'total_steps': total_tasks,
+    })
 
 
 def property_dashboard(request):

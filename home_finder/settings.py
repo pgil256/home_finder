@@ -170,6 +170,21 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_ALWAYS_EAGER = config('CELERY_TASK_ALWAYS_EAGER', default=not bool(_redis_url), cast=bool)
 CELERY_TASK_EAGER_PROPAGATES = True
 
+# Cache configuration - use Redis if available for cross-process chain tracking
+if _redis_url:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _redis_url,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+
 # Email settings (example using Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
