@@ -180,8 +180,8 @@ class PCPAOScraper:
                     logger.warning(f"No property-details links found after {max_wait_seconds}s - search may have returned no results")
                     return parcels
 
-                # Small extra wait for any final rendering
-                time.sleep(1)
+                # Brief extra wait for any final rendering (reduced from 1s)
+                time.sleep(0.5)
 
             except TimeoutException:
                 logger.warning("No results table found - search may have returned no results")
@@ -230,8 +230,8 @@ class PCPAOScraper:
                             # Page is updating, keep waiting
                             continue
 
-                    # Extra wait for rendering stability
-                    time.sleep(1)
+                    # Brief wait for rendering stability (reduced from 1s)
+                    time.sleep(0.3)
 
                     # Extract with BeautifulSoup
                     page_parcels = self._extract_parcels_from_page(seen_ids)
@@ -423,12 +423,21 @@ class PCPAOScraper:
             else:
                 # Search for the parcel to get the detail URL
                 self.driver.get(self.SEARCH_URL)
-                time.sleep(2)
+                # Wait for search input instead of fixed sleep
+                WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.ID, "txtKeyWord"))
+                )
                 search_input = self.driver.find_element(By.ID, "txtKeyWord")
                 search_input.clear()
                 search_input.send_keys(parcel_id)
                 search_input.send_keys(Keys.RETURN)
-                time.sleep(4)
+                # Wait for results instead of fixed 4s sleep
+                try:
+                    WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "a[href*='property-details']"))
+                    )
+                except TimeoutException:
+                    time.sleep(1)  # Fallback short wait
 
                 soup = BeautifulSoup(self.driver.page_source, 'html.parser')
                 link = soup.select_one(f'a[href*="property-details"]')
@@ -441,7 +450,13 @@ class PCPAOScraper:
                     logger.warning(f"No detail link found for parcel {parcel_id}")
                     return property_data
 
-            time.sleep(3)
+            # Wait for page to load (reduced from 3s fixed sleep)
+            try:
+                WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "h2"))
+                )
+            except TimeoutException:
+                time.sleep(1)  # Fallback short wait
             property_data['appraiser_url'] = self.driver.current_url
 
             # Parse page with BeautifulSoup
@@ -538,7 +553,7 @@ class PCPAOScraper:
                 logger.info(f"Scraping property {i}/{len(parcels)}: {parcel_id}")
                 property_data = self.scrape_property_details(parcel_id, detail_url=detail_url)
                 properties.append(property_data)
-                time.sleep(1)
+                time.sleep(0.5)  # Reduced from 1s
 
         finally:
             self.close_driver()
