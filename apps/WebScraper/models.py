@@ -38,6 +38,7 @@ class PropertyListing(models.Model):
     # URLs for reference
     appraiser_url = models.URLField(null=True, blank=True)
     tax_collector_url = models.URLField(null=True, blank=True)
+    image_url = models.URLField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return f"{self.parcel_id} - {self.address}"
