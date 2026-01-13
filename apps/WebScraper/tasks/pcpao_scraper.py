@@ -404,6 +404,66 @@ class PCPAOScraper:
                 break
         return data
 
+    def _extract_property_image(self, soup: BeautifulSoup) -> Optional[str]:
+        """Extract property image URL from detail page.
+
+        PCPAO may have property photos in various locations. This method
+        attempts multiple selectors to find the primary property image.
+
+        Args:
+            soup: BeautifulSoup object of the property detail page
+
+        Returns:
+            Full URL to property image, or None if not found
+        """
+        # Common selectors for property photos on county appraiser sites
+        selectors = [
+            'img.property-photo',
+            'img.property-image',
+            'img[alt*="property"]',
+            'img[alt*="Property"]',
+            '.property-photo img',
+            '.property-image img',
+            '#property-photo img',
+            '.photo-gallery img',
+            '.main-photo img',
+            'img[src*="property"]',
+            'img[src*="parcel"]',
+        ]
+
+        for selector in selectors:
+            img = soup.select_one(selector)
+            if img and img.get('src'):
+                src = img['src']
+                # Handle relative URLs
+                if src.startswith('//'):
+                    return f"https:{src}"
+                elif src.startswith('/'):
+                    return f"{self.BASE_URL.rstrip('/')}{src}"
+                elif src.startswith('http'):
+                    return src
+
+        # Fallback: look for any large image that might be a property photo
+        for img in soup.find_all('img'):
+            src = img.get('src', '')
+            # Skip small icons, logos, and UI elements
+            if any(skip in src.lower() for skip in ['logo', 'icon', 'button', 'arrow', 'nav']):
+                continue
+            # Check for reasonable image dimensions if available
+            width = img.get('width', '')
+            height = img.get('height', '')
+            if width and height:
+                try:
+                    if int(width) >= 200 and int(height) >= 150:
+                        if src.startswith('/'):
+                            return f"{self.BASE_URL.rstrip('/')}{src}"
+                        elif src.startswith('http'):
+                            return src
+                except ValueError:
+                    pass
+
+        return None
+
     def scrape_property_details(self, parcel_id: str, detail_url: Optional[str] = None) -> Dict[str, Any]:
         """Scrape property details using BeautifulSoup for extraction.
 
@@ -517,13 +577,19 @@ class PCPAOScraper:
             valuation = self._get_valuation_data(soup)
             property_data.update(valuation)
 
+            # Extract property image URL
+            image_url = self._extract_property_image(soup)
+            if image_url:
+                property_data['image_url'] = image_url
+
         except Exception as e:
             logger.error(f"Error scraping property {parcel_id}: {e}")
 
         # Log extracted data for debugging
         logger.info(f"Scraped property {parcel_id}: address={property_data.get('address')}, "
                     f"city={property_data.get('city')}, market_value={property_data.get('market_value')}, "
-                    f"owner={property_data.get('owner_name')}, sqft={property_data.get('building_sqft')}")
+                    f"owner={property_data.get('owner_name')}, sqft={property_data.get('building_sqft')}, "
+                    f"image={'found' if property_data.get('image_url') else 'not found'}")
 
         return property_data
 
