@@ -15,16 +15,6 @@ fi
 echo "=== Running migrations ===" >&2
 python manage.py migrate
 
-# Show database connection info
-echo "=== Database Connection Test ===" >&2
-DJANGO_SETTINGS_MODULE=home_finder.settings python -c "
-import django
-django.setup()
-from django.db import connection
-print(f'Database engine: {connection.vendor}')
-print(f'Database name: {connection.settings_dict.get(\"NAME\", \"unknown\")}')
-"
-
 echo "=== Migrations complete! ===" >&2
 
 echo "=== Starting gunicorn on port ${PORT:-8000} ===" >&2
