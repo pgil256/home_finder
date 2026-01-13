@@ -373,6 +373,231 @@ def generate_plots_and_pdf(dataframe, current_count):
         else:
             logger.warning("Skipping Plot 8: Missing 'Property Type' or 'Estimated Monthly Payment' column")
 
+        # Plot 9: Market Value vs Assessed Value (Equity Analysis)
+        if has_columns(dataframe, "Listing Price", "Assessed Value"):
+            fig, ax = plt.subplots(figsize=(10, 6))
+            plot_df = dataframe[["Listing Price", "Assessed Value"]].dropna()
+            plot_df = plot_df[(plot_df["Listing Price"] > 0) & (plot_df["Assessed Value"] > 0)]
+
+            if len(plot_df) > 0:
+                scatter = ax.scatter(
+                    plot_df["Assessed Value"],
+                    plot_df["Listing Price"],
+                    c=COLORS['secondary'],
+                    alpha=0.6,
+                    s=80,
+                    edgecolors='white',
+                    linewidth=0.5,
+                )
+
+                # Add reference line (1:1 - where market = assessed)
+                max_val = max(plot_df["Listing Price"].max(), plot_df["Assessed Value"].max())
+                min_val = min(plot_df["Listing Price"].min(), plot_df["Assessed Value"].min())
+                ax.plot([min_val, max_val], [min_val, max_val], color=COLORS['text_light'],
+                       linestyle='--', linewidth=1.5, label='Equal Value Line', alpha=0.7)
+
+                ax.set_title('Market Value vs. Assessed Value (Equity Analysis)', pad=20)
+                ax.set_xlabel('Assessed Value')
+                ax.set_ylabel('Market Value')
+                format_currency_axis(ax, 'x')
+                format_currency_axis(ax, 'y')
+
+                # Add annotation
+                ax.annotate('Points above line = Positive Equity',
+                           xy=(0.05, 0.95), xycoords='axes fraction',
+                           fontsize=9, color=COLORS['accent'],
+                           bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+                ax.legend(loc='lower right')
+
+                plt.tight_layout()
+                pdf.savefig(fig, facecolor='white')
+                plt.close()
+                current_count += 1
+                logger.debug(f"Plot 9 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 9: Missing 'Listing Price' or 'Assessed Value' column")
+
+        # Plot 10: Tax Burden Analysis
+        if has_columns(dataframe, "Listing Price", "Tax Amount"):
+            fig, ax = plt.subplots(figsize=(10, 6))
+            plot_df = dataframe[["Listing Price", "Tax Amount"]].dropna()
+            plot_df = plot_df[(plot_df["Listing Price"] > 0) & (plot_df["Tax Amount"] > 0)]
+            plot_df["Tax Rate"] = (plot_df["Tax Amount"] / plot_df["Listing Price"]) * 100
+
+            if len(plot_df) > 0:
+                scatter = ax.scatter(
+                    plot_df["Listing Price"],
+                    plot_df["Tax Rate"],
+                    c=COLORS['warning'],
+                    alpha=0.6,
+                    s=80,
+                    edgecolors='white',
+                    linewidth=0.5,
+                )
+
+                # Add average line
+                avg_rate = plot_df["Tax Rate"].mean()
+                ax.axhline(avg_rate, color=COLORS['danger'], linestyle='--',
+                          linewidth=2, label=f'Avg Tax Rate: {avg_rate:.2f}%')
+
+                # Add Florida average reference
+                ax.axhline(1.8, color=COLORS['accent'], linestyle=':',
+                          linewidth=1.5, label='FL Avg: 1.8%', alpha=0.7)
+
+                ax.set_title('Tax Burden Analysis (Tax Rate by Property Value)', pad=20)
+                ax.set_xlabel('Market Value')
+                ax.set_ylabel('Effective Tax Rate (%)')
+                format_currency_axis(ax, 'x')
+
+                ax.legend(loc='upper right')
+
+                plt.tight_layout()
+                pdf.savefig(fig, facecolor='white')
+                plt.close()
+                current_count += 1
+                logger.debug(f"Plot 10 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 10: Missing 'Listing Price' or 'Tax Amount' column")
+
+        # Plot 11: Value Opportunity Quadrant
+        if has_columns(dataframe, "Price Per Sqft", "Listing Price"):
+            fig, ax = plt.subplots(figsize=(10, 8))
+            plot_df = dataframe[["Price Per Sqft", "Listing Price", "Property Type"]].dropna()
+            plot_df = plot_df[(plot_df["Price Per Sqft"] > 0) & (plot_df["Listing Price"] > 0)]
+
+            if len(plot_df) > 0:
+                avg_pps = plot_df["Price Per Sqft"].mean()
+                avg_price = plot_df["Listing Price"].mean()
+
+                # Color by quadrant
+                colors_list = []
+                for _, row in plot_df.iterrows():
+                    if row["Price Per Sqft"] < avg_pps and row["Listing Price"] < avg_price:
+                        colors_list.append(COLORS['accent'])  # Best deals
+                    elif row["Price Per Sqft"] < avg_pps and row["Listing Price"] >= avg_price:
+                        colors_list.append(COLORS['secondary'])  # Good value, higher price
+                    elif row["Price Per Sqft"] >= avg_pps and row["Listing Price"] < avg_price:
+                        colors_list.append(COLORS['warning'])  # Premium $/sqft, lower price
+                    else:
+                        colors_list.append(COLORS['danger'])  # Premium all around
+
+                scatter = ax.scatter(
+                    plot_df["Price Per Sqft"],
+                    plot_df["Listing Price"],
+                    c=colors_list,
+                    alpha=0.7,
+                    s=100,
+                    edgecolors='white',
+                    linewidth=0.5,
+                )
+
+                # Add quadrant lines
+                ax.axvline(avg_pps, color=COLORS['text_light'], linestyle='--', linewidth=1, alpha=0.7)
+                ax.axhline(avg_price, color=COLORS['text_light'], linestyle='--', linewidth=1, alpha=0.7)
+
+                # Quadrant labels
+                ax.annotate('BEST VALUE\nLow $/sqft, Low Price',
+                           xy=(0.15, 0.15), xycoords='axes fraction',
+                           fontsize=9, color=COLORS['accent'], fontweight='bold',
+                           ha='center', va='center',
+                           bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+                ax.annotate('PREMIUM\nHigh $/sqft, High Price',
+                           xy=(0.85, 0.85), xycoords='axes fraction',
+                           fontsize=9, color=COLORS['danger'], fontweight='bold',
+                           ha='center', va='center',
+                           bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+                ax.set_title('Value Opportunity Analysis', pad=20)
+                ax.set_xlabel('Price per Square Foot')
+                ax.set_ylabel('Total Price')
+                format_currency_axis(ax, 'y')
+
+                # Custom x-axis
+                from matplotlib.ticker import FuncFormatter
+                ax.xaxis.set_major_formatter(FuncFormatter(lambda x, p: f'${x:.0f}'))
+
+                plt.tight_layout()
+                pdf.savefig(fig, facecolor='white')
+                plt.close()
+                current_count += 1
+                logger.debug(f"Plot 11 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 11: Missing 'Price Per Sqft' or 'Listing Price' column")
+
+        # Plot 12: Geographic Price Comparison (if City data available)
+        if has_columns(dataframe, "City", "Listing Price"):
+            fig, ax = plt.subplots(figsize=(12, 7))
+            city_stats = dataframe.groupby("City")["Listing Price"].agg(['mean', 'count'])
+            city_stats = city_stats[city_stats['count'] >= 1].sort_values('mean', ascending=False).head(10)
+
+            if len(city_stats) > 0:
+                bars = ax.bar(range(len(city_stats)), city_stats['mean'].values,
+                             color=[CHART_COLORS[i % len(CHART_COLORS)] for i in range(len(city_stats))],
+                             edgecolor='white', linewidth=1, alpha=0.85)
+
+                ax.set_title('Average Property Value by City', pad=20)
+                ax.set_xlabel('City')
+                ax.set_ylabel('Average Market Value')
+                ax.set_xticks(range(len(city_stats)))
+                ax.set_xticklabels(city_stats.index, rotation=45, ha='right')
+                format_currency_axis(ax, 'y')
+
+                # Add count labels
+                for i, bar in enumerate(bars):
+                    count = city_stats['count'].iloc[i]
+                    ax.annotate(f'n={int(count)}',
+                               xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                               xytext=(0, 3),
+                               textcoords="offset points",
+                               ha='center', va='bottom',
+                               fontsize=8, color=COLORS['text_light'])
+
+                plt.tight_layout()
+                pdf.savefig(fig, facecolor='white')
+                plt.close()
+                current_count += 1
+                logger.debug(f"Plot 12 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 12: Missing 'City' or 'Listing Price' column")
+
+        # Plot 13: Tax Status Distribution (Pie Chart)
+        if 'Tax Status' in dataframe.columns:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            tax_status = dataframe['Tax Status'].value_counts()
+
+            if len(tax_status) > 0:
+                # Custom colors for tax status
+                status_colors = {
+                    'Paid': COLORS['accent'],
+                    'Unpaid': COLORS['danger'],
+                    'Partial': COLORS['warning'],
+                }
+                pie_colors = [status_colors.get(str(s), COLORS['secondary']) for s in tax_status.index]
+
+                wedges, texts, autotexts = ax.pie(tax_status.values, labels=tax_status.index,
+                                                   colors=pie_colors, autopct='%1.1f%%',
+                                                   startangle=90, explode=[0.02]*len(tax_status))
+
+                for autotext in autotexts:
+                    autotext.set_color('white')
+                    autotext.set_fontweight('bold')
+
+                ax.set_title('Tax Payment Status Distribution', pad=20, fontsize=14, fontweight='bold', color=COLORS['primary'])
+
+                # Add center circle for donut effect
+                centre_circle = plt.Circle((0,0), 0.50, fc='white')
+                ax.add_patch(centre_circle)
+
+                plt.tight_layout()
+                pdf.savefig(fig, facecolor='white')
+                plt.close()
+                current_count += 1
+                logger.debug(f"Plot 13 saved, current count: {current_count}")
+        else:
+            logger.warning("Skipping Plot 13: Missing 'Tax Status' column")
+
     logger.info(f"Generated {current_count} plots and saved to {pdf_filepath}")
     return pdf_filepath
 
@@ -390,6 +615,8 @@ COLUMN_MAPPING = {
     'bathrooms': 'Bathrooms',
     'city': 'City',
     'zip_code': 'ZIP Code',
+    'tax_status': 'Tax Status',
+    'delinquent': 'Delinquent',
 }
 
 
