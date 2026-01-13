@@ -375,11 +375,21 @@
             <article class="card card-hover p-4 animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}0ms">
                 <div class="flex flex-col sm:flex-row gap-4">
                     <!-- Thumbnail -->
+                    {% if property.image_url %}
+                    <img
+                        src="{{ property.image_url }}"
+                        alt="Property at {{ property.address }}"
+                        class="w-full sm:w-32 h-24 rounded-lg flex-shrink-0 object-cover"
+                        loading="lazy"
+                        onerror="this.onerror=null; this.outerHTML='<div class=\'w-full sm:w-32 h-24 bg-gradient-to-br from-charcoal-200 to-charcoal-300 rounded-lg flex-shrink-0 flex items-center justify-center\'><svg class=\'w-8 h-8 text-charcoal-400\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\' stroke-width=\'1\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6\' /></svg></div>';"
+                    >
+                    {% else %}
                     <div class="w-full sm:w-32 h-24 bg-gradient-to-br from-charcoal-200 to-charcoal-300 rounded-lg flex-shrink-0 flex items-center justify-center">
                         <svg class="w-8 h-8 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
                     </div>
+                    {% endif %}
 
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
