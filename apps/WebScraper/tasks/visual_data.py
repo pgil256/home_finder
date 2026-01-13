@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -14,11 +15,14 @@ logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-excel_path = settings.EXCEL_PATH
+# Reports directory in media
+REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
+os.makedirs(REPORTS_DIR, exist_ok=True)
 
 
 def generate_plots_and_pdf(dataframe, current_count):
     pdf_filename = "Data_Analysis.pdf"
+    pdf_filepath = os.path.join(REPORTS_DIR, pdf_filename)
     current_count = 0
     logger.info("Starting to generate plots and save them to a PDF")
 
@@ -31,7 +35,7 @@ def generate_plots_and_pdf(dataframe, current_count):
                 return False
         return True
 
-    with PdfPages(pdf_filename) as pdf:
+    with PdfPages(pdf_filepath) as pdf:
         # Plot 1: Histogram of Listing Prices
         if has_columns(dataframe, "Listing Price"):
             plt.figure(figsize=(10, 6))
@@ -186,8 +190,8 @@ def generate_plots_and_pdf(dataframe, current_count):
         else:
             logger.warning("Skipping Plot 8: Missing 'Property Type' or 'Estimated Monthly Payment' column")
 
-    logger.info(f"Generated {current_count} plots and saved to {pdf_filename}")
-    return pdf_filename
+    logger.info(f"Generated {current_count} plots and saved to {pdf_filepath}")
+    return pdf_filepath
 
 
 # Column mapping from model field names to display names for visualization
@@ -211,13 +215,21 @@ COLUMN_MAPPING = {
 def analyze_data(self, pdf_result):
     # Extract file paths from chain result
     pdf_path = pdf_result.get('pdf_path') if isinstance(pdf_result, dict) else None
-    excel_path = pdf_result.get('excel_path', 'PropertyListings.xlsx') if isinstance(pdf_result, dict) else 'PropertyListings.xlsx'
+    excel_path = pdf_result.get('excel_path') if isinstance(pdf_result, dict) else None
+
+    # Default to REPORTS_DIR if not provided
+    if not excel_path:
+        excel_path = os.path.join(REPORTS_DIR, 'PropertyListings.xlsx')
 
     if not pdf_path:
         logger.warning("No PDF path provided, skipping visualization")
+        # Generate media URL for excel
+        excel_filename = os.path.basename(excel_path)
         return {
             'pdf_path': pdf_path,
             'excel_path': excel_path,
+            'pdf': None,
+            'excel': f'/media/reports/{excel_filename}' if os.path.exists(excel_path) else None,
             'status': 'Skipped visualization - no PDF available'
         }
 
@@ -245,7 +257,7 @@ def analyze_data(self, pdf_result):
     current_plot = 0
     logger.debug("Starting to generate plots for data analysis")
     analysis_pdf = generate_plots_and_pdf(df, current_plot)
-    final_pdf = concatenate_pdfs("Real_Estate_Listings.pdf", analysis_pdf)
+    final_pdf = concatenate_pdfs(pdf_path, analysis_pdf)
     progress_recorder = ProgressRecorder(self)
 
     # Increment progress from 75 to 100
@@ -258,9 +270,13 @@ def analyze_data(self, pdf_result):
     from apps.WebScraper.models import PropertyListing
     property_count = PropertyListing.objects.count()
 
+    # Generate media URLs from file paths
+    pdf_filename = os.path.basename(final_pdf) if final_pdf else None
+    excel_filename = os.path.basename(excel_path) if excel_path else None
+
     return {
-        'pdf': f'/static/reports/{final_pdf}' if final_pdf else None,
-        'excel': f'/static/reports/{excel_path}' if excel_path else None,
+        'pdf': f'/media/reports/{pdf_filename}' if pdf_filename else None,
+        'excel': f'/media/reports/{excel_filename}' if excel_filename else None,
         'pdf_path': final_pdf,
         'excel_path': excel_path,
         'count': property_count,
@@ -270,7 +286,8 @@ def analyze_data(self, pdf_result):
 
 def concatenate_pdfs(base_pdf, analysis_pdf):
     logger.info("Concatenating base PDF and analysis PDF into a single document")
-    output_pdf = "Real_Estate_Report.pdf"
+    output_filename = "Real_Estate_Report.pdf"
+    output_filepath = os.path.join(REPORTS_DIR, output_filename)
     merger = PdfMerger()
 
     # Check if base PDF exists and has pages
@@ -297,10 +314,10 @@ def concatenate_pdfs(base_pdf, analysis_pdf):
 
     # Only write if we have pages to write
     if len(merger.pages) > 0:
-        merger.write(output_pdf)
+        merger.write(output_filepath)
         merger.close()
-        logger.info(f"Final PDF report generated at {output_pdf}")
-        return output_pdf
+        logger.info(f"Final PDF report generated at {output_filepath}")
+        return output_filepath
     else:
         merger.close()
         logger.warning("No pages to merge, returning base PDF path")

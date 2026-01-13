@@ -27,6 +27,5 @@ urlpatterns = [
     path("celery-progress/", include("celery_progress.urls")),
 ]
 
-# Serve media files through Django if in development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve media files through Django (needed for dynamically generated reports)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

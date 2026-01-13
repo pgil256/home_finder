@@ -1,10 +1,12 @@
 import logging
+import os
 from datetime import datetime
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
 from celery import shared_task
+from django.conf import settings
 from apps.KeywordSelection.models import Keyword
 from apps.WebScraper.models import PropertyListing
 from celery_progress.backend import ProgressRecorder
@@ -12,6 +14,10 @@ from celery_progress.backend import ProgressRecorder
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+# Reports directory in media
+REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
+os.makedirs(REPORTS_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -82,9 +88,10 @@ def generate_spreadsheet(columns, listings):
         ws.column_dimensions[column[0].column_letter].width = max_length
 
     filename = "PropertyListings.xlsx"
-    wb.save(filename)
-    logger.info(f"Spreadsheet saved to {filename}")
-    return "Spreadsheet generated successfully!"
+    filepath = os.path.join(REPORTS_DIR, filename)
+    wb.save(filepath)
+    logger.info(f"Spreadsheet saved to {filepath}")
+    return filepath
 
 
 def quick_sort(arr, compare_func):
@@ -156,7 +163,7 @@ def generate_sorted_properties(self, tax_result):
     progress_recorder.set_progress(35, 100, description="Sorted properties")
 
     logger.info("Sorted properties, generating spreadsheet")
-    generate_spreadsheet(columns, sorted_properties)
+    excel_filepath = generate_spreadsheet(columns, sorted_properties)
     progress_recorder.set_progress(45, 100, description="Generated spreadsheet")
 
     logger.info("Generating PDF for sorted properties")
@@ -167,5 +174,5 @@ def generate_sorted_properties(self, tax_result):
     return {
         'sorted_properties': sorted_properties[:10],
         'columns': columns,
-        'excel_path': 'PropertyListings.xlsx'
+        'excel_path': excel_filepath
     }

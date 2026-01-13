@@ -1,4 +1,5 @@
 import logging
+import os
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -13,6 +14,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.units import inch
 from celery import shared_task
+from django.conf import settings
 from celery_progress.backend import ProgressRecorder
 
 # Setup logging
@@ -20,6 +22,10 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+# Reports directory in media
+REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
+os.makedirs(REPORTS_DIR, exist_ok=True)
 
 
 def get_custom_styles():
@@ -64,7 +70,8 @@ def generate_listing_pdf(self, sort_result):
     excel_path = sort_result.get('excel_path', 'PropertyListings.xlsx')
 
     filename = "Real_Estate_Listings.pdf"
-    doc = SimpleDocTemplate(filename, pagesize=letter)
+    filepath = os.path.join(REPORTS_DIR, filename)
+    doc = SimpleDocTemplate(filepath, pagesize=letter)
     story = []
     styles = get_custom_styles()
 
@@ -111,10 +118,10 @@ def generate_listing_pdf(self, sort_result):
     try:
         doc.build(story)
         progress_recorder.set_progress(75, 100, description="Listing PDF generated")
-        logger.info(f"PDF generated successfully at {filename}")
+        logger.info(f"PDF generated successfully at {filepath}")
         return {
             "status": "PDF generated successfully",
-            "pdf_path": filename,
+            "pdf_path": filepath,
             "excel_path": excel_path
         }
     except Exception as e:
