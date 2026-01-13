@@ -39,7 +39,15 @@ def fetch_property_listings():
         ]  # Safeguard against None fields
 
     listings = PropertyListing.objects.values_list(*fields, named=True)
-    logger.debug(f"Fetched {len(listings)} listings with fields: {fields}")
+    logger.info(f"Database contains {len(listings)} property listings")
+
+    # Log sample data for debugging
+    if listings:
+        sample = listings[0]
+        logger.info(f"Sample listing: parcel_id={getattr(sample, 'parcel_id', 'N/A')}, "
+                    f"address={getattr(sample, 'address', 'N/A')}, "
+                    f"market_value={getattr(sample, 'market_value', 'N/A')}")
+
     return [(field, field) for field in fields], listings
 
 
@@ -91,6 +99,14 @@ def generate_spreadsheet(columns, listings):
     filepath = os.path.join(REPORTS_DIR, filename)
     wb.save(filepath)
     logger.info(f"Spreadsheet saved to {filepath}")
+
+    # Verify file was created
+    if os.path.exists(filepath):
+        file_size = os.path.getsize(filepath)
+        logger.info(f"File verified: {filepath} ({file_size} bytes)")
+    else:
+        logger.error(f"File NOT created: {filepath}")
+
     return filepath
 
 

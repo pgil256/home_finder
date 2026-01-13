@@ -505,6 +505,11 @@ class PCPAOScraper:
         except Exception as e:
             logger.error(f"Error scraping property {parcel_id}: {e}")
 
+        # Log extracted data for debugging
+        logger.info(f"Scraped property {parcel_id}: address={property_data.get('address')}, "
+                    f"city={property_data.get('city')}, market_value={property_data.get('market_value')}, "
+                    f"owner={property_data.get('owner_name')}, sqft={property_data.get('building_sqft')}")
+
         return property_data
 
     def scrape_by_criteria(self, search_criteria: Dict[str, Any], limit: Optional[int] = None) -> List[Dict[str, Any]]:

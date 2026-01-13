@@ -35,25 +35,30 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
 
             parcel_id = property_data.get('parcel_id')
             if parcel_id:
+                defaults = {
+                    'address': property_data.get('address', ''),
+                    'city': property_data.get('city', ''),
+                    'zip_code': property_data.get('zip_code', ''),
+                    'owner_name': property_data.get('owner_name'),
+                    'market_value': property_data.get('market_value'),
+                    'assessed_value': property_data.get('assessed_value'),
+                    'building_sqft': property_data.get('building_sqft'),
+                    'year_built': property_data.get('year_built'),
+                    'bedrooms': property_data.get('bedrooms'),
+                    'bathrooms': property_data.get('bathrooms'),
+                    'property_type': property_data.get('property_type', 'Unknown'),
+                    'land_size': property_data.get('land_size'),
+                    'lot_sqft': property_data.get('lot_sqft'),
+                    'appraiser_url': property_data.get('appraiser_url'),
+                }
+                logger.info(f"Saving property {parcel_id} to database: "
+                            f"address={defaults['address']}, city={defaults['city']}, "
+                            f"market_value={defaults['market_value']}")
                 listing, created = PropertyListing.objects.update_or_create(
                     parcel_id=parcel_id,
-                    defaults={
-                        'address': property_data.get('address', ''),
-                        'city': property_data.get('city', ''),
-                        'zip_code': property_data.get('zip_code', ''),
-                        'owner_name': property_data.get('owner_name'),
-                        'market_value': property_data.get('market_value'),
-                        'assessed_value': property_data.get('assessed_value'),
-                        'building_sqft': property_data.get('building_sqft'),
-                        'year_built': property_data.get('year_built'),
-                        'bedrooms': property_data.get('bedrooms'),
-                        'bathrooms': property_data.get('bathrooms'),
-                        'property_type': property_data.get('property_type', 'Unknown'),
-                        'land_size': property_data.get('land_size'),
-                        'lot_sqft': property_data.get('lot_sqft'),
-                        'appraiser_url': property_data.get('appraiser_url'),
-                    }
+                    defaults=defaults
                 )
+                logger.info(f"Property {parcel_id} {'created' if created else 'updated'} in database (pk={listing.pk})")
                 property_ids.append(parcel_id)
 
         progress_recorder.set_progress(100, 100, description=f"Completed {total_properties} properties")
