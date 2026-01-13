@@ -114,7 +114,14 @@ class TaxCollectorScraper:
             # Use direct URL with parcel ID search parameter
             search_url = f"{self.SEARCH_URL}?search={parcel_id}"
             self.driver.get(search_url)
-            time.sleep(4)
+            # Wait for page load (reduced from 4s fixed sleep)
+            try:
+                WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "body"))
+                )
+                time.sleep(0.5)  # Brief stabilization wait
+            except TimeoutException:
+                pass
 
             tax_data['tax_collector_url'] = self.driver.current_url
 
@@ -197,7 +204,7 @@ class TaxCollectorScraper:
                 logger.info(f"Scraping tax info {i}/{len(parcel_ids)}: {parcel_id}")
                 tax_data = self.scrape_tax_info(parcel_id)
                 tax_data_list.append(tax_data)
-                time.sleep(1)
+                time.sleep(0.3)  # Reduced from 1s
 
         finally:
             self.close_driver()
