@@ -3,251 +3,370 @@
 {% block title %}Help{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
+<div class="max-w-6xl mx-auto">
 
     <!-- Hero Section -->
-    <div class="text-center mb-12">
-        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 shadow-glow-primary mb-6">
-            <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-            </svg>
+    <section class="relative py-8 md:py-16 mb-12 md:mb-20">
+        <!-- Decorative background -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-50 translate-x-1/2 -translate-y-1/2"></div>
         </div>
-        <h1 class="font-display text-4xl md:text-5xl font-bold text-charcoal-800 mb-4">
-            How It Works
-        </h1>
-        <p class="text-lg text-charcoal-500 max-w-2xl mx-auto leading-relaxed">
-            Turn your property search criteria into comprehensive reports in three simple steps.
-        </p>
-    </div>
 
-    <!-- Workflow Steps -->
-    <div class="relative mb-12">
+        <div class="relative">
+            <!-- Overline -->
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-px w-12 bg-primary-400"></div>
+                <span class="text-sm font-medium tracking-widest uppercase text-primary-600">Getting Started</span>
+            </div>
 
-        <!-- Connecting line (visible on md+) -->
-        <div class="hidden md:block absolute left-1/2 top-24 bottom-24 w-0.5 bg-gradient-to-b from-primary-200 via-primary-400 to-primary-200 -translate-x-1/2"></div>
+            <!-- Large hero text -->
+            <h1 class="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-charcoal-800 leading-[1.1] mb-8 max-w-4xl">
+                From search to
+                <span class="relative inline-block">
+                    <span class="relative z-10">reports</span>
+                    <span class="absolute bottom-2 left-0 right-0 h-3 md:h-4 bg-primary-200 -z-0 -rotate-1"></span>
+                </span>
+                in minutes.
+            </h1>
 
-        <!-- Step 1 -->
-        <div class="relative flex flex-col md:flex-row items-center gap-6 mb-8">
-            <div class="flex-1 md:text-right order-2 md:order-1">
-                <div class="bg-white rounded-2xl border border-charcoal-100 p-6 hover:shadow-soft transition-shadow duration-300">
-                    <h3 class="font-display text-xl font-semibold text-charcoal-800 mb-3">Select Your Keywords</h3>
-                    <p class="text-charcoal-500 mb-4">
-                        Choose the search criteria that matter most to you: cities, ZIP codes, property types, and price ranges.
+            <!-- Subheading -->
+            <p class="text-xl md:text-2xl text-charcoal-500 max-w-2xl leading-relaxed">
+                Turn your property search criteria into comprehensive, downloadable reports in three simple steps.
+            </p>
+        </div>
+    </section>
+
+    <!-- Workflow Steps - Horizontal Timeline -->
+    <section class="mb-16 md:mb-24">
+        <div class="flex items-center gap-3 mb-12">
+            <div class="h-px w-12 bg-charcoal-300"></div>
+            <span class="text-sm font-medium tracking-widest uppercase text-charcoal-500">The Process</span>
+        </div>
+
+        <!-- Steps Container -->
+        <div class="relative">
+            <!-- Connecting line (desktop) -->
+            <div class="hidden lg:block absolute top-24 left-[calc(16.67%-20px)] right-[calc(16.67%-20px)] h-0.5 bg-gradient-to-r from-primary-300 via-coral-300 to-success-300"></div>
+
+            <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
+                <!-- Step 1 -->
+                <div class="relative group">
+                    <!-- Large step number -->
+                    <div class="relative z-10 w-12 h-12 md:w-16 md:h-16 mx-auto mb-6 lg:mb-8">
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
+                        <div class="relative w-full h-full bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-glow-primary">
+                            <span class="font-display text-2xl md:text-3xl font-bold text-white">1</span>
+                        </div>
+                    </div>
+
+                    <!-- Card -->
+                    <div class="bg-white rounded-3xl border border-charcoal-100 p-6 md:p-8 hover:shadow-soft-lg transition-all duration-300 h-full">
+                        <div class="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mb-5">
+                            <svg class="w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59" />
+                            </svg>
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-charcoal-800 mb-3">Select Keywords</h3>
+                        <p class="text-charcoal-500 mb-5 leading-relaxed">
+                            Choose what matters to you: cities, ZIP codes, property types, and price ranges.
+                        </p>
+
+                        <ul class="space-y-2">
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Click "Search Properties" to begin</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Pick relevant search criteria</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Drag to rank by importance</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative group">
+                    <!-- Large step number -->
+                    <div class="relative z-10 w-12 h-12 md:w-16 md:h-16 mx-auto mb-6 lg:mb-8">
+                        <div class="absolute inset-0 bg-gradient-to-br from-coral-400 to-coral-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
+                        <div class="relative w-full h-full bg-gradient-to-br from-coral-500 to-coral-600 rounded-2xl flex items-center justify-center" style="box-shadow: 0 0 24px -4px rgba(251, 113, 133, 0.4);">
+                            <span class="font-display text-2xl md:text-3xl font-bold text-white">2</span>
+                        </div>
+                    </div>
+
+                    <!-- Card -->
+                    <div class="bg-white rounded-3xl border border-charcoal-100 p-6 md:p-8 hover:shadow-soft-lg transition-all duration-300 h-full">
+                        <div class="w-14 h-14 rounded-2xl bg-coral-50 flex items-center justify-center mb-5">
+                            <svg class="w-7 h-7 text-coral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                            </svg>
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-charcoal-800 mb-3">Complete the Form</h3>
+                        <p class="text-charcoal-500 mb-5 leading-relaxed">
+                            A customized form appears based on your keywords. Fill in the specific values you want.
+                        </p>
+
+                        <ul class="space-y-2">
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-coral-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Enter specific cities or ZIPs</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-coral-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Set price range & property type</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-coral-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Hit submit and we'll do the rest</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative group">
+                    <!-- Large step number -->
+                    <div class="relative z-10 w-12 h-12 md:w-16 md:h-16 mx-auto mb-6 lg:mb-8">
+                        <div class="absolute inset-0 bg-gradient-to-br from-success-400 to-success-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
+                        <div class="relative w-full h-full bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center" style="box-shadow: 0 0 24px -4px rgba(16, 185, 129, 0.4);">
+                            <span class="font-display text-2xl md:text-3xl font-bold text-white">3</span>
+                        </div>
+                    </div>
+
+                    <!-- Card -->
+                    <div class="bg-white rounded-3xl border border-charcoal-100 p-6 md:p-8 hover:shadow-soft-lg transition-all duration-300 h-full">
+                        <div class="w-14 h-14 rounded-2xl bg-success-50 flex items-center justify-center mb-5">
+                            <svg class="w-7 h-7 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                        </div>
+                        <h3 class="font-display text-xl font-bold text-charcoal-800 mb-3">Download Reports</h3>
+                        <p class="text-charcoal-500 mb-5 leading-relaxed">
+                            Once processing completes, download three comprehensive documents with your property data.
+                        </p>
+
+                        <ul class="space-y-2">
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Visual market analysis charts</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>PDF listing of matched properties</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
+                                <svg class="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Excel spreadsheet with full data</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What You'll Get - Bold visual cards -->
+    <section class="mb-16 md:mb-24">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="h-px w-12 bg-charcoal-300"></div>
+            <span class="text-sm font-medium tracking-widest uppercase text-charcoal-500">Your Reports</span>
+        </div>
+
+        <h2 class="font-display text-3xl md:text-4xl font-bold text-charcoal-800 mb-10 max-w-xl">
+            Three comprehensive outputs, ready for download.
+        </h2>
+
+        <div class="grid md:grid-cols-3 gap-4 md:gap-6">
+            <!-- Market Visuals Card -->
+            <div class="group relative bg-gradient-to-br from-violet-500 to-violet-600 rounded-3xl p-6 md:p-8 text-white overflow-hidden">
+                <!-- Decorative element -->
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-violet-400/30 rounded-full blur-xl -translate-x-1/2 translate-y-1/2"></div>
+
+                <div class="relative">
+                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
+                    </div>
+
+                    <div class="text-xs font-medium uppercase tracking-wider text-violet-200 mb-2">Visualization</div>
+                    <h3 class="font-display text-2xl font-bold mb-3">Market Visuals</h3>
+                    <p class="text-violet-100 text-sm leading-relaxed">
+                        Charts and graphs showing price distributions, property counts, and market trends for your search area.
                     </p>
-                    <ul class="space-y-2 text-sm text-charcoal-600">
-                        <li class="flex items-center gap-2 md:justify-end">
-                            <span>Click "Search Properties" to begin</span>
-                            <svg class="w-4 h-4 text-primary-500 md:order-first" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </li>
-                        <li class="flex items-center gap-2 md:justify-end">
-                            <span>Pick keywords relevant to your search</span>
-                            <svg class="w-4 h-4 text-primary-500 md:order-first" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </li>
-                        <li class="flex items-center gap-2 md:justify-end">
-                            <span>Drag to rank by importance</span>
-                            <svg class="w-4 h-4 text-primary-500 md:order-first" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </li>
-                    </ul>
                 </div>
             </div>
 
-            <!-- Step Number -->
-            <div class="relative z-10 order-1 md:order-2">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-glow-primary">
-                    <span class="font-display text-2xl font-bold text-white">1</span>
-                </div>
-            </div>
+            <!-- PDF Report Card -->
+            <div class="group relative bg-gradient-to-br from-rose-500 to-rose-600 rounded-3xl p-6 md:p-8 text-white overflow-hidden">
+                <!-- Decorative element -->
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-rose-400/30 rounded-full blur-xl -translate-x-1/2 translate-y-1/2"></div>
 
-            <div class="flex-1 order-3 hidden md:block"></div>
-        </div>
+                <div class="relative">
+                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                    </div>
 
-        <!-- Step 2 -->
-        <div class="relative flex flex-col md:flex-row items-center gap-6 mb-8">
-            <div class="flex-1 hidden md:block"></div>
-
-            <!-- Step Number -->
-            <div class="relative z-10">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-glow-primary">
-                    <span class="font-display text-2xl font-bold text-white">2</span>
-                </div>
-            </div>
-
-            <div class="flex-1">
-                <div class="bg-white rounded-2xl border border-charcoal-100 p-6 hover:shadow-soft transition-shadow duration-300">
-                    <h3 class="font-display text-xl font-semibold text-charcoal-800 mb-3">Complete the Search Form</h3>
-                    <p class="text-charcoal-500 mb-4">
-                        Based on your keywords, a customized form appears. Fill in the specific values you're looking for.
+                    <div class="text-xs font-medium uppercase tracking-wider text-rose-200 mb-2">Document</div>
+                    <h3 class="font-display text-2xl font-bold mb-3">PDF Report</h3>
+                    <p class="text-rose-100 text-sm leading-relaxed">
+                        A formatted document listing each property with key details: address, value, size, and tax information.
                     </p>
-                    <ul class="space-y-2 text-sm text-charcoal-600">
-                        <li class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            <span>Enter specific cities or ZIP codes</span>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            <span>Set price range and property type</span>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            <span>Hit submit and let us do the rest</span>
-                        </li>
-                    </ul>
                 </div>
-            </div>
-        </div>
-
-        <!-- Step 3 -->
-        <div class="relative flex flex-col md:flex-row items-center gap-6">
-            <div class="flex-1 md:text-right order-2 md:order-1">
-                <div class="bg-white rounded-2xl border border-charcoal-100 p-6 hover:shadow-soft transition-shadow duration-300">
-                    <h3 class="font-display text-xl font-semibold text-charcoal-800 mb-3">Download Your Reports</h3>
-                    <p class="text-charcoal-500 mb-4">
-                        Once processing completes, you'll receive three downloadable documents with your property data.
-                    </p>
-                    <ul class="space-y-2 text-sm text-charcoal-600">
-                        <li class="flex items-center gap-2 md:justify-end">
-                            <span>Visual charts summarizing the market</span>
-                            <svg class="w-4 h-4 text-primary-500 md:order-first" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </li>
-                        <li class="flex items-center gap-2 md:justify-end">
-                            <span>PDF listing of matched properties</span>
-                            <svg class="w-4 h-4 text-primary-500 md:order-first" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </li>
-                        <li class="flex items-center gap-2 md:justify-end">
-                            <span>Excel spreadsheet with full data</span>
-                            <svg class="w-4 h-4 text-primary-500 md:order-first" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Step Number -->
-            <div class="relative z-10 order-1 md:order-2">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-glow-primary">
-                    <span class="font-display text-2xl font-bold text-white">3</span>
-                </div>
-            </div>
-
-            <div class="flex-1 order-3 hidden md:block"></div>
-        </div>
-
-    </div>
-
-    <!-- What's in the Reports Section -->
-    <div class="mb-12">
-        <h2 class="font-display text-2xl font-bold text-charcoal-800 text-center mb-8">What You'll Get</h2>
-
-        <div class="grid md:grid-cols-3 gap-6">
-            <!-- Visual Data Card -->
-            <div class="group bg-white rounded-2xl border border-charcoal-100 p-6 text-center hover:border-primary-200 hover:shadow-soft transition-all duration-300">
-                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-100 to-violet-200 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-7 h-7 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                    </svg>
-                </div>
-                <h3 class="font-display text-lg font-semibold text-charcoal-800 mb-2">Market Visuals</h3>
-                <p class="text-charcoal-500 text-sm">
-                    Charts and graphs showing price distributions, property counts, and market trends for your search area.
-                </p>
-            </div>
-
-            <!-- PDF Card -->
-            <div class="group bg-white rounded-2xl border border-charcoal-100 p-6 text-center hover:border-primary-200 hover:shadow-soft transition-all duration-300">
-                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-7 h-7 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                </div>
-                <h3 class="font-display text-lg font-semibold text-charcoal-800 mb-2">PDF Report</h3>
-                <p class="text-charcoal-500 text-sm">
-                    A formatted document listing each property with key details: address, value, size, and tax information.
-                </p>
             </div>
 
             <!-- Excel Card -->
-            <div class="group bg-white rounded-2xl border border-charcoal-100 p-6 text-center hover:border-primary-200 hover:shadow-soft transition-all duration-300">
-                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-7 h-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
-                    </svg>
+            <div class="group relative bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 md:p-8 text-white overflow-hidden">
+                <!-- Decorative element -->
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-emerald-400/30 rounded-full blur-xl -translate-x-1/2 translate-y-1/2"></div>
+
+                <div class="relative">
+                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
+                        </svg>
+                    </div>
+
+                    <div class="text-xs font-medium uppercase tracking-wider text-emerald-200 mb-2">Spreadsheet</div>
+                    <h3 class="font-display text-2xl font-bold mb-3">Excel Data</h3>
+                    <p class="text-emerald-100 text-sm leading-relaxed">
+                        Full dataset with all property details. Filter, sort, and analyze the data however you need.
+                    </p>
                 </div>
-                <h3 class="font-display text-lg font-semibold text-charcoal-800 mb-2">Excel Spreadsheet</h3>
-                <p class="text-charcoal-500 text-sm">
-                    Full dataset with all property details. Filter, sort, and analyze the data however you need.
-                </p>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Data Sources Info -->
-    <div class="bg-gradient-to-br from-charcoal-50 to-white rounded-2xl border border-charcoal-100 p-8 mb-8">
-        <div class="flex items-start gap-4">
-            <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center">
-                <svg class="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-                </svg>
-            </div>
+    <section class="mb-16 md:mb-24">
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+            <!-- Content -->
             <div>
-                <h2 class="font-display text-xl font-semibold text-charcoal-800 mb-2">Where Does the Data Come From?</h2>
-                <p class="text-charcoal-600 leading-relaxed mb-4">
-                    All property information is sourced directly from official Pinellas County government websites:
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="h-px w-12 bg-charcoal-300"></div>
+                    <span class="text-sm font-medium tracking-widest uppercase text-charcoal-500">Data Sources</span>
+                </div>
+
+                <h2 class="font-display text-3xl md:text-4xl font-bold text-charcoal-800 mb-6">
+                    Powered by official county records.
+                </h2>
+
+                <p class="text-charcoal-600 text-lg leading-relaxed mb-8">
+                    All property information is sourced directly from official Pinellas County government websites, ensuring accuracy and reliability.
                 </p>
-                <div class="grid sm:grid-cols-2 gap-4">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-success-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
+
+                <div class="space-y-4">
+                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-charcoal-100">
+                        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
                         <div>
-                            <p class="font-medium text-charcoal-700">Property Appraiser</p>
+                            <p class="font-display font-semibold text-charcoal-800">Property Appraiser</p>
                             <p class="text-sm text-charcoal-500">Values, ownership, building details</p>
                         </div>
                     </div>
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-success-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
+
+                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-charcoal-100">
+                        <div class="w-10 h-10 rounded-xl bg-coral-100 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-coral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+                            </svg>
+                        </div>
                         <div>
-                            <p class="font-medium text-charcoal-700">Tax Collector</p>
+                            <p class="font-display font-semibold text-charcoal-800">Tax Collector</p>
                             <p class="text-sm text-charcoal-500">Tax amounts, payment status</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Support Section -->
-    <div class="bg-charcoal-800 rounded-2xl p-8 text-center">
-        <h2 class="font-display text-2xl font-bold text-white mb-3">Need More Help?</h2>
-        <p class="text-charcoal-400 mb-6 max-w-md mx-auto">
-            Have questions, found a bug, or want to suggest a feature? I'm happy to help.
-        </p>
-        <a href="mailto:pgilhooley95@gmail.com"
-           class="inline-flex items-center gap-3 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-medium transition-all duration-200 hover:scale-105">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-            </svg>
-            <span>Send an Email</span>
-        </a>
-    </div>
+            <!-- Visual -->
+            <div class="relative hidden md:block">
+                <div class="aspect-square rounded-3xl bg-gradient-to-br from-charcoal-100 to-charcoal-50 p-8 flex items-center justify-center relative overflow-hidden">
+                    <!-- Decorative pattern -->
+                    <div class="absolute inset-0 opacity-30">
+                        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <defs>
+                                <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse">
+                                    <circle cx="4" cy="4" r="1" fill="currentColor" class="text-charcoal-400"/>
+                                </pattern>
+                            </defs>
+                            <rect width="100%" height="100%" fill="url(#dots)"/>
+                        </svg>
+                    </div>
+
+                    <div class="relative text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white shadow-soft flex items-center justify-center">
+                            <svg class="w-10 h-10 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                            </svg>
+                        </div>
+                        <div class="font-display text-xl font-bold text-charcoal-800 mb-2">Verified Data</div>
+                        <p class="text-charcoal-500 text-sm">Direct from official sources</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support CTA -->
+    <section class="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+        <div class="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-3xl overflow-hidden relative">
+            <!-- Decorative -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-coral-500/10 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
+            </div>
+
+            <div class="relative py-12 md:py-16 px-6 md:px-12">
+                <div class="max-w-3xl mx-auto text-center">
+                    <h2 class="font-display text-3xl md:text-4xl font-bold text-white mb-4">
+                        Still have questions?
+                    </h2>
+                    <p class="text-primary-100 text-lg mb-8 max-w-lg mx-auto">
+                        Have questions, found a bug, or want to suggest a feature? I'm happy to help.
+                    </p>
+
+                    <a href="mailto:pgilhooley95@gmail.com"
+                       class="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-white rounded-2xl text-primary-700 font-semibold hover:bg-charcoal-50 transition-all duration-200 hover:scale-105 shadow-soft">
+                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        <span>Send an Email</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 
 </div>
 {% endblock %}
