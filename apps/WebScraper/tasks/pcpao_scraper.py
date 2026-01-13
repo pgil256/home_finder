@@ -147,11 +147,42 @@ class PCPAOScraper:
             logger.info("Search submitted, waiting for results...")
 
             # Wait for results table to load (AJAX content)
+            # The page has multiple tables; we need to wait for the DataTable with
+            # property-details links to be populated, not just any table row.
             try:
+                # First wait for any table structure
                 self.wait.until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
                 )
-                time.sleep(2)  # Extra wait for DataTable to fully populate
+
+                # Now poll for property-details links (the actual AJAX-loaded data)
+                # The DataTable loads asynchronously and may take longer in production
+                max_wait_seconds = 15
+                poll_interval = 0.5
+                waited = 0
+                links_found = False
+
+                while waited < max_wait_seconds:
+                    try:
+                        links = self.driver.find_elements(
+                            By.CSS_SELECTOR, "a[href*='property-details']"
+                        )
+                        if links:
+                            links_found = True
+                            logger.info(f"Found {len(links)} property-details links after {waited:.1f}s")
+                            break
+                    except Exception:
+                        pass
+                    time.sleep(poll_interval)
+                    waited += poll_interval
+
+                if not links_found:
+                    logger.warning(f"No property-details links found after {max_wait_seconds}s - search may have returned no results")
+                    return parcels
+
+                # Small extra wait for any final rendering
+                time.sleep(1)
+
             except TimeoutException:
                 logger.warning("No results table found - search may have returned no results")
                 return parcels
@@ -171,9 +202,36 @@ class PCPAOScraper:
                     next_button = self.driver.find_element(
                         By.CSS_SELECTOR, "a.paginate_button.next:not(.disabled)"
                     )
+
+                    # Get current links count before clicking
+                    current_links = self.driver.find_elements(
+                        By.CSS_SELECTOR, "a[href*='property-details']"
+                    )
+                    current_link_count = len(current_links)
+
                     next_button.click()
-                    time.sleep(3)
                     page_num += 1
+
+                    # Wait for page transition - poll until links change or timeout
+                    max_wait = 10
+                    waited = 0
+                    while waited < max_wait:
+                        time.sleep(0.5)
+                        waited += 0.5
+                        try:
+                            new_links = self.driver.find_elements(
+                                By.CSS_SELECTOR, "a[href*='property-details']"
+                            )
+                            # Page has transitioned when we have links
+                            # (they may be same count but different content)
+                            if new_links:
+                                break
+                        except StaleElementReferenceException:
+                            # Page is updating, keep waiting
+                            continue
+
+                    # Extra wait for rendering stability
+                    time.sleep(1)
 
                     # Extract with BeautifulSoup
                     page_parcels = self._extract_parcels_from_page(seen_ids)
