@@ -132,6 +132,29 @@ class TestMapCsvRowToProperty:
         assert result['lot_sqft'] is None
         assert result['land_size'] is None
 
+    def test_maps_tax_amount_from_pcpao(self):
+        """Test CSV row mapping includes tax_amount from TAX_AMOUNT_NO_EX field."""
+        row = {
+            'PARCEL_ID': '15-29-16-12345-000-0010',
+            'SITE_ADDR': '123 Main St',
+            'TAX_AMOUNT_NO_EX': '4567.89',
+        }
+        result = map_csv_row_to_property(row)
+
+        assert result['tax_amount'] == Decimal('4567.89')
+        assert result['tax_status'] == 'From PCPAO'
+
+    def test_tax_amount_none_when_missing(self):
+        """Test tax_amount is None when TAX_AMOUNT_NO_EX is missing."""
+        row = {
+            'PARCEL_ID': 'test-no-tax',
+            'SITE_ADDR': '456 Oak Ave',
+        }
+        result = map_csv_row_to_property(row)
+
+        assert result['tax_amount'] is None
+        assert 'tax_status' not in result or result.get('tax_status') != 'From PCPAO'
+
 
 class TestBulkUpsertProperties:
     def test_creates_new_properties(self, db):

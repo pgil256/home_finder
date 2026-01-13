@@ -76,7 +76,10 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
 @shared_task(bind=True)
 def scrape_tax_data(self, scrape_result):
     """
-    Scrape tax information for the given property IDs
+    Collect tax information for the given property IDs.
+
+    First checks if tax data already exists from PCPAO bulk import.
+    Only attempts web scraping for properties missing tax data.
     """
     progress_recorder = ProgressRecorder(self)
     progress_recorder.set_progress(0, 100, description="Starting tax data collection...")
@@ -85,39 +88,75 @@ def scrape_tax_data(self, scrape_result):
     search_criteria = scrape_result.get('search_criteria', {})
 
     updated_properties = []
+    skipped_properties = []
 
+    # Check which properties already have tax data from PCPAO
+    properties_needing_tax = []
+    for parcel_id in property_ids:
+        try:
+            listing = PropertyListing.objects.get(parcel_id=parcel_id)
+            if listing.tax_amount is not None:
+                # Already has tax data from PCPAO import
+                skipped_properties.append(parcel_id)
+                logger.info(f"Property {parcel_id} already has tax data (${listing.tax_amount}), skipping scrape")
+            else:
+                properties_needing_tax.append(parcel_id)
+        except PropertyListing.DoesNotExist:
+            properties_needing_tax.append(parcel_id)
+
+    total_properties = len(property_ids)
+    logger.info(f"Tax data collection: {len(skipped_properties)} already have tax data, "
+                f"{len(properties_needing_tax)} need scraping")
+
+    # If all properties already have tax data, we're done
+    if not properties_needing_tax:
+        progress_recorder.set_progress(100, 100,
+            description=f"All {total_properties} properties already have tax data from PCPAO")
+        return {
+            'status': 'Tax data collection completed (all from PCPAO)',
+            'updated_properties': skipped_properties,
+            'total_processed': len(skipped_properties),
+            'from_pcpao': len(skipped_properties),
+            'from_scraping': 0,
+            'search_criteria': search_criteria
+        }
+
+    # Attempt to scrape tax data for properties that need it
     try:
-        # Lazy import to avoid loading selenium at startup
         from .tax_collector_scraper import TaxCollectorScraper
         scraper = TaxCollectorScraper(headless=True)
-        total_properties = len(property_ids)
-        logger.info(f"Starting tax data collection for {total_properties} properties")
+        logger.info(f"Attempting to scrape tax data for {len(properties_needing_tax)} properties")
 
-        tax_data_list = scraper.scrape_batch(property_ids)
+        tax_data_list = scraper.scrape_batch(properties_needing_tax)
 
         for i, tax_data in enumerate(tax_data_list, 1):
             progress_recorder.set_progress(
-                int((i / total_properties) * 100),
+                int(((len(skipped_properties) + i) / total_properties) * 100),
                 100,
-                description=f"Processing tax data {i}/{total_properties}..."
+                description=f"Processing tax data {len(skipped_properties) + i}/{total_properties}..."
             )
 
             parcel_id = tax_data.get('parcel_id')
             if parcel_id:
                 try:
                     property_listing = PropertyListing.objects.get(parcel_id=parcel_id)
-                    property_listing.tax_amount = tax_data.get('tax_amount')
-                    property_listing.tax_status = tax_data.get('tax_status', 'Unknown')
-                    property_listing.delinquent = tax_data.get('delinquent', False)
-                    property_listing.tax_year = tax_data.get('tax_year')
-                    property_listing.tax_collector_url = tax_data.get('tax_collector_url')
-                    property_listing.save()
-                    updated_properties.append(parcel_id)
+                    # Only update if we got actual tax data
+                    if tax_data.get('tax_amount') is not None:
+                        property_listing.tax_amount = tax_data.get('tax_amount')
+                        property_listing.tax_status = tax_data.get('tax_status', 'Unknown')
+                        property_listing.delinquent = tax_data.get('delinquent', False)
+                        property_listing.tax_year = tax_data.get('tax_year')
+                        property_listing.tax_collector_url = tax_data.get('tax_collector_url')
+                        property_listing.save()
+                        updated_properties.append(parcel_id)
+                    else:
+                        logger.warning(f"No tax data returned for parcel {parcel_id}")
 
                 except PropertyListing.DoesNotExist:
                     logger.warning(f"Property listing not found for parcel {parcel_id}")
 
-        progress_recorder.set_progress(100, 100, description=f"Completed tax data for {len(updated_properties)} properties")
+        progress_recorder.set_progress(100, 100,
+            description=f"Completed: {len(skipped_properties)} from PCPAO, {len(updated_properties)} scraped")
 
     except Exception as e:
         logger.error(f"Error in scrape_tax_data: {e}")
@@ -125,7 +164,9 @@ def scrape_tax_data(self, scrape_result):
 
     return {
         'status': 'Tax data collection completed',
-        'updated_properties': updated_properties,
-        'total_processed': len(updated_properties),
+        'updated_properties': skipped_properties + updated_properties,
+        'total_processed': len(skipped_properties) + len(updated_properties),
+        'from_pcpao': len(skipped_properties),
+        'from_scraping': len(updated_properties),
         'search_criteria': search_criteria
     }

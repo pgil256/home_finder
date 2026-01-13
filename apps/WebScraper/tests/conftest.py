@@ -26,6 +26,28 @@ def sample_property(db):
 
 
 @pytest.fixture
+def property_without_tax(db):
+    """Property that doesn't have tax data - needs scraping."""
+    return PropertyListing.objects.create(
+        parcel_id='15-29-16-99999-000-0001',
+        address='456 Oak Ave',
+        city='Clearwater',
+        zip_code='33755',
+        owner_name='Jane Smith',
+        property_type='Single Family',
+        market_value=Decimal('300000.00'),
+        assessed_value=Decimal('270000.00'),
+        building_sqft=1800,
+        year_built=1995,
+        bedrooms=4,
+        bathrooms=Decimal('2.5'),
+        land_size=Decimal('0.30'),
+        tax_amount=None,  # No tax data yet
+        tax_status='Unknown',
+    )
+
+
+@pytest.fixture
 def multiple_properties(db):
     properties = []
     for i in range(5):

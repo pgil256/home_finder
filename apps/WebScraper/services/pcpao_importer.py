@@ -36,6 +36,7 @@ FIELD_MAPPING = {
     'BATHS': 'bathrooms',
     'DOR_UC': 'property_type',    # DOR Use Code
     'LAND_SQFT': 'lot_sqft',
+    'TAX_AMOUNT_NO_EX': 'tax_amount',  # Tax amount from PCPAO
 }
 
 
@@ -121,6 +122,11 @@ def map_csv_row_to_property(row: Dict[str, str]) -> Dict[str, Any]:
         result['land_size'] = Decimal(str(result['lot_sqft'])) / Decimal('43560')
     else:
         result['land_size'] = None
+
+    # Tax data from PCPAO
+    result['tax_amount'] = safe_decimal(row.get('TAX_AMOUNT_NO_EX', ''))
+    if result['tax_amount'] is not None:
+        result['tax_status'] = 'From PCPAO'
 
     return result
 

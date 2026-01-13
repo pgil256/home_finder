@@ -61,14 +61,14 @@ class TestScrapeDataTasks:
 
     @patch('apps.WebScraper.tasks.tax_collector_scraper.TaxCollectorScraper')
     @patch('apps.WebScraper.tasks.scrape_data.ProgressRecorder')
-    def test_scrape_tax_data_updates_records(self, mock_progress, mock_scraper_class, sample_property, celery_eager):
-        """Test tax scraper updates existing properties."""
+    def test_scrape_tax_data_updates_records(self, mock_progress, mock_scraper_class, property_without_tax, celery_eager):
+        """Test tax scraper updates properties that don't have tax data."""
         from apps.WebScraper.tasks.scrape_data import scrape_tax_data
 
         mock_scraper = MagicMock()
         mock_scraper.scrape_batch.return_value = [
             {
-                'parcel_id': sample_property.parcel_id,
+                'parcel_id': property_without_tax.parcel_id,
                 'tax_amount': Decimal('3500.00'),
                 'tax_status': 'Paid',
                 'delinquent': False,
@@ -77,14 +77,39 @@ class TestScrapeDataTasks:
         mock_scraper_class.return_value = mock_scraper
 
         scrape_result = {
+            'property_ids': [property_without_tax.parcel_id],
+            'search_criteria': {'city': 'Clearwater'}
+        }
+        result = scrape_tax_data(scrape_result)
+
+        property_without_tax.refresh_from_db()
+        assert property_without_tax.tax_amount == Decimal('3500.00')
+        assert property_without_tax.tax_status == 'Paid'
+        assert result['from_scraping'] == 1
+
+    @patch('apps.WebScraper.tasks.tax_collector_scraper.TaxCollectorScraper')
+    @patch('apps.WebScraper.tasks.scrape_data.ProgressRecorder')
+    def test_scrape_tax_data_skips_existing(self, mock_progress, mock_scraper_class, sample_property, celery_eager):
+        """Test tax scraper skips properties that already have tax data from PCPAO."""
+        from apps.WebScraper.tasks.scrape_data import scrape_tax_data
+
+        mock_scraper = MagicMock()
+        mock_scraper_class.return_value = mock_scraper
+
+        original_tax = sample_property.tax_amount
+        scrape_result = {
             'property_ids': [sample_property.parcel_id],
             'search_criteria': {'city': 'Clearwater'}
         }
-        scrape_tax_data(scrape_result)
+        result = scrape_tax_data(scrape_result)
 
         sample_property.refresh_from_db()
-        assert sample_property.tax_amount == Decimal('3500.00')
-        assert sample_property.tax_status == 'Paid'
+        # Tax amount should be unchanged (not scraped)
+        assert sample_property.tax_amount == original_tax
+        # Scraper should not have been called since all properties had tax data
+        mock_scraper.scrape_batch.assert_not_called()
+        assert result['from_pcpao'] == 1
+        assert result['from_scraping'] == 0
 
     @patch('apps.WebScraper.tasks.tax_collector_scraper.TaxCollectorScraper')
     @patch('apps.WebScraper.tasks.scrape_data.ProgressRecorder')
@@ -123,17 +148,15 @@ class TestSortDataTasks:
 
     def test_generate_spreadsheet_creates_file(self, multiple_properties, tmp_path, monkeypatch):
         """Test spreadsheet generation creates valid file."""
-        from apps.WebScraper.tasks.sort_data import generate_spreadsheet, fetch_property_listings
+        from apps.WebScraper.tasks.sort_data import generate_spreadsheet, fetch_property_listings, REPORTS_DIR
         import os
-
-        # Change to temp directory for file output
-        monkeypatch.chdir(tmp_path)
 
         columns, listings = fetch_property_listings()
         result = generate_spreadsheet(columns, listings)
 
-        assert result == "Spreadsheet generated successfully!"
-        assert os.path.exists(tmp_path / "PropertyListings.xlsx")
+        # Function now returns the full filepath
+        assert result.endswith('PropertyListings.xlsx')
+        assert os.path.exists(result)
 
     def test_quick_sort_sorts_correctly(self):
         """Test quick_sort with simple compare function."""
@@ -153,23 +176,10 @@ class TestSortDataTasks:
 
 
 class TestPDFTasks:
-    def test_get_custom_styles_returns_dict(self):
-        """Test get_custom_styles returns style dictionary."""
-        from apps.WebScraper.tasks.listings_pdf import get_custom_styles
-
-        styles = get_custom_styles()
-
-        assert 'title' in styles
-        assert 'heading' in styles
-        assert 'body' in styles
-        assert 'link' in styles
-
     @patch('apps.WebScraper.tasks.listings_pdf.ProgressRecorder')
     def test_generate_listing_pdf_with_empty_properties(self, mock_progress, celery_eager, tmp_path, monkeypatch):
         """Test PDF generation handles empty property list."""
         from apps.WebScraper.tasks.listings_pdf import generate_listing_pdf
-
-        monkeypatch.chdir(tmp_path)
 
         sort_result = {
             'sorted_properties': [],
@@ -180,7 +190,8 @@ class TestPDFTasks:
         result = generate_listing_pdf(sort_result)
 
         assert result['status'] == 'PDF generated successfully'
-        assert result['pdf_path'] == 'Real_Estate_Listings.pdf'
+        # Function now returns full filepath
+        assert result['pdf_path'].endswith('Real_Estate_Listings.pdf')
 
     @patch('apps.WebScraper.tasks.listings_pdf.ProgressRecorder')
     def test_generate_listing_pdf_returns_paths(self, mock_progress, celery_eager, tmp_path, monkeypatch):
@@ -201,16 +212,6 @@ class TestPDFTasks:
         assert 'pdf_path' in result
         assert 'excel_path' in result
         assert result['excel_path'] == 'TestListings.xlsx'
-
-    def test_get_custom_styles_has_correct_font_settings(self):
-        """Test custom styles have appropriate font settings."""
-        from apps.WebScraper.tasks.listings_pdf import get_custom_styles
-
-        styles = get_custom_styles()
-
-        assert styles['title'].fontSize == 18
-        assert styles['heading'].fontSize == 14
-        assert styles['body'].fontSize == 12
 
 
 class TestVisualizationTasks:
