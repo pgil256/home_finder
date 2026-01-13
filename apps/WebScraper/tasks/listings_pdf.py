@@ -15,6 +15,10 @@ from reportlab.platypus import (
     HRFlowable,
 )
 from reportlab.lib.units import inch
+from reportlab.platypus import Image as RLImage
+from io import BytesIO
+import urllib.request
+import urllib.error
 from celery import shared_task
 from django.conf import settings
 from celery_progress.backend import ProgressRecorder
@@ -44,8 +48,41 @@ COLORS = {
 # Fields to hide from display
 HIDDEN_FIELDS = {
     'id', 'appraiser_url', 'tax_collector_url', 'created_at',
-    'last_scraped', 'image_of_property', 'garage'
+    'last_scraped', 'image_of_property', 'garage', 'image_url'
 }
+
+
+def fetch_property_image(url, max_width=120, max_height=90):
+    """Fetch and resize property image for PDF embedding.
+
+    Args:
+        url: URL of the property image
+        max_width: Maximum width in points
+        max_height: Maximum height in points
+
+    Returns:
+        ReportLab Image object or None if fetch fails
+    """
+    if not url:
+        return None
+
+    try:
+        # Set a timeout and user agent for the request
+        request = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'Mozilla/5.0 (compatible; PropertyReport/1.0)'}
+        )
+        with urllib.request.urlopen(request, timeout=5) as response:
+            image_data = BytesIO(response.read())
+
+        # Create ReportLab image with aspect ratio preserved
+        img = RLImage(image_data, width=max_width, height=max_height)
+        img.hAlign = 'LEFT'
+        return img
+
+    except (urllib.error.URLError, urllib.error.HTTPError, Exception) as e:
+        logger.debug(f"Failed to fetch property image from {url}: {e}")
+        return None
 
 # Field display names and formatting
 FIELD_CONFIG = {
@@ -519,7 +556,7 @@ def create_property_page(story, styles, property_dict, index, total, market_stat
     story.append(HRFlowable(width="100%", thickness=1, color=COLORS['border']))
     story.append(Spacer(1, 0.2*inch))
 
-    # Main header with address and price
+    # Main header with address, price, and optional image
     address = property_dict.get('address', 'Address Not Available')
     city = property_dict.get('city', '')
     zip_code = property_dict.get('zip_code', '')
@@ -527,6 +564,10 @@ def create_property_page(story, styles, property_dict, index, total, market_stat
 
     market_value = property_dict.get('market_value')
     price_display = format_value(market_value, 'currency') if market_value else '-'
+
+    # Try to fetch property image
+    image_url = property_dict.get('image_url')
+    property_image = fetch_property_image(image_url) if image_url else None
 
     header_left = [
         Paragraph(str(address), styles['property_title']),
@@ -536,13 +577,25 @@ def create_property_page(story, styles, property_dict, index, total, market_stat
     # Property type badge
     prop_type = property_dict.get('property_type', '-')
 
-    main_header = Table(
-        [[header_left, Paragraph(price_display, styles['price_large'])]],
-        colWidths=[4*inch, 2.5*inch]
-    )
+    if property_image:
+        # Two-column layout with image
+        address_block = Table([[e] for e in header_left], colWidths=[2.8*inch])
+        address_block.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+
+        main_header = Table(
+            [[property_image, address_block, Paragraph(price_display, styles['price_large'])]],
+            colWidths=[1.3*inch, 2.7*inch, 2.5*inch]
+        )
+    else:
+        # Original layout without image
+        main_header = Table(
+            [[header_left, Paragraph(price_display, styles['price_large'])]],
+            colWidths=[4*inch, 2.5*inch]
+        )
+
     main_header.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('ALIGN', (-1, 0), (-1, 0), 'RIGHT'),
     ]))
     story.append(main_header)
 
