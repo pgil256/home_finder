@@ -1,13 +1,17 @@
 """
 Pinellas County Property Appraiser (PCPAO) Selenium Scraper
+
+Uses Selenium for navigation and form interaction, BeautifulSoup for data extraction.
 """
 
 import logging
+import re
 import time
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 
 import os
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
@@ -61,13 +65,65 @@ class PCPAOScraper:
             self.driver.quit()
             logger.info("Driver closed")
 
-    def search_properties(self, search_criteria: Dict[str, Any]) -> List[str]:
-        """Search for properties using PCPAO Quick Search."""
-        parcel_ids = []
+    def _extract_parcels_from_page(self, existing_ids: set) -> List[Dict[str, str]]:
+        """Extract parcel info from current page using BeautifulSoup.
+
+        The search results contain both the parcel ID and a strap ID (used in detail URLs).
+
+        Args:
+            existing_ids: Set of already-found parcel IDs to avoid duplicates
+
+        Returns:
+            List of dicts with parcel_id and detail_url for each new parcel found
+        """
+        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        found = []
+
+        # Parcel ID pattern: 14-31-15-91961-004-0110 (23 chars, 5 dashes)
+        parcel_pattern = re.compile(r'^\d{2}-\d{2}-\d{2}-\d{5}-\d{3}-\d{4}$')
+
+        # Find links to property-details pages (they contain strap IDs)
+        for link in soup.select('a[href*="property-details"]'):
+            text = link.get_text(strip=True)
+            href = link.get('href', '')
+
+            if parcel_pattern.match(text) and text not in existing_ids:
+                existing_ids.add(text)
+                found.append({
+                    'parcel_id': text,
+                    'detail_url': href if href.startswith('http') else f"{self.BASE_URL}{href.lstrip('/')}"
+                })
+
+        return found
+
+    def _extract_parcel_ids_from_page(self, existing_ids: set) -> List[str]:
+        """Extract parcel IDs from current page (legacy compatibility).
+
+        Args:
+            existing_ids: Set of already-found parcel IDs to avoid duplicates
+
+        Returns:
+            List of new parcel IDs found on this page
+        """
+        parcels = self._extract_parcels_from_page(existing_ids)
+        return [p['parcel_id'] for p in parcels]
+
+    def search_properties_with_urls(self, search_criteria: Dict[str, Any]) -> List[Dict[str, str]]:
+        """Search for properties using PCPAO Quick Search.
+
+        Returns list of dicts with parcel_id and detail_url for each property.
+        """
+        parcels = []
+        seen_ids = set()
+
         try:
             logger.info(f"Navigating to {self.SEARCH_URL}")
             self.driver.get(self.SEARCH_URL)
-            time.sleep(3)
+
+            # Wait for search input to be ready
+            search_input = self.wait.until(
+                EC.presence_of_element_located((By.ID, "txtKeyWord"))
+            )
             logger.info(f"Page loaded, title: {self.driver.title}")
 
             # Build search query from criteria
@@ -84,104 +140,58 @@ class PCPAOScraper:
             search_query = ' '.join(search_terms) if search_terms else 'Clearwater'
             logger.info(f"Searching for: {search_query}")
 
-            # Use the quick search input
-            search_input = self.driver.find_element(By.ID, "txtKeyWord")
+            # Submit search
             search_input.clear()
             search_input.send_keys(search_query)
             search_input.send_keys(Keys.RETURN)
             logger.info("Search submitted, waiting for results...")
-            time.sleep(5)
 
-            # Extract parcel IDs from DataTable results
-            # Parcel IDs are in table cells, NOT in anchor tags
-            # Wait for DataTable to load
-            time.sleep(3)
-
-            def extract_parcel_ids_from_page():
-                """Extract parcel IDs from the current page's DataTable."""
-                found_on_page = []
-
-                # Try multiple strategies to find parcel IDs
-                # Strategy 1: Look in table cells (DataTable rows)
-                try:
-                    cells = self.driver.find_elements(By.CSS_SELECTOR, "table tbody td")
-                    logger.info(f"Found {len(cells)} table cells on page")
-
-                    for cell in cells:
-                        try:
-                            text = cell.text.strip()
-                            # Parcel IDs match pattern like 14-31-15-91961-004-0110
-                            if text and len(text) == 23 and text.count('-') == 5:
-                                # Validate it looks like a parcel ID (starts with 2 digits)
-                                if text[:2].isdigit():
-                                    if text not in parcel_ids:
-                                        found_on_page.append(text)
-                                        parcel_ids.append(text)
-                        except StaleElementReferenceException:
-                            continue
-                except Exception as e:
-                    logger.warning(f"Error extracting from table cells: {e}")
-
-                # Strategy 2: Also check anchor tags (in case some are clickable)
-                if len(found_on_page) == 0:
-                    try:
-                        links = self.driver.find_elements(By.TAG_NAME, "a")
-                        for link in links:
-                            try:
-                                text = link.text.strip()
-                                if text and len(text) == 23 and text.count('-') == 5:
-                                    if text[:2].isdigit() and text not in parcel_ids:
-                                        found_on_page.append(text)
-                                        parcel_ids.append(text)
-                            except StaleElementReferenceException:
-                                continue
-                    except Exception as e:
-                        logger.warning(f"Error extracting from links: {e}")
-
-                return found_on_page
-
-            # Extract from first page
-            first_page_parcels = extract_parcel_ids_from_page()
-            logger.info(f"Page 1: Found {len(first_page_parcels)} NEW parcel IDs (total: {len(parcel_ids)})")
-
-            # Log some sample cell texts to debug what we're seeing
+            # Wait for results table to load (AJAX content)
             try:
-                sample_cells = self.driver.find_elements(By.CSS_SELECTOR, "table tbody td")[:20]
-                sample_texts = [c.text.strip()[:50] for c in sample_cells if c.text.strip()]
-                logger.info(f"Sample cell texts: {sample_texts[:10]}")
-            except Exception as e:
-                logger.warning(f"Could not get sample cells: {e}")
+                self.wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
+                )
+                time.sleep(2)  # Extra wait for DataTable to fully populate
+            except TimeoutException:
+                logger.warning("No results table found - search may have returned no results")
+                return parcels
 
-            # Handle pagination if present - with safety limit
+            # Extract from first page using BeautifulSoup
+            first_page_parcels = self._extract_parcels_from_page(seen_ids)
+            parcels.extend(first_page_parcels)
+            logger.info(f"Page 1: Found {len(first_page_parcels)} parcels")
+
+            # Handle pagination - Selenium for clicking, BeautifulSoup for extraction
             page_num = 1
-            MAX_PAGES = 100  # Safety limit to prevent infinite loops
+            MAX_PAGES = 100
             consecutive_empty_pages = 0
 
             while page_num < MAX_PAGES:
                 try:
-                    next_button = self.driver.find_element(By.CSS_SELECTOR, "a.paginate_button.next:not(.disabled)")
+                    next_button = self.driver.find_element(
+                        By.CSS_SELECTOR, "a.paginate_button.next:not(.disabled)"
+                    )
                     next_button.click()
-                    time.sleep(3)  # Wait longer for AJAX content to load
+                    time.sleep(3)
                     page_num += 1
 
-                    # Extract parcel IDs from new page
-                    page_parcels = extract_parcel_ids_from_page()
-                    logger.info(f"Page {page_num}: Found {len(page_parcels)} NEW parcel IDs (total: {len(parcel_ids)})")
+                    # Extract with BeautifulSoup
+                    page_parcels = self._extract_parcels_from_page(seen_ids)
+                    parcels.extend(page_parcels)
+                    logger.info(f"Page {page_num}: Found {len(page_parcels)} new parcels (total: {len(parcels)})")
 
-                    # If we're getting empty pages, something might be wrong
-                    if len(page_parcels) == 0:
+                    if not page_parcels:
                         consecutive_empty_pages += 1
                         if consecutive_empty_pages >= 3:
-                            logger.warning(f"3 consecutive empty pages, stopping pagination")
+                            logger.warning("3 consecutive empty pages, stopping pagination")
                             break
                     else:
                         consecutive_empty_pages = 0
 
                 except NoSuchElementException:
-                    logger.info(f"No more pages (next button disabled or not found)")
+                    logger.info("No more pages (next button disabled or not found)")
                     break
                 except StaleElementReferenceException:
-                    # Page updated during navigation, re-fetch links
                     logger.warning(f"Stale element on page {page_num}, retrying...")
                     time.sleep(1)
                     continue
@@ -191,87 +201,248 @@ class PCPAOScraper:
 
         except Exception as e:
             logger.error(f"Error searching properties: {e}", exc_info=True)
-            # Log page source for debugging
             try:
                 logger.error(f"Current URL: {self.driver.current_url}")
                 logger.error(f"Page title: {self.driver.title}")
             except:
                 pass
 
-        logger.info(f"Found {len(parcel_ids)} parcels")
-        return parcel_ids
+        logger.info(f"Found {len(parcels)} parcels")
+        return parcels
 
-    def scrape_property_details(self, parcel_id: str) -> Dict[str, Any]:
+    def search_properties(self, search_criteria: Dict[str, Any]) -> List[str]:
+        """Search for properties using PCPAO Quick Search (legacy compatibility).
+
+        Returns list of parcel IDs only. Use search_properties_with_urls for
+        better performance when scraping property details.
+        """
+        parcels = self.search_properties_with_urls(search_criteria)
+        return [p['parcel_id'] for p in parcels]
+
+    def _get_h2_value(self, soup: BeautifulSoup, label: str) -> Optional[str]:
+        """Extract value from h2 element where label is in the parent.
+
+        PCPAO uses a pattern where the label text and h2 value are both in a parent div.
+
+        Args:
+            soup: BeautifulSoup object of the page
+            label: Text to search for (case-insensitive)
+
+        Returns:
+            Text content of the h2 element, or None if not found
+        """
+        for h2 in soup.find_all('h2'):
+            parent = h2.parent
+            if parent:
+                parent_text = parent.get_text(strip=True)
+                if label.lower() in parent_text.lower():
+                    return h2.get_text(strip=True)
+        return None
+
+    def _get_sibling_value(self, soup: BeautifulSoup, label: str) -> Optional[str]:
+        """Extract value from sibling element after a label.
+
+        PCPAO uses a pattern where label text is followed by value in next sibling.
+
+        Args:
+            soup: BeautifulSoup object of the page
+            label: Text to search for (case-insensitive)
+
+        Returns:
+            Text content of the sibling element, or None if not found
+        """
+        elem = soup.find(string=re.compile(re.escape(label), re.I))
+        if elem:
+            parent = elem.find_parent()
+            if parent:
+                sibling = parent.find_next_sibling()
+                if sibling:
+                    return sibling.get_text(strip=True)
+        return None
+
+    def _get_address_parts(self, soup: BeautifulSoup) -> Dict[str, str]:
+        """Extract address, city, and zip from Site Address section.
+
+        The Site Address label is followed by a sibling element containing
+        street address and city/state/zip separated by <br> tags.
+
+        Args:
+            soup: BeautifulSoup object of the page
+
+        Returns:
+            Dict with address, city, and zip_code keys
+        """
+        result = {}
+        elem = soup.find(string=re.compile('Site Address', re.I))
+        if elem:
+            parent = elem.find_parent()
+            if parent:
+                sibling = parent.find_next_sibling()
+                if sibling:
+                    # Get text parts split by <br> tags
+                    parts = []
+                    for child in sibling.children:
+                        if hasattr(child, 'name') and child.name == 'br':
+                            continue
+                        text = str(child).strip() if not hasattr(child, 'get_text') else child.get_text(strip=True)
+                        if text:
+                            parts.append(text)
+
+                    if len(parts) >= 1:
+                        result['address'] = parts[0]
+                    if len(parts) >= 2:
+                        # Parse "CLEARWATER, FL 33759"
+                        city_state_zip = parts[1]
+                        city_match = re.match(r'([A-Z\s]+),?\s*FL\s*(\d{5})', city_state_zip)
+                        if city_match:
+                            result['city'] = city_match.group(1).strip().title()
+                            result['zip_code'] = city_match.group(2)
+        return result
+
+    def _get_parcel_from_page(self, soup: BeautifulSoup) -> Optional[str]:
+        """Extract parcel ID from the detail page.
+
+        Args:
+            soup: BeautifulSoup object of the page
+
+        Returns:
+            Parcel ID string or None if not found
+        """
+        parcel_pattern = re.compile(r'^\d{2}-\d{2}-\d{2}-\d{5}-\d{3}-\d{4}$')
+        for h2 in soup.find_all('h2'):
+            text = h2.get_text(strip=True)
+            if parcel_pattern.match(text):
+                return text
+        return None
+
+    def _get_valuation_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """Extract valuation data from the current year's valuation table.
+
+        Args:
+            soup: BeautifulSoup object of the page
+
+        Returns:
+            Dict with market_value and assessed_value if found
+        """
+        data = {}
+        for table in soup.find_all('table'):
+            text = table.get_text()
+            if 'Just/Market Value' in text and 'Assessed' in text:
+                rows = table.select('tbody tr')
+                if rows:
+                    cells = [td.get_text(strip=True) for td in rows[0].find_all('td')]
+                    # Typical structure: Year, Just/Market Value, Assessed Value, ...
+                    if len(cells) >= 3:
+                        try:
+                            market_val = cells[1].replace('$', '').replace(',', '')
+                            data['market_value'] = float(market_val)
+                        except (ValueError, IndexError):
+                            pass
+                        try:
+                            assessed_val = cells[2].replace('$', '').replace(',', '')
+                            data['assessed_value'] = float(assessed_val)
+                        except (ValueError, IndexError):
+                            pass
+                break
+        return data
+
+    def scrape_property_details(self, parcel_id: str, detail_url: Optional[str] = None) -> Dict[str, Any]:
+        """Scrape property details using BeautifulSoup for extraction.
+
+        Args:
+            parcel_id: The parcel ID
+            detail_url: Optional direct URL to property details page
+
+        Returns:
+            Dict containing property data
+        """
         property_data = {'parcel_id': parcel_id}
 
         try:
-            parcel_url = f"{self.BASE_URL}parcel/{parcel_id}"
-            self.driver.get(parcel_url)
-            time.sleep(2)
-            property_data['appraiser_url'] = parcel_url
+            # Use provided detail_url or search for the property
+            if detail_url:
+                self.driver.get(detail_url)
+            else:
+                # Search for the parcel to get the detail URL
+                self.driver.get(self.SEARCH_URL)
+                time.sleep(2)
+                search_input = self.driver.find_element(By.ID, "txtKeyWord")
+                search_input.clear()
+                search_input.send_keys(parcel_id)
+                search_input.send_keys(Keys.RETURN)
+                time.sleep(4)
 
-            # Extract data using various selectors
-            extractors = [
-                ('address', "h1.property-address", "//span[contains(@class, 'address')]"),
-                ('owner_name', None, "//td[text()='Owner Name']/following-sibling::td"),
-                ('market_value', None, "//td[contains(text(), 'Market Value')]/following-sibling::td"),
-                ('assessed_value', None, "//td[contains(text(), 'Assessed Value')]/following-sibling::td"),
-                ('year_built', None, "//td[text()='Year Built']/following-sibling::td"),
-                ('building_sqft', None, "//td[contains(text(), 'Living Area')]/following-sibling::td"),
-                ('bedrooms', None, "//td[text()='Bedrooms']/following-sibling::td"),
-                ('bathrooms', None, "//td[text()='Bathrooms']/following-sibling::td"),
-                ('property_type', None, "//td[contains(text(), 'Property Use')]/following-sibling::td"),
-            ]
+                soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+                link = soup.select_one(f'a[href*="property-details"]')
+                if link:
+                    detail_url = link.get('href')
+                    if not detail_url.startswith('http'):
+                        detail_url = f"{self.BASE_URL}{detail_url.lstrip('/')}"
+                    self.driver.get(detail_url)
+                else:
+                    logger.warning(f"No detail link found for parcel {parcel_id}")
+                    return property_data
 
-            for field, css_selector, xpath_selector in extractors:
-                try:
-                    if css_selector:
-                        elem = self.driver.find_element(By.CSS_SELECTOR, css_selector)
+            time.sleep(3)
+            property_data['appraiser_url'] = self.driver.current_url
+
+            # Parse page with BeautifulSoup
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+
+            # Extract H2 label-value pairs (PCPAO pattern)
+            h2_fields = {
+                'building_sqft': ['Living SF', 'Heated SF'],
+                'gross_sqft': ['Gross SF'],
+                'living_units': ['Living Units'],
+                'buildings': ['Buildings'],
+            }
+
+            for field, labels in h2_fields.items():
+                for label in labels:
+                    value = self._get_h2_value(soup, label)
+                    if value and value not in ['n/a', 'N/A', '']:
+                        try:
+                            property_data[field] = int(re.sub(r'[^\d]', '', value))
+                            break
+                        except (ValueError, TypeError):
+                            pass
+
+            # Get parcel ID from the page (in case it wasn't provided correctly)
+            page_parcel = self._get_parcel_from_page(soup)
+            if page_parcel:
+                property_data['parcel_id'] = page_parcel
+
+            # Extract sibling-pattern fields (label followed by value in sibling)
+            sibling_fields = {
+                'owner_name': 'Owner Name',
+                'year_built': 'Year Built',
+                'property_type': 'Property Use',
+            }
+
+            for field, label in sibling_fields.items():
+                value = self._get_sibling_value(soup, label)
+                if value and value not in ['n/a', 'N/A', '']:
+                    if field == 'year_built':
+                        try:
+                            property_data[field] = int(re.sub(r'[^\d]', '', value))
+                        except (ValueError, TypeError):
+                            pass
+                    elif field == 'owner_name':
+                        # Clean up owner name (remove "More" suffix and add space between names)
+                        value = re.sub(r'More$', '', value).strip()
+                        # Add space before uppercase letters that follow lowercase (name boundaries)
+                        value = re.sub(r'([a-z])([A-Z])', r'\1 \2', value)
+                        property_data[field] = value
                     else:
-                        elem = self.driver.find_element(By.XPATH, xpath_selector)
+                        property_data[field] = value
 
-                    value = elem.text.strip()
+            # Extract site address with proper parsing (handles <br> tags)
+            address_parts = self._get_address_parts(soup)
+            property_data.update(address_parts)
 
-                    if field in ['market_value', 'assessed_value']:
-                        value = float(value.replace('$', '').replace(',', ''))
-                    elif field in ['year_built', 'bedrooms']:
-                        value = int(value)
-                    elif field == 'bathrooms':
-                        value = float(value)
-                    elif field == 'building_sqft':
-                        value = int(value.replace(',', '').replace('sqft', '').strip())
-
-                    property_data[field] = value
-                except:
-                    pass
-
-            # Extract city and ZIP
-            try:
-                city_zip_elem = self.driver.find_element(By.CSS_SELECTOR, "span.city-state-zip")
-                city_zip_text = city_zip_elem.text.strip()
-                parts = city_zip_text.split(',')
-                if len(parts) >= 2:
-                    property_data['city'] = parts[0].strip()
-                    zip_parts = parts[-1].strip().split()
-                    if zip_parts:
-                        property_data['zip_code'] = zip_parts[-1]
-            except:
-                pass
-
-            # Extract land size
-            try:
-                land_elem = self.driver.find_element(By.XPATH, "//td[contains(text(), 'Land Area')]/following-sibling::td")
-                land_text = land_elem.text.strip()
-                if 'acres' in land_text.lower():
-                    land_size = float(land_text.replace('acres', '').replace(',', '').strip())
-                    property_data['land_size'] = land_size
-                    property_data['lot_sqft'] = int(land_size * 43560)
-                elif 'sqft' in land_text.lower():
-                    lot_sqft = int(land_text.replace('sqft', '').replace(',', '').strip())
-                    property_data['lot_sqft'] = lot_sqft
-                    property_data['land_size'] = lot_sqft / 43560
-            except:
-                pass
+            # Extract valuation data from table
+            valuation = self._get_valuation_data(soup)
+            property_data.update(valuation)
 
         except Exception as e:
             logger.error(f"Error scraping property {parcel_id}: {e}")
@@ -279,19 +450,30 @@ class PCPAOScraper:
         return property_data
 
     def scrape_by_criteria(self, search_criteria: Dict[str, Any], limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Search for properties and scrape their details.
+
+        Args:
+            search_criteria: Dict with search parameters (city, zip_code, address, owner_name)
+            limit: Optional max number of properties to scrape
+
+        Returns:
+            List of property data dicts
+        """
         properties = []
         try:
             self.setup_driver()
-            parcel_ids = self.search_properties(search_criteria)
+            parcels = self.search_properties_with_urls(search_criteria)
 
             if limit:
-                parcel_ids = parcel_ids[:limit]
+                parcels = parcels[:limit]
 
-            logger.info(f"Scraping details for {len(parcel_ids)} properties")
+            logger.info(f"Scraping details for {len(parcels)} properties")
 
-            for i, parcel_id in enumerate(parcel_ids, 1):
-                logger.info(f"Scraping property {i}/{len(parcel_ids)}: {parcel_id}")
-                property_data = self.scrape_property_details(parcel_id)
+            for i, parcel_info in enumerate(parcels, 1):
+                parcel_id = parcel_info['parcel_id']
+                detail_url = parcel_info.get('detail_url')
+                logger.info(f"Scraping property {i}/{len(parcels)}: {parcel_id}")
+                property_data = self.scrape_property_details(parcel_id, detail_url=detail_url)
                 properties.append(property_data)
                 time.sleep(1)
 

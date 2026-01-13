@@ -1,13 +1,22 @@
 """
 Pinellas County Tax Collector Selenium Scraper
+
+Uses Selenium for navigation and form interaction, BeautifulSoup for data extraction.
+
+NOTE: The primary tax payment site (pinellas.county-taxes.com) has Cloudflare protection
+which prevents automated access. This scraper attempts to use the pinellastaxcollector.gov
+search but may return limited data. Consider using the PCPAO bulk data import for tax
+information when available.
 """
 
 import logging
+import re
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 import os
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -27,8 +36,14 @@ logger = logging.getLogger(__name__)
 
 
 class TaxCollectorScraper:
-    BASE_URL = "https://taxcollect.com/"
-    SEARCH_URL = "https://taxcollect.com/search"
+    """Scraper for Pinellas County Tax Collector information.
+
+    Note: Direct tax bill scraping is limited due to Cloudflare protection on the
+    primary tax payment site. This scraper returns basic information when available.
+    """
+
+    BASE_URL = "https://pinellastaxcollector.gov/"
+    SEARCH_URL = "https://pinellastaxcollector.gov/search-results/"
 
     def __init__(self, headless: bool = True):
         self.headless = headless
@@ -58,99 +73,113 @@ class TaxCollectorScraper:
         if self.driver:
             self.driver.quit()
 
+    def _get_table_value(self, soup: BeautifulSoup, label: str) -> Optional[str]:
+        """Find a table cell value by its label text.
+
+        Args:
+            soup: BeautifulSoup object of the page
+            label: Text to search for in table cells
+
+        Returns:
+            Text content of the sibling cell, or None if not found
+        """
+        td = soup.find('td', string=re.compile(re.escape(label), re.I))
+        if td:
+            sibling = td.find_next_sibling('td')
+            if sibling:
+                return sibling.get_text(strip=True)
+        return None
+
     def scrape_tax_info(self, parcel_id: str) -> Dict[str, Any]:
-        tax_data = {'parcel_id': parcel_id}
+        """Scrape tax information using BeautifulSoup for extraction.
+
+        Note: Due to Cloudflare protection on the primary tax site, this method
+        may only return basic information. For complete tax data, consider using
+        the PCPAO bulk data import which includes tax information.
+
+        Args:
+            parcel_id: The parcel ID to search for
+
+        Returns:
+            Dict with tax information (may be limited)
+        """
+        tax_data = {
+            'parcel_id': parcel_id,
+            'tax_year': datetime.now().year,
+            'tax_status': 'Unknown',
+            'delinquent': False,
+        }
 
         try:
-            self.driver.get(self.SEARCH_URL)
-            time.sleep(2)
-
-            # Find and fill search field
-            search_selectors = [
-                "input[name='parcel']",
-                "input[name='parcel_id']",
-                "input[placeholder*='Parcel']",
-                "input[type='search']"
-            ]
-
-            search_input = None
-            for selector in search_selectors:
-                try:
-                    search_input = self.driver.find_element(By.CSS_SELECTOR, selector)
-                    break
-                except:
-                    continue
-
-            if not search_input:
-                try:
-                    search_input = self.driver.find_element(By.XPATH, "//input[contains(@placeholder, 'Enter parcel')]")
-                except:
-                    logger.error(f"Could not find search input for parcel {parcel_id}")
-                    return tax_data
-
-            # Scroll element into view and wait for it to be interactable
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", search_input)
-            time.sleep(0.5)
-
-            # Try standard interaction first, then JavaScript fallback
-            try:
-                search_input.clear()
-                search_input.send_keys(parcel_id)
-                search_input.send_keys(Keys.RETURN)
-            except ElementNotInteractableException:
-                # Use JavaScript to set value and submit
-                self.driver.execute_script("arguments[0].value = arguments[1];", search_input, parcel_id)
-                # Try to find and click search button, or trigger form submit
-                try:
-                    search_btn = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit'], .search-button")
-                    self.driver.execute_script("arguments[0].click();", search_btn)
-                except:
-                    # Trigger form submit via JavaScript
-                    self.driver.execute_script("arguments[0].form.submit();", search_input)
-            time.sleep(3)
+            # Use direct URL with parcel ID search parameter
+            search_url = f"{self.SEARCH_URL}?search={parcel_id}"
+            self.driver.get(search_url)
+            time.sleep(4)
 
             tax_data['tax_collector_url'] = self.driver.current_url
 
-            # Extract tax amount
-            try:
-                tax_amount_elem = self.driver.find_element(By.XPATH, "//td[contains(text(), 'Total Tax')]/following-sibling::td")
-                tax_amount_text = tax_amount_elem.text.replace('$', '').replace(',', '').strip()
-                tax_data['tax_amount'] = float(tax_amount_text)
-            except:
-                try:
-                    tax_amount_elem = self.driver.find_element(By.CSS_SELECTOR, ".tax-amount")
-                    tax_amount_text = tax_amount_elem.text.replace('$', '').replace(',', '').strip()
-                    tax_data['tax_amount'] = float(tax_amount_text)
-                except:
-                    pass
+            # Parse page with BeautifulSoup
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
 
-            # Extract tax year
-            try:
-                year_elem = self.driver.find_element(By.XPATH, "//td[contains(text(), 'Tax Year')]/following-sibling::td")
-                tax_data['tax_year'] = int(year_elem.text.strip())
-            except:
-                tax_data['tax_year'] = datetime.now().year
+            # Check if we got a "no results" message
+            page_text = soup.get_text().lower()
+            if 'no search results' in page_text or 'no results' in page_text:
+                logger.warning(f"No tax results found for parcel {parcel_id}")
+                tax_data['tax_status'] = 'Not Found'
+                return tax_data
 
-            # Extract payment status
-            try:
-                status_elem = self.driver.find_element(By.XPATH, "//td[contains(text(), 'Status')]/following-sibling::td")
-                status_text = status_elem.text.strip().upper()
+            # Try to extract any available tax information
+            # Look for tables with tax data
+            for table in soup.find_all('table'):
+                # Extract tax amount
+                tax_amount = self._get_table_value(soup, 'Total Tax')
+                if not tax_amount:
+                    tax_amount = self._get_table_value(soup, 'Amount Due')
+                if not tax_amount:
+                    tax_amount = self._get_table_value(soup, 'Tax Amount')
 
-                if 'PAID' in status_text:
-                    tax_data['tax_status'] = 'Paid'
-                    tax_data['delinquent'] = False
-                elif 'UNPAID' in status_text:
-                    tax_data['tax_status'] = 'Unpaid'
-                    tax_data['delinquent'] = False
-                elif 'DELINQUENT' in status_text:
-                    tax_data['tax_status'] = 'Delinquent'
-                    tax_data['delinquent'] = True
-                else:
-                    tax_data['tax_status'] = status_text
-                    tax_data['delinquent'] = False
-            except:
-                tax_data['tax_status'] = 'Unknown'
-                tax_data['delinquent'] = False
+                if tax_amount:
+                    try:
+                        tax_data['tax_amount'] = float(re.sub(r'[^\d.]', '', tax_amount))
+                    except (ValueError, TypeError):
+                        pass
+
+                # Extract tax year
+                tax_year = self._get_table_value(soup, 'Tax Year')
+                if not tax_year:
+                    tax_year = self._get_table_value(soup, 'Year')
+                if tax_year:
+                    try:
+                        tax_data['tax_year'] = int(re.sub(r'[^\d]', '', tax_year))
+                    except (ValueError, TypeError):
+                        pass
+
+                # Extract payment status
+                status_text = self._get_table_value(soup, 'Status')
+                if not status_text:
+                    status_text = self._get_table_value(soup, 'Payment Status')
+                if status_text:
+                    status_upper = status_text.upper()
+                    if 'PAID' in status_upper:
+                        tax_data['tax_status'] = 'Paid'
+                        tax_data['delinquent'] = False
+                    elif 'UNPAID' in status_upper:
+                        tax_data['tax_status'] = 'Unpaid'
+                        tax_data['delinquent'] = False
+                    elif 'DELINQUENT' in status_upper:
+                        tax_data['tax_status'] = 'Delinquent'
+                        tax_data['delinquent'] = True
+                    else:
+                        tax_data['tax_status'] = status_text
+                        tax_data['delinquent'] = False
+
+                # If we found any data, break
+                if 'tax_amount' in tax_data:
+                    break
+
+            # If no data found, note the limitation
+            if 'tax_amount' not in tax_data:
+                logger.info(f"Limited tax data available for parcel {parcel_id} - site may be protected")
 
         except TimeoutException:
             logger.error(f"Timeout while searching for parcel {parcel_id}")
