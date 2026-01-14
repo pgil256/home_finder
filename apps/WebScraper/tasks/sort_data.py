@@ -161,8 +161,9 @@ def compare_properties(x, y, user_preferences, priority_fields):
 def generate_sorted_properties(self, tax_result):
     progress_recorder = ProgressRecorder(self)
 
-    # Extract search_criteria from the chain result
+    # Extract search_criteria and limit from the chain result
     scrape_config = tax_result.get('search_criteria', {}) if isinstance(tax_result, dict) else {}
+    limit = tax_result.get('limit', 10) if isinstance(tax_result, dict) else 10
 
     if not scrape_config:
         logger.warning("No scrape configuration provided, using empty config")
@@ -186,9 +187,9 @@ def generate_sorted_properties(self, tax_result):
     # Code to generate PDF goes here
     progress_recorder.set_progress(50, 100, description="Generated PDF")
 
-    logger.info("Top 10 sorted properties generated")
+    logger.info(f"Top {limit} sorted properties generated")
     return {
-        'sorted_properties': sorted_properties[:10],
+        'sorted_properties': sorted_properties[:limit],
         'columns': columns,
         'excel_path': excel_filepath
     }

@@ -13,10 +13,22 @@ CACHE_HOURS = 24
 
 def filter_properties_by_criteria(properties, search_criteria):
     """
-    Filter scraped properties by property type and price range.
+    Filter scraped properties by search criteria.
 
     PCPAO Quick Search only supports keyword search, so we post-filter
     the results to match the user's actual criteria.
+
+    Supported filters:
+    - property_type: Match property type (substring, case-insensitive)
+    - min_value/max_value: Filter by market value range
+    - bedrooms_min: Minimum number of bedrooms
+    - bathrooms_min: Minimum number of bathrooms
+    - year_built_after: Minimum year built
+    - sqft_min/sqft_max: Building square footage range
+    - tax_status: Exact match on tax status
+
+    Properties with null values for a filtered field pass through
+    (cannot be filtered when data is unavailable).
     """
     filtered = []
 
@@ -205,7 +217,8 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
         'property_ids': property_ids,
         'search_criteria': search_criteria,
         'cached_count': cached_count,
-        'scraped_count': total_properties - cached_count
+        'scraped_count': total_properties - cached_count,
+        'limit': limit
     }
 
 
@@ -228,6 +241,7 @@ def scrape_tax_data(self, scrape_result):
     property_ids = scrape_result.get('property_ids', [])
     search_criteria = scrape_result.get('search_criteria', {})
     cached_count = scrape_result.get('cached_count', 0)
+    limit = scrape_result.get('limit', 10)
 
     logger.info(f"Tax data passthrough: {len(property_ids)} properties (tax data from PCPAO bulk import)")
 
@@ -239,5 +253,6 @@ def scrape_tax_data(self, scrape_result):
         'property_ids': property_ids,
         'total_processed': len(property_ids),
         'search_criteria': search_criteria,
-        'cached_count': cached_count
+        'cached_count': cached_count,
+        'limit': limit
     }
