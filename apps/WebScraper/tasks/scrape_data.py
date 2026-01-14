@@ -11,6 +11,70 @@ logger = logging.getLogger(__name__)
 CACHE_HOURS = 24
 
 
+def filter_properties_by_criteria(properties, search_criteria):
+    """
+    Filter scraped properties by property type and price range.
+
+    PCPAO Quick Search only supports keyword search, so we post-filter
+    the results to match the user's actual criteria.
+    """
+    filtered = []
+
+    # Get filter criteria
+    requested_types = search_criteria.get('property_type', [])
+    if isinstance(requested_types, str):
+        requested_types = [requested_types]
+    requested_types_lower = [t.lower() for t in requested_types] if requested_types else []
+
+    min_value = search_criteria.get('min_value')
+    max_value = search_criteria.get('max_value')
+
+    # Convert to float if provided
+    try:
+        min_value = float(min_value) if min_value else None
+    except (ValueError, TypeError):
+        min_value = None
+    try:
+        max_value = float(max_value) if max_value else None
+    except (ValueError, TypeError):
+        max_value = None
+
+    for prop in properties:
+        # Check property type filter
+        if requested_types_lower:
+            prop_type = (prop.get('property_type') or '').lower()
+            # Match if the property type contains any of the requested types
+            type_match = any(req_type in prop_type for req_type in requested_types_lower)
+            if not type_match:
+                logger.debug(f"Filtered out {prop.get('parcel_id')}: type '{prop.get('property_type')}' "
+                           f"doesn't match {requested_types}")
+                continue
+
+        # Check price range filter
+        market_value = prop.get('market_value')
+        if market_value is not None:
+            try:
+                market_value = float(market_value)
+            except (ValueError, TypeError):
+                market_value = None
+
+        if min_value is not None and market_value is not None:
+            if market_value < min_value:
+                logger.debug(f"Filtered out {prop.get('parcel_id')}: value ${market_value:,.0f} "
+                           f"below min ${min_value:,.0f}")
+                continue
+
+        if max_value is not None and market_value is not None:
+            if market_value > max_value:
+                logger.debug(f"Filtered out {prop.get('parcel_id')}: value ${market_value:,.0f} "
+                           f"above max ${max_value:,.0f}")
+                continue
+
+        filtered.append(prop)
+
+    return filtered
+
+
 @shared_task(bind=True)
 def scrape_pinellas_properties(self, search_criteria, limit=10):
     """
@@ -77,12 +141,24 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
                 max_workers=3
             )
 
+            # Post-filter by property type and price range
+            # (PCPAO Quick Search doesn't support these filters)
+            pre_filter_count = len(properties)
+            properties = filter_properties_by_criteria(properties, search_criteria)
+            filtered_out = pre_filter_count - len(properties)
+
+            if filtered_out > 0:
+                logger.info(f"Filtered out {filtered_out} properties that didn't match criteria")
+
             total_to_save = len(properties)
-            logger.info(f"Scraped {total_to_save} properties, saving to database")
+            logger.info(f"Scraped {pre_filter_count} properties, {total_to_save} match criteria, saving to database")
+
+            if total_to_save == 0:
+                logger.info("No properties matched the filter criteria")
 
             for i, property_data in enumerate(properties, 1):
                 progress_recorder.set_progress(
-                    10 + int((i / total_to_save) * 85),
+                    10 + int((i / max(total_to_save, 1)) * 85),
                     100,
                     description=f"Saving property {i}/{total_to_save}..."
                 )
@@ -117,8 +193,9 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
                     property_ids.append(parcel_id)
 
         total_properties = len(property_ids)
+        scraped_count = total_properties - cached_count
         progress_recorder.set_progress(100, 100,
-            description=f"Completed: {total_properties} properties ({cached_count} cached, {total_properties - cached_count} scraped)")
+            description=f"Completed: {total_properties} properties ({cached_count} cached, {scraped_count} scraped)")
 
     except Exception as e:
         logger.error(f"Error in scrape_pinellas_properties: {e}")
@@ -127,7 +204,8 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
     return {
         'property_ids': property_ids,
         'search_criteria': search_criteria,
-        'cached_count': cached_count
+        'cached_count': cached_count,
+        'scraped_count': total_properties - cached_count
     }
 
 
