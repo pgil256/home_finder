@@ -32,3 +32,6 @@ claude-code/
 
 # Worktrees
 .worktrees/
+
+# Auto Claude data directory
+.auto-claude/

@@ -15,18 +15,18 @@ class TestWebScraperViews:
     def test_scraper_page_uses_correct_template(self, client):
         """Test scraper page uses the correct template."""
         response = client.get('/scraper/')
-        assert 'WebScraper/web-scraper.html' in [t.name for t in response.templates]
+        assert 'WebScraper/search.html' in [t.name for t in response.templates]
 
-    @patch('apps.WebScraper.views.start_processing_pipeline')
+    @patch('apps.WebScraper.views.build_processing_pipeline')
     def test_scraper_page_post_starts_task(self, mock_task, client):
-        """Test POST starts Celery task."""
+        """Test POST starts Celery task pipeline."""
         mock_result = MagicMock()
         mock_result.id = 'test-task-id'
-        mock_task.apply_async.return_value = mock_result
+        mock_task.return_value = mock_result
 
         response = client.post('/scraper/', {
-            'City': 'Clearwater',
-            'Property Type': 'Single Family',
+            'city': 'Clearwater',
+            'property_type': 'Single Family',
             'limit': '10',
         })
 
@@ -34,24 +34,24 @@ class TestWebScraperViews:
         assert response.status_code == 302
         assert 'progress/test-task-id' in response.url
 
-    @patch('apps.WebScraper.views.start_processing_pipeline')
+    @patch('apps.WebScraper.views.build_processing_pipeline')
     def test_scraper_post_passes_search_criteria(self, mock_task, client):
         """Test POST passes correct search criteria to task."""
         mock_result = MagicMock()
         mock_result.id = 'test-task-id'
-        mock_task.apply_async.return_value = mock_result
+        mock_task.return_value = mock_result
 
         client.post('/scraper/', {
-            'City': 'St Petersburg',
-            'Location': '33701',
-            'Property Type': 'Condo',
+            'city': 'St Petersburg',
+            'zip_code': '33701',
+            'property_type': 'Condo',
             'limit': '25',
         })
 
-        # Verify task was called with search criteria
-        mock_task.apply_async.assert_called_once()
-        call_args = mock_task.apply_async.call_args
-        search_criteria = call_args.kwargs['args'][0]
+        # Verify build_processing_pipeline was called
+        mock_task.assert_called_once()
+        call_args = mock_task.call_args
+        search_criteria = call_args[0][0]  # First positional argument
         assert search_criteria['city'] == 'St Petersburg'
         assert search_criteria['zip_code'] == '33701'
         assert search_criteria['property_type'] == 'Condo'

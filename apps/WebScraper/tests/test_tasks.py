@@ -19,13 +19,21 @@ class TestScrapeDataTasks:
     @patch('apps.WebScraper.tasks.pcpao_scraper.PCPAOScraper')
     @patch('apps.WebScraper.tasks.scrape_data.ProgressRecorder')
     def test_scrape_pinellas_properties_creates_records(self, mock_progress, mock_scraper_class, celery_eager):
-        """Test scrape task creates PropertyListing records."""
+        """Test scrape task creates PropertyListing records.
+
+        Note: The scrape task now uses parallel scraping with separate search and detail phases.
+        """
         from apps.WebScraper.tasks.scrape_data import scrape_pinellas_properties
         from apps.WebScraper.models import PropertyListing
 
-        # Mock scraper to return test data
+        # Mock scraper instance
         mock_scraper = MagicMock()
-        mock_scraper.scrape_by_criteria.return_value = [
+        # Mock search phase returns parcel IDs with URLs
+        mock_scraper.search_properties_with_urls.return_value = [
+            {'parcel_id': 'test-001', 'detail_url': 'http://test1'},
+        ]
+        # Mock parallel scraping returns full property data
+        mock_scraper.scrape_properties_parallel.return_value = [
             {
                 'parcel_id': 'test-001',
                 'address': '123 Test St',
@@ -48,7 +56,11 @@ class TestScrapeDataTasks:
         from apps.WebScraper.tasks.scrape_data import scrape_pinellas_properties
 
         mock_scraper = MagicMock()
-        mock_scraper.scrape_by_criteria.return_value = [
+        mock_scraper.search_properties_with_urls.return_value = [
+            {'parcel_id': 'test-001', 'detail_url': 'http://test1'},
+            {'parcel_id': 'test-002', 'detail_url': 'http://test2'},
+        ]
+        mock_scraper.scrape_properties_parallel.return_value = [
             {'parcel_id': 'test-001', 'address': '123 Test St', 'city': 'Test'},
             {'parcel_id': 'test-002', 'address': '456 Test Ave', 'city': 'Test'},
         ]
@@ -59,81 +71,60 @@ class TestScrapeDataTasks:
         assert len(result['property_ids']) == 2
         assert result['search_criteria'] == {'city': 'Test'}
 
-    @patch('apps.WebScraper.tasks.tax_collector_scraper.TaxCollectorScraper')
     @patch('apps.WebScraper.tasks.scrape_data.ProgressRecorder')
-    def test_scrape_tax_data_updates_records(self, mock_progress, mock_scraper_class, property_without_tax, celery_eager):
-        """Test tax scraper updates properties that don't have tax data."""
-        from apps.WebScraper.tasks.scrape_data import scrape_tax_data
+    def test_scrape_tax_data_is_passthrough(self, mock_progress, property_without_tax, celery_eager):
+        """Test tax scraper is now a passthrough (tax data comes from PCPAO bulk import).
 
-        mock_scraper = MagicMock()
-        mock_scraper.scrape_batch.return_value = [
-            {
-                'parcel_id': property_without_tax.parcel_id,
-                'tax_amount': Decimal('3500.00'),
-                'tax_status': 'Paid',
-                'delinquent': False,
-            }
-        ]
-        mock_scraper_class.return_value = mock_scraper
+        The real-time tax collector scraper has been disabled because the tax collector
+        website doesn't provide property-specific tax data via search.
+        """
+        from apps.WebScraper.tasks.scrape_data import scrape_tax_data
 
         scrape_result = {
             'property_ids': [property_without_tax.parcel_id],
-            'search_criteria': {'city': 'Clearwater'}
+            'search_criteria': {'city': 'Clearwater'},
+            'cached_count': 0
         }
         result = scrape_tax_data(scrape_result)
 
+        # Tax data should NOT be updated (passthrough behavior)
         property_without_tax.refresh_from_db()
-        assert property_without_tax.tax_amount == Decimal('3500.00')
-        assert property_without_tax.tax_status == 'Paid'
-        assert result['from_scraping'] == 1
+        assert property_without_tax.tax_amount is None
+        # Result should indicate passthrough
+        assert result['status'] == 'Tax data from PCPAO bulk import'
+        assert result['total_processed'] == 1
 
-    @patch('apps.WebScraper.tasks.tax_collector_scraper.TaxCollectorScraper')
     @patch('apps.WebScraper.tasks.scrape_data.ProgressRecorder')
-    def test_scrape_tax_data_skips_existing(self, mock_progress, mock_scraper_class, sample_property, celery_eager):
-        """Test tax scraper skips properties that already have tax data from PCPAO."""
+    def test_scrape_tax_data_preserves_property_ids(self, mock_progress, sample_property, celery_eager):
+        """Test tax scraper passthrough preserves property IDs in result."""
         from apps.WebScraper.tasks.scrape_data import scrape_tax_data
 
-        mock_scraper = MagicMock()
-        mock_scraper_class.return_value = mock_scraper
-
-        original_tax = sample_property.tax_amount
         scrape_result = {
             'property_ids': [sample_property.parcel_id],
-            'search_criteria': {'city': 'Clearwater'}
+            'search_criteria': {'city': 'Clearwater'},
+            'cached_count': 1
         }
         result = scrape_tax_data(scrape_result)
 
+        # Tax amount should be unchanged (passthrough)
         sample_property.refresh_from_db()
-        # Tax amount should be unchanged (not scraped)
-        assert sample_property.tax_amount == original_tax
-        # Scraper should not have been called since all properties had tax data
-        mock_scraper.scrape_batch.assert_not_called()
-        assert result['from_pcpao'] == 1
-        assert result['from_scraping'] == 0
+        assert sample_property.tax_amount == Decimal('3125.00')
+        # Property IDs should be passed through
+        assert sample_property.parcel_id in result['property_ids']
+        assert result['cached_count'] == 1
 
-    @patch('apps.WebScraper.tasks.tax_collector_scraper.TaxCollectorScraper')
     @patch('apps.WebScraper.tasks.scrape_data.ProgressRecorder')
-    def test_scrape_tax_data_handles_missing_property(self, mock_progress, mock_scraper_class, celery_eager):
-        """Test tax scraper handles property not found gracefully."""
+    def test_scrape_tax_data_handles_empty_ids(self, mock_progress, celery_eager):
+        """Test tax scraper passthrough handles empty property list."""
         from apps.WebScraper.tasks.scrape_data import scrape_tax_data
 
-        mock_scraper = MagicMock()
-        mock_scraper.scrape_batch.return_value = [
-            {
-                'parcel_id': 'non-existent-parcel',
-                'tax_amount': Decimal('1000.00'),
-                'tax_status': 'Paid',
-            }
-        ]
-        mock_scraper_class.return_value = mock_scraper
-
         scrape_result = {
-            'property_ids': ['non-existent-parcel'],
+            'property_ids': [],
             'search_criteria': {}
         }
-        # Should not raise
         result = scrape_tax_data(scrape_result)
         assert result['total_processed'] == 0
+        assert result['property_ids'] == []
 
 
 class TestSortDataTasks:

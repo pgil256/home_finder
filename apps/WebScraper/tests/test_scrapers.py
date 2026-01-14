@@ -20,6 +20,20 @@ def mock_time_sleep():
             yield
 
 
+@pytest.fixture
+def mock_chrome_dependencies():
+    """Mock Chrome binary paths and ChromeDriverManager to avoid TLS errors."""
+    with patch('apps.WebScraper.tasks.pcpao_scraper.os.path.exists', return_value=False):
+        with patch('apps.WebScraper.tasks.tax_collector_scraper.os.path.exists', return_value=False):
+            with patch('apps.WebScraper.tasks.pcpao_scraper.ChromeDriverManager') as mock_cdm1:
+                with patch('apps.WebScraper.tasks.tax_collector_scraper.ChromeDriverManager') as mock_cdm2:
+                    mock_service1 = MagicMock()
+                    mock_service2 = MagicMock()
+                    mock_cdm1.return_value.install.return_value = '/fake/chromedriver'
+                    mock_cdm2.return_value.install.return_value = '/fake/chromedriver'
+                    yield
+
+
 class TestPCPAOScraper:
     """Tests for PCPAOScraper with mocked Selenium WebDriver."""
 
@@ -53,7 +67,7 @@ class TestPCPAOScraper:
         scraper = PCPAOScraper(headless=False)
         assert scraper.headless is False
 
-    def test_setup_driver_creates_chrome_instance(self, mock_webdriver, mock_chrome_paths):
+    def test_setup_driver_creates_chrome_instance(self, mock_chrome_dependencies):
         """Test setup_driver creates Chrome WebDriver."""
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         import apps.WebScraper.tasks.pcpao_scraper as scraper_module
@@ -92,7 +106,7 @@ class TestPCPAOScraper:
     def test_search_properties_navigates_to_search_url(self, mock_webdriver, mock_chrome_paths):
         """Test search_properties navigates to PCPAO search page."""
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-        from selenium.common.exceptions import NoSuchElementException
+        from selenium.common.exceptions import NoSuchElementException, TimeoutException
         from selenium.webdriver.common.by import By
 
         mock_search_input = MagicMock()
@@ -105,10 +119,13 @@ class TestPCPAOScraper:
 
         mock_webdriver.find_element.side_effect = find_element_side_effect
         mock_webdriver.find_elements.return_value = []
+        mock_webdriver.page_source = '<html><body><table><tbody></tbody></table></body></html>'
 
         scraper = PCPAOScraper()
         scraper.driver = mock_webdriver
         scraper.wait = MagicMock()
+        # Make wait.until raise TimeoutException to exit search early
+        scraper.wait.until.side_effect = TimeoutException()
 
         scraper.search_properties({'city': 'Clearwater'})
 
@@ -121,14 +138,23 @@ class TestPCPAOScraper:
         from selenium.common.exceptions import NoSuchElementException
         from selenium.webdriver.common.by import By
 
-        # Mock link elements with parcel ID format
-        mock_link1 = MagicMock()
-        mock_link1.text = '15-29-16-12345-000-0010'
-        mock_link1.get_attribute.return_value = 'http://example.com/parcel/15-29-16-12345-000-0010'
-
-        mock_link2 = MagicMock()
-        mock_link2.text = '15-29-16-12345-000-0020'
-        mock_link2.get_attribute.return_value = 'http://example.com/parcel/15-29-16-12345-000-0020'
+        # HTML with parcel links (BeautifulSoup-based extraction)
+        html_with_parcels = """
+        <html>
+        <body>
+            <table>
+                <tbody>
+                    <tr>
+                        <td><a href="/property-details?strap=1">15-29-16-12345-000-0010</a></td>
+                    </tr>
+                    <tr>
+                        <td><a href="/property-details?strap=2">15-29-16-12345-000-0020</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </body>
+        </html>
+        """
 
         mock_search_input = MagicMock()
 
@@ -139,11 +165,12 @@ class TestPCPAOScraper:
             raise NoSuchElementException()
 
         mock_webdriver.find_element.side_effect = find_element_side_effect
-        mock_webdriver.find_elements.return_value = [mock_link1, mock_link2]
+        mock_webdriver.page_source = html_with_parcels
 
         scraper = PCPAOScraper()
         scraper.driver = mock_webdriver
         scraper.wait = MagicMock()
+        scraper.wait.until = MagicMock(return_value=mock_search_input)
 
         results = scraper.search_properties({'city': 'Clearwater'})
 
@@ -153,7 +180,7 @@ class TestPCPAOScraper:
     def test_search_properties_handles_empty_results(self, mock_webdriver, mock_chrome_paths):
         """Test search_properties handles empty search results gracefully."""
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-        from selenium.common.exceptions import NoSuchElementException
+        from selenium.common.exceptions import NoSuchElementException, TimeoutException
         from selenium.webdriver.common.by import By
 
         mock_search_input = MagicMock()
@@ -165,10 +192,12 @@ class TestPCPAOScraper:
 
         mock_webdriver.find_element.side_effect = find_element_side_effect
         mock_webdriver.find_elements.return_value = []
+        mock_webdriver.page_source = '<html><body></body></html>'
 
         scraper = PCPAOScraper()
         scraper.driver = mock_webdriver
         scraper.wait = MagicMock()
+        scraper.wait.until.side_effect = TimeoutException()
 
         results = scraper.search_properties({'city': 'NonexistentCity'})
 
@@ -179,12 +208,14 @@ class TestPCPAOScraper:
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         mock_webdriver.find_element.side_effect = Exception("Element not found")
+        mock_webdriver.page_source = '<html><body></body></html>'
+        mock_webdriver.current_url = 'https://www.pcpao.gov/property-details'
 
         scraper = PCPAOScraper()
         scraper.driver = mock_webdriver
         scraper.wait = MagicMock()
 
-        result = scraper.scrape_property_details('15-29-16-12345-000-0010')
+        result = scraper.scrape_property_details('15-29-16-12345-000-0010', detail_url='https://test')
 
         assert isinstance(result, dict)
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
@@ -196,6 +227,8 @@ class TestPCPAOScraper:
 
         mock_address_elem = MagicMock()
         mock_address_elem.text = '123 Main St'
+        mock_webdriver.page_source = '<html><body></body></html>'
+        mock_webdriver.current_url = 'https://www.pcpao.gov/property-details'
 
         def find_element_side_effect(by, selector):
             if 'address' in selector.lower():
@@ -208,19 +241,26 @@ class TestPCPAOScraper:
         scraper.driver = mock_webdriver
         scraper.wait = MagicMock()
 
-        result = scraper.scrape_property_details('15-29-16-12345-000-0010')
+        result = scraper.scrape_property_details('15-29-16-12345-000-0010', detail_url='https://test')
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
 
     def test_scrape_by_criteria_orchestrates_full_workflow(self, mock_chrome_paths):
-        """Test scrape_by_criteria sets up driver, searches, and scrapes details."""
+        """Test scrape_by_criteria sets up driver, searches, and scrapes details.
+
+        Note: With parallel scraping, setup_driver/close_driver are called multiple times:
+        once for the initial search, and once per worker thread.
+        """
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         with patch.object(PCPAOScraper, 'setup_driver') as mock_setup:
             with patch.object(PCPAOScraper, 'close_driver') as mock_close:
-                with patch.object(PCPAOScraper, 'search_properties') as mock_search:
+                with patch.object(PCPAOScraper, 'search_properties_with_urls') as mock_search:
                     with patch.object(PCPAOScraper, 'scrape_property_details') as mock_details:
-                        mock_search.return_value = ['parcel-001', 'parcel-002']
+                        mock_search.return_value = [
+                            {'parcel_id': 'parcel-001', 'detail_url': 'http://test1'},
+                            {'parcel_id': 'parcel-002', 'detail_url': 'http://test2'},
+                        ]
                         mock_details.side_effect = [
                             {'parcel_id': 'parcel-001', 'address': '123 Test'},
                             {'parcel_id': 'parcel-002', 'address': '456 Test'},
@@ -229,10 +269,12 @@ class TestPCPAOScraper:
                         scraper = PCPAOScraper()
                         results = scraper.scrape_by_criteria({'city': 'Clearwater'})
 
-                        mock_setup.assert_called_once()
+                        # setup_driver called once for search + once per worker (parallel scraping)
+                        assert mock_setup.call_count >= 1
                         mock_search.assert_called_once()
                         assert mock_details.call_count == 2
-                        mock_close.assert_called_once()
+                        # close_driver called once for search + once per worker
+                        assert mock_close.call_count >= 1
                         assert len(results) == 2
 
     def test_scrape_by_criteria_respects_limit(self, mock_chrome_paths):
@@ -241,9 +283,12 @@ class TestPCPAOScraper:
 
         with patch.object(PCPAOScraper, 'setup_driver'):
             with patch.object(PCPAOScraper, 'close_driver'):
-                with patch.object(PCPAOScraper, 'search_properties') as mock_search:
+                with patch.object(PCPAOScraper, 'search_properties_with_urls') as mock_search:
                     with patch.object(PCPAOScraper, 'scrape_property_details') as mock_details:
-                        mock_search.return_value = ['p1', 'p2', 'p3', 'p4', 'p5']
+                        mock_search.return_value = [
+                            {'parcel_id': f'p{i}', 'detail_url': f'http://test{i}'}
+                            for i in range(5)
+                        ]
                         mock_details.return_value = {'parcel_id': 'test'}
 
                         scraper = PCPAOScraper()
@@ -279,7 +324,7 @@ class TestTaxCollectorScraper:
         assert scraper.headless is True
         assert scraper.driver is None
 
-    def test_setup_driver_creates_chrome_instance(self, mock_chrome_paths):
+    def test_setup_driver_creates_chrome_instance(self, mock_chrome_dependencies):
         """Test setup_driver creates Chrome WebDriver."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         import apps.WebScraper.tasks.tax_collector_scraper as scraper_module
@@ -306,12 +351,12 @@ class TestTaxCollectorScraper:
         mock_webdriver.quit.assert_called_once()
 
     def test_scrape_tax_info_searches_by_parcel_id(self, mock_webdriver, mock_chrome_paths):
-        """Test scrape_tax_info searches using parcel ID."""
+        """Test scrape_tax_info searches using parcel ID via direct URL."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
-        mock_search_input = MagicMock()
-        mock_webdriver.find_element.return_value = mock_search_input
-        mock_webdriver.current_url = 'http://taxcollect.com/result'
+        # Tax collector now uses direct URL navigation, not form input
+        mock_webdriver.page_source = '<html><body><p>No results</p></body></html>'
+        mock_webdriver.current_url = 'https://pinellastaxcollector.gov/search-results/?search=15-29-16-12345-000-0010'
 
         scraper = TaxCollectorScraper()
         scraper.driver = mock_webdriver
@@ -319,11 +364,10 @@ class TestTaxCollectorScraper:
 
         result = scraper.scrape_tax_info('15-29-16-12345-000-0010')
 
-        # Should navigate to search URL
+        # Should navigate to search URL with parcel ID in query string
         mock_webdriver.get.assert_called()
-
-        # Should interact with search field
-        assert mock_search_input.clear.called or mock_search_input.send_keys.called
+        call_url = mock_webdriver.get.call_args[0][0]
+        assert '15-29-16-12345-000-0010' in call_url
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
 
@@ -332,19 +376,18 @@ class TestTaxCollectorScraper:
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         from selenium.webdriver.common.by import By
 
-        mock_search_input = MagicMock()
-        mock_tax_elem = MagicMock()
-        mock_tax_elem.text = '$3,125.00'
+        # HTML with tax table data (BeautifulSoup parses this)
+        html_with_tax = """
+        <html><body>
+            <table>
+                <tr><td>Total Tax</td><td>$3,125.00</td></tr>
+                <tr><td>Status</td><td>PAID</td></tr>
+            </table>
+        </body></html>
+        """
 
-        def find_element_side_effect(by, selector):
-            if 'Total Tax' in str(selector):
-                return mock_tax_elem
-            if by == By.CSS_SELECTOR:
-                return mock_search_input
-            raise Exception("Not found")
-
-        mock_webdriver.find_element.side_effect = find_element_side_effect
-        mock_webdriver.current_url = 'http://taxcollect.com/result'
+        mock_webdriver.page_source = html_with_tax
+        mock_webdriver.current_url = 'https://pinellastaxcollector.gov/search-results/'
 
         scraper = TaxCollectorScraper()
         scraper.driver = mock_webdriver
@@ -353,25 +396,23 @@ class TestTaxCollectorScraper:
         result = scraper.scrape_tax_info('15-29-16-12345-000-0010')
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
+        assert result['tax_amount'] == 3125.00
+        assert result['tax_status'] == 'Paid'
 
     def test_scrape_tax_info_handles_paid_status(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_tax_info correctly identifies paid status."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
-        mock_search_input = MagicMock()
-        mock_status_elem = MagicMock()
-        mock_status_elem.text = 'PAID'
+        html_with_paid = """
+        <html><body>
+            <table>
+                <tr><td>Status</td><td>PAID</td></tr>
+            </table>
+        </body></html>
+        """
 
-        call_count = [0]
-
-        def find_element_side_effect(by, selector):
-            call_count[0] += 1
-            if 'Status' in str(selector):
-                return mock_status_elem
-            return mock_search_input
-
-        mock_webdriver.find_element.side_effect = find_element_side_effect
-        mock_webdriver.current_url = 'http://taxcollect.com/result'
+        mock_webdriver.page_source = html_with_paid
+        mock_webdriver.current_url = 'https://pinellastaxcollector.gov/search-results/'
 
         scraper = TaxCollectorScraper()
         scraper.driver = mock_webdriver
@@ -379,24 +420,24 @@ class TestTaxCollectorScraper:
 
         result = scraper.scrape_tax_info('15-29-16-12345-000-0010')
 
-        # Tax status defaults or gets extracted
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
+        assert result['tax_status'] == 'Paid'
+        assert result['delinquent'] is False
 
     def test_scrape_tax_info_handles_delinquent_status(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_tax_info correctly identifies delinquent status."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
-        mock_search_input = MagicMock()
-        mock_status_elem = MagicMock()
-        mock_status_elem.text = 'DELINQUENT'
+        html_with_delinquent = """
+        <html><body>
+            <table>
+                <tr><td>Status</td><td>DELINQUENT</td></tr>
+            </table>
+        </body></html>
+        """
 
-        def find_element_side_effect(by, selector):
-            if 'Status' in str(selector):
-                return mock_status_elem
-            return mock_search_input
-
-        mock_webdriver.find_element.side_effect = find_element_side_effect
-        mock_webdriver.current_url = 'http://taxcollect.com/result'
+        mock_webdriver.page_source = html_with_delinquent
+        mock_webdriver.current_url = 'https://pinellastaxcollector.gov/search-results/'
 
         scraper = TaxCollectorScraper()
         scraper.driver = mock_webdriver
@@ -405,14 +446,16 @@ class TestTaxCollectorScraper:
         result = scraper.scrape_tax_info('15-29-16-12345-000-0010')
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
+        assert result['tax_status'] == 'Delinquent'
+        assert result['delinquent'] is True
 
     def test_scrape_tax_info_handles_missing_parcel(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_tax_info handles parcel not found gracefully."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         from selenium.common.exceptions import NoSuchElementException
 
-        mock_webdriver.find_element.side_effect = NoSuchElementException()
-        mock_webdriver.current_url = 'http://taxcollect.com/search'
+        mock_webdriver.page_source = '<html><body><p>No search results found</p></body></html>'
+        mock_webdriver.current_url = 'https://pinellastaxcollector.gov/search-results/'
 
         scraper = TaxCollectorScraper()
         scraper.driver = mock_webdriver
@@ -423,6 +466,7 @@ class TestTaxCollectorScraper:
         # Should return dict with at least parcel_id, not raise
         assert isinstance(result, dict)
         assert result['parcel_id'] == 'invalid-parcel-id'
+        assert result['tax_status'] == 'Not Found'
 
     def test_scrape_tax_info_handles_timeout(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_tax_info handles timeout gracefully."""
