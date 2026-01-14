@@ -23,7 +23,15 @@ logging.basicConfig(
 )
 
 
-def fetch_property_listings():
+def fetch_property_listings(property_ids=None):
+    """
+    Fetch property listings from database.
+
+    Args:
+        property_ids: Optional list of parcel IDs to filter by.
+                     If provided, only returns properties with matching parcel_id.
+                     If None, returns ALL properties (legacy behavior).
+    """
     logger.debug("Fetching property listings based on priority")
     keywords = Keyword.objects.exclude(priority=0).order_by("-priority")
     priority_columns = [(keyword.listing_field, keyword.name) for keyword in keywords]
@@ -38,8 +46,15 @@ def fetch_property_listings():
             field for field in fields if field is not None
         ]  # Safeguard against None fields
 
-    listings = PropertyListing.objects.values_list(*fields, named=True)
-    logger.info(f"Database contains {len(listings)} property listings")
+    # Filter by property_ids if provided
+    queryset = PropertyListing.objects
+    if property_ids:
+        queryset = queryset.filter(parcel_id__in=property_ids)
+        logger.info(f"Filtering by {len(property_ids)} property IDs")
+
+    listings = queryset.values_list(*fields, named=True)
+    logger.info(f"Fetched {len(listings)} property listings" +
+                (f" (filtered from {len(property_ids)} IDs)" if property_ids else " (all)"))
 
     # Log sample data for debugging
     if listings:
@@ -161,15 +176,19 @@ def compare_properties(x, y, user_preferences, priority_fields):
 def generate_sorted_properties(self, tax_result):
     progress_recorder = ProgressRecorder(self)
 
-    # Extract search_criteria and limit from the chain result
+    # Extract search_criteria, property_ids, and limit from the chain result
     scrape_config = tax_result.get('search_criteria', {}) if isinstance(tax_result, dict) else {}
+    property_ids = tax_result.get('property_ids', []) if isinstance(tax_result, dict) else []
     limit = tax_result.get('limit', 10) if isinstance(tax_result, dict) else 10
 
     if not scrape_config:
         logger.warning("No scrape configuration provided, using empty config")
         scrape_config = {}
 
-    columns, listings = fetch_property_listings()
+    logger.info(f"Generating sorted properties for {len(property_ids)} property IDs, limit={limit}")
+
+    # Filter by property_ids from the scraper - only include properties that matched search criteria
+    columns, listings = fetch_property_listings(property_ids if property_ids else None)
     progress_recorder.set_progress(25, 100, description="Fetched property listings")
 
     priority_fields = [col[0] for col in columns if col[0] != "link"]
@@ -187,9 +206,10 @@ def generate_sorted_properties(self, tax_result):
     # Code to generate PDF goes here
     progress_recorder.set_progress(50, 100, description="Generated PDF")
 
-    logger.info(f"Top {limit} sorted properties generated")
+    logger.info(f"Top {limit} sorted properties generated (from {len(sorted_properties)} total)")
     return {
         'sorted_properties': sorted_properties[:limit],
         'columns': columns,
-        'excel_path': excel_filepath
+        'excel_path': excel_filepath,
+        'search_criteria': scrape_config,
     }

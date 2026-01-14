@@ -209,13 +209,37 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
         )
 
         parcels_to_scrape = [p for p in parcels if p['parcel_id'] not in cached_parcels]
-        cached_count = len(cached_parcels)
 
-        logger.info(f"Cache check: {cached_count} cached (< {CACHE_HOURS}h old), "
+        logger.info(f"Cache check: {len(cached_parcels)} cached (< {CACHE_HOURS}h old), "
                     f"{len(parcels_to_scrape)} need scraping")
 
-        # Add cached parcel IDs to results
-        property_ids.extend(cached_parcels)
+        # Filter cached properties by search criteria before adding
+        # (they may have been scraped with different criteria previously)
+        if cached_parcels:
+            cached_listings = PropertyListing.objects.filter(parcel_id__in=cached_parcels)
+            cached_properties = []
+            for listing in cached_listings:
+                cached_properties.append({
+                    'parcel_id': listing.parcel_id,
+                    'property_type': listing.property_type,
+                    'market_value': listing.market_value,
+                    'bedrooms': listing.bedrooms,
+                    'bathrooms': listing.bathrooms,
+                    'year_built': listing.year_built,
+                    'building_sqft': listing.building_sqft,
+                    'tax_status': listing.tax_status,
+                })
+
+            # Apply same filter criteria to cached properties
+            filtered_cached = filter_properties_by_criteria(cached_properties, search_criteria)
+            cached_count = len(filtered_cached)
+
+            logger.info(f"Cached properties: {len(cached_parcels)} total, {cached_count} match current criteria")
+
+            # Only add cached properties that match current search criteria
+            property_ids.extend([p['parcel_id'] for p in filtered_cached])
+        else:
+            cached_count = 0
 
         # Step 3: Scrape non-cached properties in parallel
         if parcels_to_scrape:
