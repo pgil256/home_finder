@@ -804,7 +804,7 @@ def add_page_footer(canvas, doc):
     canvas.drawCentredString(letter[0]/2, 0.5*inch, f"Page {page_num}")
 
     # Footer text
-    canvas.drawCentredString(letter[0]/2, 0.35*inch, "Home Finder - Pinellas County Property Report")
+    canvas.drawCentredString(letter[0]/2, 0.35*inch, "Pinellas Property Finder - County Property Report")
 
     canvas.restoreState()
 

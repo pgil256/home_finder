@@ -1,5 +1,5 @@
 /**
- * Home Finder - Mobile Enhancements
+ * Pinellas Property Finder - Mobile Enhancements
  * Bottom sheets, swipe gestures, touch interactions
  */
 

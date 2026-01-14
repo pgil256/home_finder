@@ -1,4 +1,4 @@
-# Home Finder - Pinellas County Property Data Aggregator
+# Pinellas Property Finder - County Property Data Aggregator
 
 A Django-based web application that aggregates property data from Pinellas County official sources to help home buyers, real estate agents, and investors find properties.
 

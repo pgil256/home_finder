@@ -1,5 +1,5 @@
 /**
- * Home Finder - Common Utilities
+ * Pinellas Property Finder - Common Utilities
  * Toast notifications, skeleton loaders, and UI interactions
  */
 
