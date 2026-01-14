@@ -82,6 +82,80 @@ def filter_properties_by_criteria(properties, search_criteria):
                            f"above max ${max_value:,.0f}")
                 continue
 
+        # Check bedrooms filter
+        bedrooms_min = search_criteria.get('bedrooms_min')
+        if bedrooms_min:
+            try:
+                bedrooms_min_val = int(bedrooms_min)
+                prop_bedrooms = prop.get('bedrooms')
+                if prop_bedrooms is not None and prop_bedrooms < bedrooms_min_val:
+                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_bedrooms} beds "
+                               f"< min {bedrooms_min_val}")
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        # Check bathrooms filter
+        bathrooms_min = search_criteria.get('bathrooms_min')
+        if bathrooms_min:
+            try:
+                bathrooms_min_val = float(bathrooms_min)
+                prop_bathrooms = prop.get('bathrooms')
+                if prop_bathrooms is not None and float(prop_bathrooms) < bathrooms_min_val:
+                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_bathrooms} baths "
+                               f"< min {bathrooms_min_val}")
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        # Check year built filter
+        year_built_after = search_criteria.get('year_built_after')
+        if year_built_after:
+            try:
+                year_built_min = int(year_built_after)
+                prop_year = prop.get('year_built')
+                if prop_year is not None and prop_year < year_built_min:
+                    logger.debug(f"Filtered out {prop.get('parcel_id')}: built {prop_year} "
+                               f"< min year {year_built_min}")
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        # Check sqft min filter
+        sqft_min = search_criteria.get('sqft_min')
+        if sqft_min:
+            try:
+                sqft_min_val = int(sqft_min)
+                prop_sqft = prop.get('building_sqft')
+                if prop_sqft is not None and prop_sqft < sqft_min_val:
+                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_sqft} sqft "
+                               f"< min {sqft_min_val}")
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        # Check sqft max filter
+        sqft_max = search_criteria.get('sqft_max')
+        if sqft_max:
+            try:
+                sqft_max_val = int(sqft_max)
+                prop_sqft = prop.get('building_sqft')
+                if prop_sqft is not None and prop_sqft > sqft_max_val:
+                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_sqft} sqft "
+                               f"> max {sqft_max_val}")
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        # Check tax status filter
+        tax_status_filter = search_criteria.get('tax_status')
+        if tax_status_filter:
+            prop_tax_status = prop.get('tax_status')
+            if prop_tax_status is not None and prop_tax_status != tax_status_filter:
+                logger.debug(f"Filtered out {prop.get('parcel_id')}: tax status '{prop_tax_status}' "
+                           f"!= '{tax_status_filter}'")
+                continue
+
         filtered.append(prop)
 
     return filtered
