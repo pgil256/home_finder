@@ -540,8 +540,11 @@ class PCPAOScraper:
                     value = self._get_h2_value(soup, label)
                     if value and value not in ['n/a', 'N/A', '']:
                         try:
-                            property_data[field] = int(re.sub(r'[^\d]', '', value))
-                            break
+                            parsed_value = int(re.sub(r'[^\d]', '', value))
+                            # Sanity check: sqft/unit values should be reasonable
+                            if parsed_value <= 10_000_000:  # Max 10M sqft
+                                property_data[field] = parsed_value
+                                break
                         except (ValueError, TypeError):
                             pass
 
@@ -562,7 +565,12 @@ class PCPAOScraper:
                 if value and value not in ['n/a', 'N/A', '']:
                     if field == 'year_built':
                         try:
-                            property_data[field] = int(re.sub(r'[^\d]', '', value))
+                            # Extract only 4-digit year patterns to avoid overflow from other numbers
+                            year_match = re.search(r'\b(19|20)\d{2}\b', value)
+                            if year_match:
+                                year = int(year_match.group())
+                                if 1800 <= year <= 2100:
+                                    property_data[field] = year
                         except (ValueError, TypeError):
                             pass
                     elif field == 'owner_name':
