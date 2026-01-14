@@ -9,6 +9,7 @@ import re
 import time
 from typing import List, Dict, Optional, Any
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import os
 from bs4 import BeautifulSoup
@@ -244,8 +245,8 @@ class PCPAOScraper:
 
                     if not page_parcels:
                         consecutive_empty_pages += 1
-                        if consecutive_empty_pages >= 3:
-                            logger.warning("3 consecutive empty pages, stopping pagination")
+                        if consecutive_empty_pages >= 1:
+                            logger.info("Empty page reached, stopping pagination")
                             break
                     else:
                         consecutive_empty_pages = 0
@@ -597,17 +598,103 @@ class PCPAOScraper:
 
         return property_data
 
-    def scrape_by_criteria(self, search_criteria: Dict[str, Any], limit: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Search for properties and scrape their details.
+    def _scrape_worker(self, parcels_chunk: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        """Worker function for parallel scraping. Each worker gets its own browser instance.
 
         Args:
-            search_criteria: Dict with search parameters (city, zip_code, address, owner_name)
-            limit: Optional max number of properties to scrape
+            parcels_chunk: List of parcel dicts with parcel_id and detail_url
 
         Returns:
             List of property data dicts
         """
-        properties = []
+        worker_scraper = PCPAOScraper(headless=self.headless)
+        results = []
+        try:
+            worker_scraper.setup_driver()
+            for parcel_info in parcels_chunk:
+                parcel_id = parcel_info['parcel_id']
+                detail_url = parcel_info.get('detail_url')
+                try:
+                    property_data = worker_scraper.scrape_property_details(parcel_id, detail_url=detail_url)
+                    results.append((parcel_info['_index'], property_data))
+                    time.sleep(0.3)  # Brief delay between requests
+                except Exception as e:
+                    logger.error(f"Worker error scraping {parcel_id}: {e}")
+                    results.append((parcel_info['_index'], {'parcel_id': parcel_id}))
+        finally:
+            worker_scraper.close_driver()
+        return results
+
+    def scrape_properties_parallel(
+        self,
+        parcels: List[Dict[str, str]],
+        max_workers: int = 3,
+        progress_callback: Optional[callable] = None
+    ) -> List[Dict[str, Any]]:
+        """Scrape property details using multiple browser instances in parallel.
+
+        Args:
+            parcels: List of parcel dicts with parcel_id and detail_url
+            max_workers: Number of concurrent browser instances (default 3)
+            progress_callback: Optional callback(completed, total) for progress updates
+
+        Returns:
+            List of property data dicts in original order
+        """
+        if not parcels:
+            return []
+
+        # Add index to each parcel for maintaining order
+        indexed_parcels = [
+            {**p, '_index': i} for i, p in enumerate(parcels)
+        ]
+
+        # Distribute parcels across workers (round-robin)
+        chunks = [[] for _ in range(max_workers)]
+        for i, parcel in enumerate(indexed_parcels):
+            chunks[i % max_workers].append(parcel)
+
+        # Remove empty chunks
+        chunks = [c for c in chunks if c]
+        actual_workers = len(chunks)
+
+        logger.info(f"Parallel scraping {len(parcels)} properties with {actual_workers} workers")
+
+        # Results array to maintain order
+        results = [None] * len(parcels)
+        completed = 0
+
+        with ThreadPoolExecutor(max_workers=actual_workers) as executor:
+            futures = {
+                executor.submit(self._scrape_worker, chunk): chunk
+                for chunk in chunks
+            }
+
+            for future in as_completed(futures):
+                try:
+                    worker_results = future.result()
+                    for idx, property_data in worker_results:
+                        results[idx] = property_data
+                        completed += 1
+                        if progress_callback:
+                            progress_callback(completed, len(parcels))
+                except Exception as e:
+                    logger.error(f"Worker failed: {e}")
+
+        # Filter out any None results (shouldn't happen but defensive)
+        return [r for r in results if r is not None]
+
+    def scrape_by_criteria(self, search_criteria: Dict[str, Any], limit: Optional[int] = None, max_workers: int = 3) -> List[Dict[str, Any]]:
+        """Search for properties and scrape their details using parallel browser instances.
+
+        Args:
+            search_criteria: Dict with search parameters (city, zip_code, address, owner_name)
+            limit: Optional max number of properties to scrape
+            max_workers: Number of concurrent browser instances (default 3)
+
+        Returns:
+            List of property data dicts
+        """
         try:
             self.setup_driver()
             parcels = self.search_properties_with_urls(search_criteria)
@@ -617,15 +704,23 @@ class PCPAOScraper:
 
             logger.info(f"Scraping details for {len(parcels)} properties")
 
-            for i, parcel_info in enumerate(parcels, 1):
-                parcel_id = parcel_info['parcel_id']
-                detail_url = parcel_info.get('detail_url')
-                logger.info(f"Scraping property {i}/{len(parcels)}: {parcel_id}")
-                property_data = self.scrape_property_details(parcel_id, detail_url=detail_url)
-                properties.append(property_data)
-                time.sleep(0.5)  # Reduced from 1s
-
         finally:
             self.close_driver()
 
-        return properties
+        # Use parallel scraping for property details (each worker creates its own browser)
+        if not parcels:
+            return []
+
+        if len(parcels) == 1:
+            # Single property - no need for parallel overhead
+            single_scraper = PCPAOScraper(headless=self.headless)
+            try:
+                single_scraper.setup_driver()
+                return [single_scraper.scrape_property_details(
+                    parcels[0]['parcel_id'],
+                    detail_url=parcels[0].get('detail_url')
+                )]
+            finally:
+                single_scraper.close_driver()
+
+        return self.scrape_properties_parallel(parcels, max_workers=max_workers)

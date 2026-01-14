@@ -135,6 +135,11 @@ def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1
     """
     Bulk insert or update property records.
 
+    Uses batch operations to avoid N+1 query pattern:
+    - Single query to find existing records
+    - bulk_create for new records
+    - bulk_update for existing records
+
     Args:
         properties: List of property dictionaries with PropertyListing fields
         batch_size: Number of records to process per batch
@@ -144,20 +149,62 @@ def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1
     """
     stats = {'created': 0, 'updated': 0}
 
+    # Filter out properties without parcel_id
+    valid_properties = [p for p in properties if p.get('parcel_id')]
+    if not valid_properties:
+        return stats
+
+    # Get all parcel IDs we're processing
+    parcel_ids = [p['parcel_id'] for p in valid_properties]
+
     with transaction.atomic():
-        for prop in properties:
-            parcel_id = prop.get('parcel_id')
-            if not parcel_id:
-                continue
+        # Single query to find all existing records (N+1 fix)
+        existing_records = {
+            p.parcel_id: p
+            for p in PropertyListing.objects.filter(parcel_id__in=parcel_ids)
+        }
 
-            obj, created = PropertyListing.objects.update_or_create(
-                parcel_id=parcel_id,
-                defaults={k: v for k, v in prop.items() if k != 'parcel_id'}
-            )
+        # Separate into new and existing
+        new_properties = []
+        properties_to_update = []
 
-            if created:
-                stats['created'] += 1
+        # Fields to update (excluding parcel_id which is the lookup key)
+        update_fields = [
+            'address', 'city', 'zip_code', 'owner_name', 'market_value',
+            'assessed_value', 'building_sqft', 'year_built', 'bedrooms',
+            'bathrooms', 'property_type', 'land_size', 'lot_sqft',
+            'tax_amount', 'tax_status'
+        ]
+
+        for prop in valid_properties:
+            parcel_id = prop['parcel_id']
+            existing = existing_records.get(parcel_id)
+
+            if existing:
+                # Update existing record in memory
+                for field in update_fields:
+                    if field in prop:
+                        setattr(existing, field, prop[field])
+                properties_to_update.append(existing)
             else:
-                stats['updated'] += 1
+                # Create new PropertyListing instance
+                new_properties.append(PropertyListing(
+                    parcel_id=parcel_id,
+                    **{k: v for k, v in prop.items() if k != 'parcel_id'}
+                ))
+
+        # Bulk create new records (single query)
+        if new_properties:
+            PropertyListing.objects.bulk_create(new_properties, batch_size=batch_size)
+            stats['created'] = len(new_properties)
+
+        # Bulk update existing records (single query)
+        if properties_to_update:
+            PropertyListing.objects.bulk_update(
+                properties_to_update,
+                update_fields,
+                batch_size=batch_size
+            )
+            stats['updated'] = len(properties_to_update)
 
     return stats
