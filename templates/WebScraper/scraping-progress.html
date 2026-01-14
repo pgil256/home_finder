@@ -277,11 +277,20 @@
 
         if (percent > 5 && percent < 100) {
             const estimated = (elapsed / percent) * (100 - percent);
-            const minutes = Math.ceil(estimated / 60000);
-            if (minutes > 1) {
+            const totalSeconds = Math.ceil(estimated / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            if (minutes >= 2) {
                 timeText.textContent = `Estimated time remaining: ~${minutes} minutes`;
+            } else if (minutes === 1) {
+                timeText.textContent = `Estimated time remaining: ~1 minute ${seconds > 0 ? seconds + 's' : ''}`;
+            } else if (seconds > 30) {
+                timeText.textContent = `Estimated time remaining: ~${seconds} seconds`;
+            } else if (seconds > 10) {
+                timeText.textContent = `Almost done... ~${seconds} seconds`;
             } else {
-                timeText.textContent = 'Almost done...';
+                timeText.textContent = 'Finishing up...';
             }
         } else if (percent >= 100) {
             timeText.textContent = 'Complete!';
