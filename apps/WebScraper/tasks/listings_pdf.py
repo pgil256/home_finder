@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.platypus import (
@@ -30,6 +30,11 @@ logging.basicConfig(
 
 REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
 os.makedirs(REPORTS_DIR, exist_ok=True)
+
+# Page dimensions for landscape letter
+PAGE_SIZE = landscape(letter)
+PAGE_WIDTH = PAGE_SIZE[0]
+PAGE_HEIGHT = PAGE_SIZE[1]
 
 # Professional color palette
 COLORS = {
@@ -365,7 +370,7 @@ def create_cover_page(story, styles, property_count, search_criteria=None):
                 ptype = ', '.join(ptype)
             summary_data.append(['Property Type', ptype])
 
-    summary_table = Table(summary_data, colWidths=[2*inch, 3*inch])
+    summary_table = Table(summary_data, colWidths=[2.5*inch, 4*inch])
     summary_table.setStyle(TableStyle([
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica'),
         ('FONTNAME', (1, 0), (1, -1), 'Helvetica-Bold'),
@@ -421,7 +426,7 @@ def create_executive_summary(story, styles, stats):
         ],
     ]
 
-    metrics_table = Table(metrics_data, colWidths=[2.16*inch]*3)
+    metrics_table = Table(metrics_data, colWidths=[3.16*inch]*3)
     metrics_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), COLORS['bg_light']),
         ('BOX', (0, 0), (-1, -1), 1, COLORS['border']),
@@ -490,7 +495,7 @@ def create_executive_summary(story, styles, stats):
         for ptype, count in sorted_types:
             pct = (count / stats['total']) * 100
             type_rows.append([str(ptype)[:20], str(count), f"{pct:.1f}%"])
-        type_table = Table(type_rows, colWidths=[1.5*inch, 0.6*inch, 0.5*inch])
+        type_table = Table(type_rows, colWidths=[2.2*inch, 0.8*inch, 0.7*inch])
         type_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), COLORS['bg_light']),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
@@ -508,7 +513,7 @@ def create_executive_summary(story, styles, stats):
         for city, count in sorted_cities:
             pct = (count / stats['total']) * 100
             city_rows.append([str(city)[:20], str(count), f"{pct:.1f}%"])
-        city_table = Table(city_rows, colWidths=[1.5*inch, 0.6*inch, 0.5*inch])
+        city_table = Table(city_rows, colWidths=[2.2*inch, 0.8*inch, 0.7*inch])
         city_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), COLORS['bg_light']),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
@@ -520,10 +525,10 @@ def create_executive_summary(story, styles, stats):
 
     if left_content or right_content:
         # Wrap in tables
-        left_wrapper = Table([[e] for e in left_content], colWidths=[3*inch]) if left_content else Paragraph("", styles['label'])
-        right_wrapper = Table([[e] for e in right_content], colWidths=[3*inch]) if right_content else Paragraph("", styles['label'])
+        left_wrapper = Table([[e] for e in left_content], colWidths=[4.5*inch]) if left_content else Paragraph("", styles['label'])
+        right_wrapper = Table([[e] for e in right_content], colWidths=[4.5*inch]) if right_content else Paragraph("", styles['label'])
 
-        dist_table = Table([[left_wrapper, right_wrapper]], colWidths=[3.25*inch, 3.25*inch])
+        dist_table = Table([[left_wrapper, right_wrapper]], colWidths=[4.75*inch, 4.75*inch])
         dist_table.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
         story.append(dist_table)
 
@@ -540,21 +545,97 @@ def create_metric_cell(label, value, color):
     ]
 
 
+def create_investment_cell_compact(label, value, color):
+    """Create a compact investment metric cell (no subtitle)."""
+    return [
+        Paragraph(f'<font size="8" color="#{COLORS["text_light"].hexval()[2:]}">{label}</font>',
+                  ParagraphStyle(name='inv_label_c', alignment=TA_CENTER)),
+        Paragraph(f'<font size="11" color="#{color.hexval()[2:]}"><b>{value}</b></font>',
+                  ParagraphStyle(name='inv_value_c', alignment=TA_CENTER)),
+    ]
+
+
+def create_compact_details_table(property_dict, styles):
+    """Create a compact 4-column details table for single-page layout."""
+    # Gather all fields by section
+    sections = {
+        'Valuation': ['market_value', 'assessed_value'],
+        'Tax Info': ['tax_amount', 'tax_status', 'tax_year', 'delinquent'],
+        'Property': ['owner_name', 'lot_sqft', 'land_size', 'stories'],
+        'Location': ['parcel_id'],
+    }
+
+    all_rows = []
+
+    # Create header row
+    headers = list(sections.keys())
+    header_row = [Paragraph(f'<b>{h}</b>', ParagraphStyle(
+        name='detail_header', fontSize=10, textColor=COLORS['primary']
+    )) for h in headers]
+    all_rows.append(header_row)
+
+    # Find max rows needed
+    max_rows = max(len(fields) for fields in sections.values())
+
+    # Build data rows
+    for row_idx in range(max_rows):
+        row = []
+        for section_name, fields in sections.items():
+            if row_idx < len(fields):
+                field = fields[row_idx]
+                config = FIELD_CONFIG.get(field, {})
+                value = property_dict.get(field)
+                formatted = format_value(value, config.get('format'))
+
+                # Special styling
+                if field == 'tax_status':
+                    status = str(value).lower() if value else ''
+                    if status == 'paid':
+                        formatted = f'<font color="#{COLORS["accent"].hexval()[2:]}">{formatted}</font>'
+                    elif status == 'unpaid':
+                        formatted = f'<font color="#{COLORS["danger"].hexval()[2:]}">{formatted}</font>'
+                if field == 'delinquent' and (value is True or str(value).lower() == 'true'):
+                    formatted = f'<font color="#{COLORS["danger"].hexval()[2:]}"><b>Yes</b></font>'
+
+                label = config.get('label', field.replace('_', ' ').title())
+                cell_content = Paragraph(
+                    f'<font size="8" color="#{COLORS["text_light"].hexval()[2:]}">{label}:</font> '
+                    f'<font size="9">{formatted}</font>',
+                    ParagraphStyle(name='detail_cell', leading=12)
+                )
+                row.append(cell_content)
+            else:
+                row.append('')
+        all_rows.append(row)
+
+    table = Table(all_rows, colWidths=[2.375*inch]*4)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), COLORS['bg_light']),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 0.5, COLORS['border']),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    return table
+
+
 def create_property_page(story, styles, property_dict, index, total, market_stats=None):
-    """Create a professional property listing page."""
-    # Header with property number
+    """Create a compact single-page property listing."""
+    # Header with property number - minimal spacing
     header_data = [[
         Paragraph(f"Property {index} of {total}", styles['label']),
     ]]
-    header_table = Table(header_data, colWidths=[6.5*inch])
+    header_table = Table(header_data, colWidths=[9.5*inch])
     header_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
     ]))
     story.append(header_table)
-
-    story.append(Spacer(1, 0.1*inch))
     story.append(HRFlowable(width="100%", thickness=1, color=COLORS['border']))
-    story.append(Spacer(1, 0.2*inch))
+    story.append(Spacer(1, 0.1*inch))
 
     # Main header with address, price, and optional image
     address = property_dict.get('address', 'Address Not Available')
@@ -578,19 +659,16 @@ def create_property_page(story, styles, property_dict, index, total, market_stat
     prop_type = property_dict.get('property_type', '-')
 
     if property_image:
-        # Two-column layout with image
-        address_block = Table([[e] for e in header_left], colWidths=[2.8*inch])
+        address_block = Table([[e] for e in header_left], colWidths=[4.5*inch])
         address_block.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
-
         main_header = Table(
             [[property_image, address_block, Paragraph(price_display, styles['price_large'])]],
-            colWidths=[1.3*inch, 2.7*inch, 2.5*inch]
+            colWidths=[1.5*inch, 4.5*inch, 3.5*inch]
         )
     else:
-        # Original layout without image
         main_header = Table(
             [[header_left, Paragraph(price_display, styles['price_large'])]],
-            colWidths=[4*inch, 2.5*inch]
+            colWidths=[6*inch, 3.5*inch]
         )
 
     main_header.setStyle(TableStyle([
@@ -598,42 +676,38 @@ def create_property_page(story, styles, property_dict, index, total, market_stat
         ('ALIGN', (-1, 0), (-1, 0), 'RIGHT'),
     ]))
     story.append(main_header)
-
     story.append(Spacer(1, 0.1*inch))
 
-    # Quick stats row
+    # Quick stats row - compact padding
     bedrooms = property_dict.get('bedrooms', '-')
     bathrooms = property_dict.get('bathrooms', '-')
     sqft = property_dict.get('building_sqft')
     year = property_dict.get('year_built', '-')
-
     sqft_display = format_value(sqft, 'sqft') if sqft else '-'
 
-    quick_stats = [
-        [
-            create_stat_cell('Beds', str(bedrooms) if bedrooms else '-'),
-            create_stat_cell('Baths', str(bathrooms) if bathrooms else '-'),
-            create_stat_cell('Sq Ft', sqft_display.replace(' sq ft', '') if sqft else '-'),
-            create_stat_cell('Built', str(year) if year else '-'),
-            create_stat_cell('Type', str(prop_type)[:15] if prop_type else '-'),
-        ]
-    ]
+    quick_stats = [[
+        create_stat_cell('Beds', str(bedrooms) if bedrooms else '-'),
+        create_stat_cell('Baths', str(bathrooms) if bathrooms else '-'),
+        create_stat_cell('Sq Ft', sqft_display.replace(' sq ft', '') if sqft else '-'),
+        create_stat_cell('Built', str(year) if year else '-'),
+        create_stat_cell('Type', str(prop_type)[:15] if prop_type else '-'),
+    ]]
 
-    stats_table = Table(quick_stats, colWidths=[1.3*inch]*5)
+    stats_table = Table(quick_stats, colWidths=[1.9*inch]*5)
     stats_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), COLORS['bg_light']),
         ('BOX', (0, 0), (-1, -1), 1, COLORS['border']),
         ('INNERGRID', (0, 0), (-1, -1), 1, COLORS['border']),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
     story.append(stats_table)
 
-    # Investment Metrics Row (if market stats available)
+    # Investment Metrics Row - compact version
     if market_stats and market_value and sqft:
-        story.append(Spacer(1, 0.15*inch))
+        story.append(Spacer(1, 0.1*inch))
         try:
             price = float(market_value)
             sqft_val = float(sqft)
@@ -641,69 +715,48 @@ def create_property_page(story, styles, property_dict, index, total, market_stat
             assessed = float(property_dict.get('assessed_value', 0) or 0)
             tax = float(property_dict.get('tax_amount', 0) or 0)
 
-            # Calculate metrics
             avg_pps = market_stats.get('avg_price_sqft', 0)
             pps_diff = price_sqft - avg_pps if avg_pps > 0 else 0
             pps_diff_pct = (pps_diff / avg_pps * 100) if avg_pps > 0 else 0
-
             equity_pct = ((price - assessed) / price * 100) if price > 0 and assessed > 0 else 0
             tax_rate = (tax / price * 100) if price > 0 and tax > 0 else 0
 
-            # Determine value rating
             if pps_diff_pct <= -15:
-                value_rating = "Excellent Value"
-                value_color = COLORS['accent']
+                value_rating, value_color = "Excellent", COLORS['accent']
             elif pps_diff_pct <= -5:
-                value_rating = "Good Value"
-                value_color = COLORS['accent']
+                value_rating, value_color = "Good", COLORS['accent']
             elif pps_diff_pct <= 5:
-                value_rating = "Fair Value"
-                value_color = COLORS['secondary']
+                value_rating, value_color = "Fair", COLORS['secondary']
             elif pps_diff_pct <= 15:
-                value_rating = "Above Market"
-                value_color = COLORS['warning']
+                value_rating, value_color = "Above Mkt", COLORS['warning']
             else:
-                value_rating = "Premium Priced"
-                value_color = COLORS['danger']
+                value_rating, value_color = "Premium", COLORS['danger']
 
-            investment_data = [
-                [
-                    create_investment_cell('$/Sq Ft', f'${price_sqft:.0f}',
-                                          f'{"▼" if pps_diff < 0 else "▲"} ${abs(pps_diff):.0f} vs avg',
-                                          COLORS['accent'] if pps_diff < 0 else COLORS['warning']),
-                    create_investment_cell('Value Rating', value_rating, f'{abs(pps_diff_pct):.1f}% {"below" if pps_diff < 0 else "above"} market', value_color),
-                    create_investment_cell('Equity Position', f'{equity_pct:.1f}%', 'Market vs Assessed', COLORS['primary'] if equity_pct > 0 else COLORS['text_light']),
-                    create_investment_cell('Tax Rate', f'{tax_rate:.2f}%', f'${tax:,.0f}/year', COLORS['warning'] if tax_rate > 2 else COLORS['accent']),
-                ]
-            ]
+            investment_data = [[
+                create_investment_cell_compact('$/Sq Ft', f'${price_sqft:.0f}', COLORS['primary']),
+                create_investment_cell_compact('Value', value_rating, value_color),
+                create_investment_cell_compact('Equity', f'{equity_pct:.1f}%', COLORS['primary']),
+                create_investment_cell_compact('Tax Rate', f'{tax_rate:.2f}%', COLORS['warning'] if tax_rate > 2 else COLORS['accent']),
+            ]]
 
-            inv_table = Table(investment_data, colWidths=[1.625*inch]*4)
+            inv_table = Table(investment_data, colWidths=[2.375*inch]*4)
             inv_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#edf2f7")),
                 ('BOX', (0, 0), (-1, -1), 1, COLORS['secondary']),
                 ('INNERGRID', (0, 0), (-1, -1), 1, COLORS['border']),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('TOPPADDING', (0, 0), (-1, -1), 8),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
             ]))
             story.append(inv_table)
         except (ValueError, TypeError, ZeroDivisionError):
             pass
 
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.15*inch))
 
-    # Two-column detail sections
-    left_sections = create_section_table(property_dict, ['financial', 'tax'], styles)
-    right_sections = create_section_table(property_dict, ['property', 'location'], styles)
-
-    detail_table = Table(
-        [[left_sections, right_sections]],
-        colWidths=[3.25*inch, 3.25*inch]
-    )
-    detail_table.setStyle(TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-    ]))
+    # All details in a single compact table - 4 columns
+    detail_table = create_compact_details_table(property_dict, styles)
     story.append(detail_table)
 
     story.append(PageBreak())
@@ -770,7 +823,7 @@ def create_section_table(property_dict, sections, styles):
                 rows.append([config['label'], Paragraph(formatted, styles['value'])])
 
         if rows:
-            section_table = Table(rows, colWidths=[1.2*inch, 1.8*inch])
+            section_table = Table(rows, colWidths=[1.5*inch, 2.8*inch])
             section_table.setStyle(TableStyle([
                 ('FONTNAME', (0, 0), (0, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 0), (0, -1), 9),
@@ -785,7 +838,7 @@ def create_section_table(property_dict, sections, styles):
         elements.append(Spacer(1, 0.15*inch))
 
     # Combine into single table cell
-    wrapper = Table([[e] for e in elements], colWidths=[3.1*inch])
+    wrapper = Table([[e] for e in elements], colWidths=[4.5*inch])
     wrapper.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
     ]))
@@ -801,10 +854,10 @@ def add_page_footer(canvas, doc):
 
     # Page number
     page_num = canvas.getPageNumber()
-    canvas.drawCentredString(letter[0]/2, 0.5*inch, f"Page {page_num}")
+    canvas.drawCentredString(PAGE_WIDTH/2, 0.5*inch, f"Page {page_num}")
 
     # Footer text
-    canvas.drawCentredString(letter[0]/2, 0.35*inch, "Pinellas Property Finder - County Property Report")
+    canvas.drawCentredString(PAGE_WIDTH/2, 0.35*inch, "Pinellas Property Finder - County Property Report")
 
     canvas.restoreState()
 
@@ -823,7 +876,7 @@ def generate_listing_pdf(self, sort_result):
 
     doc = SimpleDocTemplate(
         filepath,
-        pagesize=letter,
+        pagesize=PAGE_SIZE,
         leftMargin=0.75*inch,
         rightMargin=0.75*inch,
         topMargin=0.75*inch,

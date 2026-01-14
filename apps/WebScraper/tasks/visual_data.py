@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.backends.backend_pdf import PdfPages
+from reportlab.lib.pagesizes import letter, landscape
 from PyPDF2 import PdfMerger, PdfReader
 from django.conf import settings
 import logging
@@ -17,6 +18,11 @@ logging.basicConfig(
 
 REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
 os.makedirs(REPORTS_DIR, exist_ok=True)
+
+# Page dimensions for landscape letter (in inches for matplotlib)
+PAGE_WIDTH_INCHES = 11
+PAGE_HEIGHT_INCHES = 8.5
+FIGURE_SIZE = (PAGE_WIDTH_INCHES - 1, PAGE_HEIGHT_INCHES - 1)  # With margins
 
 # Professional color palette matching the PDF
 COLORS = {
@@ -124,7 +130,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
     with PdfPages(pdf_filepath) as pdf:
         # Title page for analysis section
-        fig = plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=FIGURE_SIZE)
         fig.text(0.5, 0.6, 'Market Analysis', ha='center', va='center',
                  fontsize=32, fontweight='bold', color=COLORS['primary'])
         fig.text(0.5, 0.45, 'Property Data Visualizations', ha='center', va='center',
@@ -137,7 +143,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 1: Histogram of Listing Prices
         if has_columns(dataframe, "Listing Price"):
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             prices = dataframe["Listing Price"].dropna()
             n, bins, patches = ax.hist(prices, bins=20, color=COLORS['primary'],
                                         edgecolor='white', linewidth=1, alpha=0.85)
@@ -162,7 +168,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 2: Scatter Plot of Home Size vs. Listing Price
         if has_columns(dataframe, "Home Size", "Listing Price"):
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             plot_df = dataframe[["Home Size", "Listing Price"]].dropna()
 
             scatter = ax.scatter(
@@ -200,7 +206,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 3: Bar Chart of Property Types
         if has_columns(dataframe, "Property Type"):
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             property_types = dataframe["Property Type"].value_counts()
 
             bars = ax.bar(range(len(property_types)), property_types.values,
@@ -225,7 +231,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 4: Box Plot for Prices by Property Type
         if has_columns(dataframe, "Listing Price", "Property Type"):
-            fig, ax = plt.subplots(figsize=(12, 7))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
 
             property_types = dataframe["Property Type"].unique()
             data_to_plot = [dataframe[dataframe["Property Type"] == pt]["Listing Price"].dropna()
@@ -263,7 +269,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 5: Year Built vs. Listing Price
         if has_columns(dataframe, "Year Built", "Listing Price"):
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             plot_df = dataframe[["Year Built", "Listing Price"]].dropna()
 
             scatter = ax.scatter(
@@ -291,7 +297,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 6: Average Price per Sqft by Property Type
         if has_columns(dataframe, "Property Type", "Price Per Sqft"):
-            fig, ax = plt.subplots(figsize=(12, 7))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             avg_price_per_sqft = dataframe.groupby("Property Type")["Price Per Sqft"].mean().sort_values(ascending=False)
 
             bars = ax.bar(range(len(avg_price_per_sqft)), avg_price_per_sqft.values,
@@ -323,7 +329,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 7: Year Built Distribution
         if has_columns(dataframe, "Year Built"):
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             years = dataframe["Year Built"].dropna()
 
             n, bins, patches = ax.hist(years, bins=15, color=COLORS['secondary'],
@@ -350,7 +356,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 8: Monthly Payment by Property Type
         if has_columns(dataframe, "Property Type", "Estimated Monthly Payment"):
-            fig, ax = plt.subplots(figsize=(12, 7))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             avg_monthly = dataframe.groupby("Property Type")["Estimated Monthly Payment"].mean().sort_values(ascending=False)
 
             bars = ax.bar(range(len(avg_monthly)), avg_monthly.values,
@@ -375,7 +381,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 9: Market Value vs Assessed Value (Equity Analysis)
         if has_columns(dataframe, "Listing Price", "Assessed Value"):
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             plot_df = dataframe[["Listing Price", "Assessed Value"]].dropna()
             plot_df = plot_df[(plot_df["Listing Price"] > 0) & (plot_df["Assessed Value"] > 0)]
 
@@ -420,7 +426,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 10: Tax Burden Analysis
         if has_columns(dataframe, "Listing Price", "Tax Amount"):
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             plot_df = dataframe[["Listing Price", "Tax Amount"]].dropna()
             plot_df = plot_df[(plot_df["Listing Price"] > 0) & (plot_df["Tax Amount"] > 0)]
             plot_df["Tax Rate"] = (plot_df["Tax Amount"] / plot_df["Listing Price"]) * 100
@@ -462,7 +468,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 11: Value Opportunity Quadrant
         if has_columns(dataframe, "Price Per Sqft", "Listing Price"):
-            fig, ax = plt.subplots(figsize=(10, 8))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             plot_df = dataframe[["Price Per Sqft", "Listing Price", "Property Type"]].dropna()
             plot_df = plot_df[(plot_df["Price Per Sqft"] > 0) & (plot_df["Listing Price"] > 0)]
 
@@ -528,7 +534,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 12: Geographic Price Comparison (if City data available)
         if has_columns(dataframe, "City", "Listing Price"):
-            fig, ax = plt.subplots(figsize=(12, 7))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             city_stats = dataframe.groupby("City")["Listing Price"].agg(['mean', 'count'])
             city_stats = city_stats[city_stats['count'] >= 1].sort_values('mean', ascending=False).head(10)
 
@@ -564,7 +570,7 @@ def generate_plots_and_pdf(dataframe, current_count):
 
         # Plot 13: Tax Status Distribution (Pie Chart)
         if 'Tax Status' in dataframe.columns:
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=FIGURE_SIZE)
             tax_status = dataframe['Tax Status'].value_counts()
 
             if len(tax_status) > 0:
