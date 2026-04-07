@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-=_g^9i%l3f^xqb9-q=025
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '.railway.app', '.up.railway.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '.railway.app', '.up.railway.app', '.patbuilds.dev', 'localhost', '127.0.0.1']
 
 # CSRF trusted origins for proxied deployments (Django 4.0+)
 CSRF_TRUSTED_ORIGINS = [
