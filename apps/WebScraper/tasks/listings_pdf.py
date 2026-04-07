@@ -29,7 +29,11 @@ logging.basicConfig(
 )
 
 REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
-os.makedirs(REPORTS_DIR, exist_ok=True)
+try:
+    os.makedirs(REPORTS_DIR, exist_ok=True)
+except OSError:
+    REPORTS_DIR = os.path.join('/tmp', 'reports')
+    os.makedirs(REPORTS_DIR, exist_ok=True)
 
 # Page dimensions for landscape letter
 PAGE_SIZE = landscape(letter)

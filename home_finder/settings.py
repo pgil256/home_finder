@@ -23,10 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=_g^9i%l3f^xqb9-q=0256j0)xf$%&2(eh2f*_bvi3tx+hf&g6'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-=_g^9i%l3f^xqb9-q=0256j0)xf$%&2(eh2f*_bvi3tx+hf&g6')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '.railway.app', '.up.railway.app', 'localhost', '127.0.0.1']
 
@@ -146,7 +146,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Ensure this directory exists and is writable
 XLSX_BASE_DIR = os.path.join(BASE_DIR, 'misc', 'temp')
-os.makedirs(XLSX_BASE_DIR, exist_ok=True)
+try:
+    os.makedirs(XLSX_BASE_DIR, exist_ok=True)
+except OSError:
+    XLSX_BASE_DIR = os.path.join('/tmp', 'misc', 'temp')
+    os.makedirs(XLSX_BASE_DIR, exist_ok=True)
 
 # Media directory
 MEDIA_URL = '/media/'

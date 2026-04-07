@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 # Reports directory in media
 REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
-os.makedirs(REPORTS_DIR, exist_ok=True)
+try:
+    os.makedirs(REPORTS_DIR, exist_ok=True)
+except OSError:
+    REPORTS_DIR = os.path.join('/tmp', 'reports')
+    os.makedirs(REPORTS_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
