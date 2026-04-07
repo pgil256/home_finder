@@ -50,6 +50,9 @@
                     <a href="{% url 'help' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200">
                         Help
                     </a>
+                    <a href="{% url 'dashboard' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200">
+                        Browse
+                    </a>
 
                     <!-- Prominent CTA Button -->
                     <a href="{% url 'scraper' %}" class="btn btn-primary ml-4 group">
@@ -90,6 +93,9 @@
                 </a>
                 <a href="{% url 'help' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200">
                     Help
+                </a>
+                <a href="{% url 'dashboard' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200">
+                    Browse Properties
                 </a>
                 <div class="pt-3">
                     <a href="{% url 'scraper' %}" class="btn btn-primary w-full justify-center">
@@ -149,6 +155,11 @@
                             </a>
                         </li>
                         <li>
+                            <a href="{% url 'dashboard' %}" class="text-charcoal-300 hover:text-primary-400 transition-colors duration-200">
+                                Browse Properties
+                            </a>
+                        </li>
+                        <li>
                             <a href="{% url 'about' %}" class="text-charcoal-300 hover:text-primary-400 transition-colors duration-200">
                                 About Us
                             </a>
@@ -186,7 +197,7 @@
             <!-- Bottom Bar -->
             <div class="mt-8 pt-8 border-t border-charcoal-700 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <p class="text-charcoal-500 text-sm">
-                    2024 Pinellas Property Finder. All rights reserved.
+                    2025 Pinellas Property Finder. All rights reserved.
                 </p>
                 <div class="flex items-center gap-4">
                     <a href="https://www.linkedin.com/in/patrick-gilhooley-dev"

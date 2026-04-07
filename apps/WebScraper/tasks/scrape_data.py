@@ -287,23 +287,25 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
 
                 parcel_id = property_data.get('parcel_id')
                 if parcel_id:
+                    # Build defaults, only setting fields that have data
+                    # to avoid overwriting bulk-imported data with None
                     defaults = {
-                        'address': property_data.get('address', ''),
-                        'city': property_data.get('city', ''),
-                        'zip_code': property_data.get('zip_code', ''),
-                        'owner_name': property_data.get('owner_name'),
-                        'market_value': property_data.get('market_value'),
-                        'assessed_value': property_data.get('assessed_value'),
-                        'building_sqft': property_data.get('building_sqft'),
-                        'year_built': property_data.get('year_built'),
-                        'bedrooms': property_data.get('bedrooms'),
-                        'bathrooms': property_data.get('bathrooms'),
                         'property_type': property_data.get('property_type', 'Unknown'),
-                        'land_size': property_data.get('land_size'),
-                        'lot_sqft': property_data.get('lot_sqft'),
-                        'appraiser_url': property_data.get('appraiser_url'),
-                        'image_url': property_data.get('image_url'),
                     }
+                    # Only update fields that the scraper actually returned
+                    optional_fields = [
+                        'address', 'city', 'zip_code', 'owner_name',
+                        'market_value', 'assessed_value', 'building_sqft',
+                        'year_built', 'bedrooms', 'bathrooms', 'land_size',
+                        'lot_sqft', 'appraiser_url', 'image_url',
+                        'tax_collector_url', 'tax_amount', 'tax_year',
+                    ]
+                    for field in optional_fields:
+                        value = property_data.get(field)
+                        if value is not None:
+                            defaults[field] = value
+                    if property_data.get('tax_status') and property_data['tax_status'] != 'Unknown':
+                        defaults['tax_status'] = property_data['tax_status']
                     logger.info(f"Saving property {parcel_id} to database: "
                                 f"address={defaults['address']}, city={defaults['city']}, "
                                 f"market_value={defaults['market_value']}")
@@ -313,6 +315,11 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
                     )
                     logger.info(f"Property {parcel_id} {'created' if created else 'updated'} in database (pk={listing.pk})")
                     property_ids.append(parcel_id)
+
+        # Cap results at the requested limit
+        if limit and len(property_ids) > limit:
+            logger.info(f"Capping results from {len(property_ids)} to limit of {limit}")
+            property_ids = property_ids[:limit]
 
         total_properties = len(property_ids)
         scraped_count = total_properties - cached_count
@@ -326,8 +333,8 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
     return {
         'property_ids': property_ids,
         'search_criteria': search_criteria,
-        'cached_count': cached_count,
-        'scraped_count': total_properties - cached_count,
+        'cached_count': min(cached_count, len(property_ids)),
+        'scraped_count': scraped_count,
         'limit': limit
     }
 

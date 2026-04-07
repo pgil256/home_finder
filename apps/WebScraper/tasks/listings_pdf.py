@@ -930,11 +930,13 @@ def generate_listing_pdf(self, sort_result):
             "pdf_path": filepath,
             "excel_path": excel_path,
             "search_criteria": search_criteria,
+            "property_ids": sort_result.get('property_ids', []),
         }
     except Exception as e:
         logger.error(f"Failed to generate PDF: {str(e)}")
         return {
             "status": f"Failed to generate PDF: {str(e)}",
             "pdf_path": None,
-            "excel_path": excel_path
+            "excel_path": excel_path,
+            "property_ids": sort_result.get('property_ids', []),
         }

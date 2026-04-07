@@ -7,4 +7,6 @@ urlpatterns = [
     path("property/<str:parcel_id>/", views.property_detail, name="property-detail"),
     path("progress/<str:task_id>/", views.scraping_progress, name="scraping-progress"),
     path("status/<str:task_id>/", views.get_task_status, name="task-status"),
+    path("download/excel/", views.download_excel, name="download-excel"),
+    path("download/pdf/", views.download_pdf, name="download-pdf"),
 ]

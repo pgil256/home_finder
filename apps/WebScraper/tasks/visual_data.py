@@ -641,11 +641,13 @@ def analyze_data(self, pdf_result):
     if not pdf_path:
         logger.warning("No PDF path provided, skipping visualization")
         excel_filename = os.path.basename(excel_path)
+        property_ids = pdf_result.get('property_ids', []) if isinstance(pdf_result, dict) else []
         return {
             'pdf_path': pdf_path,
             'excel_path': excel_path,
             'pdf': None,
             'excel': f'/media/reports/{excel_filename}' if os.path.exists(excel_path) else None,
+            'count': len(property_ids),
             'status': 'Skipped visualization - no PDF available'
         }
 
@@ -678,8 +680,8 @@ def analyze_data(self, pdf_result):
             current_plot, 100, description=f"Generating visual data ({i}%)"
         )
 
-    from apps.WebScraper.models import PropertyListing
-    property_count = PropertyListing.objects.count()
+    property_ids = pdf_result.get('property_ids', []) if isinstance(pdf_result, dict) else []
+    property_count = len(property_ids) if property_ids else 0
 
     pdf_filename = os.path.basename(final_pdf) if final_pdf else None
     excel_filename = os.path.basename(excel_path) if excel_path else None

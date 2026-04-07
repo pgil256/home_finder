@@ -534,6 +534,10 @@ class PCPAOScraper:
         valuation = self._get_valuation_data(soup)
         property_data.update(valuation)
 
+        # Extract tax data (millage rate, tax bill link, estimated tax)
+        tax_data = self._get_tax_data(soup)
+        property_data.update(tax_data)
+
         # Get Street View image URL
         image_url = get_street_view_url(
             address=property_data.get('address'),
@@ -544,6 +548,81 @@ class PCPAOScraper:
             property_data['image_url'] = image_url
 
         return property_data
+
+    def _get_tax_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """Extract tax information from the PCPAO detail page.
+
+        Looks for the Tax Information section which contains millage rate
+        and a link to the tax bill. Also extracts County Taxable Value
+        from the valuation table to estimate annual taxes.
+
+        Args:
+            soup: BeautifulSoup object of the page
+
+        Returns:
+            Dict with tax_amount, tax_status, tax_year, tax_collector_url
+        """
+        data = {}
+
+        # Extract tax bill link (e.g., "Link to Tax Bills" or "View 2025 Tax Bill")
+        tax_bill_link = soup.find('a', string=re.compile(r'(Tax Bill|Link to Tax)', re.I))
+        if tax_bill_link and tax_bill_link.get('href'):
+            href = tax_bill_link['href']
+            if href.startswith('http'):
+                data['tax_collector_url'] = href
+
+        # Extract millage rate from the tax info table
+        # Table header contains "Millage Rate" (may have year prefix like "2025Millage Rate")
+        millage_rate = None
+        for th in soup.find_all('th'):
+            if 'millage rate' not in th.get_text(strip=True).lower():
+                continue
+            table = th.find_parent('table')
+            if table:
+                for row in table.find_all('tr'):
+                    cells = [td.get_text(strip=True) for td in row.find_all('td')]
+                    for cell in cells:
+                        try:
+                            val = float(cell)
+                            if 5 < val < 30:  # Reasonable millage rate range
+                                millage_rate = val
+                                break
+                        except ValueError:
+                            pass
+                    if millage_rate:
+                        break
+            if millage_rate:
+                break
+
+        # Extract County Taxable Value from the valuation table
+        county_taxable = None
+        for table in soup.find_all('table'):
+            text = table.get_text()
+            if 'County Taxable Value' in text:
+                rows = table.select('tbody tr')
+                if rows:
+                    cells = [td.get_text(strip=True) for td in rows[0].find_all('td')]
+                    # Structure: Year, Just/Market, Assessed, County Taxable, School Taxable, Municipal Taxable
+                    if len(cells) >= 4:
+                        try:
+                            county_taxable = float(cells[3].replace('$', '').replace(',', ''))
+                        except (ValueError, IndexError):
+                            pass
+                        # Also grab the tax year
+                        try:
+                            data['tax_year'] = int(cells[0])
+                        except (ValueError, IndexError):
+                            pass
+                break
+
+        # Estimate tax amount from millage rate and taxable value
+        if millage_rate and county_taxable:
+            # Tax = Taxable Value * Millage Rate / 1000
+            estimated_tax = round(county_taxable * millage_rate / 1000, 2)
+            data['tax_amount'] = estimated_tax
+            data['tax_status'] = 'Estimated'
+
+        return data
 
     def _extract_property_image(self, soup: BeautifulSoup) -> Optional[str]:
         """Extract property image URL from detail page.

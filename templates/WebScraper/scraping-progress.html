@@ -308,18 +308,14 @@
         // Update dashboard link
         document.getElementById('btn-view-dashboard').href = dashboardUrl;
 
-        // Update download links if available
-        if (data.result) {
-            if (data.result.excel) {
-                document.getElementById('btn-download-excel').href = data.result.excel;
-            }
-            if (data.result.pdf) {
-                document.getElementById('btn-download-pdf').href = data.result.pdf;
-            }
-            if (data.result.count) {
-                document.getElementById('results-count').textContent =
-                    `Found ${data.result.count} properties matching your criteria.`;
-            }
+        // Set download links to on-demand generation endpoints
+        document.getElementById('btn-download-excel').href = '{% url "download-excel" %}';
+        document.getElementById('btn-download-pdf').href = '{% url "download-pdf" %}';
+
+        // Update results count if available
+        if (data.result && data.result.count) {
+            document.getElementById('results-count').textContent =
+                `Found ${data.result.count} properties matching your criteria.`;
         }
 
         // Show toast

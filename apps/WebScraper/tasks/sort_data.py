@@ -216,4 +216,5 @@ def generate_sorted_properties(self, tax_result):
         'columns': columns,
         'excel_path': excel_filepath,
         'search_criteria': scrape_config,
+        'property_ids': property_ids,
     }

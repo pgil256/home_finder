@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load property_filters %}
 
 {% block title %}Property Dashboard - Pinellas Property Finder{% endblock %}
 
@@ -251,14 +252,12 @@
                         </span>
                         {% elif property.tax_status == 'Unpaid' %}
                         <span class="badge badge-warning">Unpaid</span>
-                        {% else %}
-                        <span class="badge badge-neutral">{{ property.tax_status }}</span>
                         {% endif %}
                     </div>
 
                     <!-- Property Type Badge -->
                     <div class="absolute top-3 right-3">
-                        <span class="badge badge-neutral bg-white/90 backdrop-blur-sm">{{ property.property_type }}</span>
+                        <span class="badge badge-neutral bg-white/90 backdrop-blur-sm">{{ property.property_type|clean_property_type }}</span>
                     </div>
 
                     <!-- Hover Overlay with Actions -->
@@ -285,7 +284,7 @@
                     <!-- Price -->
                     <div class="flex items-baseline gap-2">
                         <span class="property-card-price">
-                            ${{ property.market_value|floatformat:0|default:"N/A" }}
+                            {{ property.market_value|format_price }}
                         </span>
                         {% if property.assessed_value %}
                         <span class="text-xs text-charcoal-400">
