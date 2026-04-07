@@ -38,6 +38,55 @@ class PCPAOScraper:
     SEARCH_URL = "https://www.pcpao.gov/quick-search"
     DETAIL_URL = "https://www.pcpao.gov/property-details"
 
+    # Municipality codes used by PCPAO for each city
+    CITY_TO_MUNI = {
+        'St. Petersburg': {'SP'},
+        'Clearwater': {'CW', 'CWD'},
+        'Largo': {'LA', 'STFU'},
+        'Pinellas Park': {'PP', 'PPW'},
+        'Dunedin': {'DN'},
+        'Tarpon Springs': {'TS'},
+        'Safety Harbor': {'SH'},
+        'Oldsmar': {'OLD'},
+        'Seminole': {'SM'},
+        'Gulfport': {'GP'},
+        'Indian Rocks Beach': {'IRB', 'NRB'},
+        'Madeira Beach': {'MB'},
+        'Treasure Island': {'TI'},
+        'St. Pete Beach': {'SPB'},
+        'Belleair': {'BL'},
+        'Kenneth City': {'KC'},
+        'South Pasadena': {'SPA'},
+        'Redington Beach': {'RB'},
+        'Indian Shores': {'IS'},
+        'Palm Harbor': {'PHMT'},
+    }
+
+    # Better search terms for city-based searches (avoids street-name false matches)
+    CITY_SEARCH_TERMS = {
+        'St. Petersburg': '1ST AVE',
+        'Clearwater': 'CLEVELAND ST',
+        'Largo': 'SEMINOLE BLVD',
+        'Pinellas Park': 'PARK BLVD',
+        'Dunedin': 'MAIN ST',
+        'Tarpon Springs': 'TARPON AVE',
+        'Safety Harbor': 'MAIN ST',
+        'Oldsmar': 'TAMPA RD',
+        'Seminole': '113TH ST',
+        'Gulfport': 'GULFPORT BLVD',
+        'Indian Rocks Beach': 'GULF BLVD',
+        'Madeira Beach': 'GULF BLVD',
+        'Treasure Island': 'GULF BLVD',
+        'St. Pete Beach': 'GULF BLVD',
+        'Belleair': 'INDIAN ROCKS RD',
+        'Kenneth City': '54TH AVE',
+        'South Pasadena': 'PASADENA AVE',
+        'Redington Beach': 'GULF BLVD',
+        'Indian Shores': 'GULF BLVD',
+        'Palm Harbor': 'TAMPA RD',
+    }
+    MAX_API_PAGES = 50
+
     def __init__(self, headless: bool = True):
         self.headless = headless
         self.driver = None
@@ -411,6 +460,91 @@ class PCPAOScraper:
                 break
         return data
 
+    def _extract_property_data_from_soup(self, soup: BeautifulSoup, parcel_id: str) -> Dict[str, Any]:
+        """Extract all property data fields from a parsed detail page.
+
+        Consolidates the shared HTML extraction logic used by both the
+        Selenium-based and requests-based scraping paths.
+
+        Args:
+            soup: BeautifulSoup object of the property detail page
+            parcel_id: The parcel ID (used as fallback if not found on page)
+
+        Returns:
+            Dict containing all extracted property data
+        """
+        property_data = {'parcel_id': parcel_id}
+
+        # Extract H2 label-value pairs (PCPAO pattern)
+        h2_fields = {
+            'building_sqft': ['Living SF', 'Heated SF'],
+            'gross_sqft': ['Gross SF'],
+            'living_units': ['Living Units'],
+            'buildings': ['Buildings'],
+        }
+
+        for field, labels in h2_fields.items():
+            for label in labels:
+                value = self._get_h2_value(soup, label)
+                if value and value not in ['n/a', 'N/A', '']:
+                    try:
+                        parsed_value = int(re.sub(r'[^\d]', '', value))
+                        if parsed_value <= 10_000_000:
+                            property_data[field] = parsed_value
+                            break
+                    except (ValueError, TypeError):
+                        pass
+
+        # Get parcel ID from the page (in case it wasn't provided correctly)
+        page_parcel = self._get_parcel_from_page(soup)
+        if page_parcel:
+            property_data['parcel_id'] = page_parcel
+
+        # Extract sibling-pattern fields (label followed by value in sibling)
+        sibling_fields = {
+            'owner_name': 'Owner Name',
+            'year_built': 'Year Built',
+            'property_type': 'Property Use',
+        }
+
+        for field, label in sibling_fields.items():
+            value = self._get_sibling_value(soup, label)
+            if value and value not in ['n/a', 'N/A', '']:
+                if field == 'year_built':
+                    try:
+                        year_match = re.search(r'\b(19|20)\d{2}\b', value)
+                        if year_match:
+                            year = int(year_match.group())
+                            if 1800 <= year <= 2100:
+                                property_data[field] = year
+                    except (ValueError, TypeError):
+                        pass
+                elif field == 'owner_name':
+                    value = re.sub(r'More$', '', value).strip()
+                    value = re.sub(r'([a-z])([A-Z])', r'\1 \2', value)
+                    property_data[field] = value
+                else:
+                    property_data[field] = value
+
+        # Extract site address with proper parsing (handles <br> tags)
+        address_parts = self._get_address_parts(soup)
+        property_data.update(address_parts)
+
+        # Extract valuation data from table
+        valuation = self._get_valuation_data(soup)
+        property_data.update(valuation)
+
+        # Get Street View image URL
+        image_url = get_street_view_url(
+            address=property_data.get('address'),
+            city=property_data.get('city'),
+            zip_code=property_data.get('zip_code')
+        )
+        if image_url:
+            property_data['image_url'] = image_url
+
+        return property_data
+
     def _extract_property_image(self, soup: BeautifulSoup) -> Optional[str]:
         """Extract property image URL from detail page.
 
@@ -526,80 +660,10 @@ class PCPAOScraper:
                 time.sleep(1)  # Fallback short wait
             property_data['appraiser_url'] = self.driver.current_url
 
-            # Parse page with BeautifulSoup
+            # Parse page with BeautifulSoup and extract all property fields
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-
-            # Extract H2 label-value pairs (PCPAO pattern)
-            h2_fields = {
-                'building_sqft': ['Living SF', 'Heated SF'],
-                'gross_sqft': ['Gross SF'],
-                'living_units': ['Living Units'],
-                'buildings': ['Buildings'],
-            }
-
-            for field, labels in h2_fields.items():
-                for label in labels:
-                    value = self._get_h2_value(soup, label)
-                    if value and value not in ['n/a', 'N/A', '']:
-                        try:
-                            parsed_value = int(re.sub(r'[^\d]', '', value))
-                            # Sanity check: sqft/unit values should be reasonable
-                            if parsed_value <= 10_000_000:  # Max 10M sqft
-                                property_data[field] = parsed_value
-                                break
-                        except (ValueError, TypeError):
-                            pass
-
-            # Get parcel ID from the page (in case it wasn't provided correctly)
-            page_parcel = self._get_parcel_from_page(soup)
-            if page_parcel:
-                property_data['parcel_id'] = page_parcel
-
-            # Extract sibling-pattern fields (label followed by value in sibling)
-            sibling_fields = {
-                'owner_name': 'Owner Name',
-                'year_built': 'Year Built',
-                'property_type': 'Property Use',
-            }
-
-            for field, label in sibling_fields.items():
-                value = self._get_sibling_value(soup, label)
-                if value and value not in ['n/a', 'N/A', '']:
-                    if field == 'year_built':
-                        try:
-                            # Extract only 4-digit year patterns to avoid overflow from other numbers
-                            year_match = re.search(r'\b(19|20)\d{2}\b', value)
-                            if year_match:
-                                year = int(year_match.group())
-                                if 1800 <= year <= 2100:
-                                    property_data[field] = year
-                        except (ValueError, TypeError):
-                            pass
-                    elif field == 'owner_name':
-                        # Clean up owner name (remove "More" suffix and add space between names)
-                        value = re.sub(r'More$', '', value).strip()
-                        # Add space before uppercase letters that follow lowercase (name boundaries)
-                        value = re.sub(r'([a-z])([A-Z])', r'\1 \2', value)
-                        property_data[field] = value
-                    else:
-                        property_data[field] = value
-
-            # Extract site address with proper parsing (handles <br> tags)
-            address_parts = self._get_address_parts(soup)
-            property_data.update(address_parts)
-
-            # Extract valuation data from table
-            valuation = self._get_valuation_data(soup)
-            property_data.update(valuation)
-
-            # Get Street View image URL
-            image_url = get_street_view_url(
-                address=property_data.get('address'),
-                city=property_data.get('city'),
-                zip_code=property_data.get('zip_code')
-            )
-            if image_url:
-                property_data['image_url'] = image_url
+            extracted = self._extract_property_data_from_soup(soup, parcel_id)
+            property_data.update(extracted)
 
         except Exception as e:
             logger.error(f"Error scraping property {parcel_id}: {e}")
@@ -698,43 +762,285 @@ class PCPAOScraper:
         # Filter out any None results (shouldn't happen but defensive)
         return [r for r in results if r is not None]
 
+    @staticmethod
+    def _get_use_code_prefixes(property_types):
+        """Map property type names to PCPAO use code 2-digit prefixes.
+
+        Args:
+            property_types: List of property type strings (e.g. ['Single Family', 'Condo'])
+
+        Returns:
+            Set of 2-digit prefix strings, or empty set if no mapping applies
+        """
+        mapping = {
+            'single family': {'01'},
+            'condo': {'04'},
+            'townhouse': {'01'},
+            'multi-family': {'08'},
+            'mobile home': {'02'},
+            'vacant land': {'00', '10', '11', '12', '13', '14', '15', '16'},
+            'commercial': {
+                '03', '05', '06', '07', '09',
+                '17', '18', '19', '20', '21', '22', '23', '24', '25',
+                '26', '27', '28', '29', '30', '31', '32', '33', '34',
+                '35', '36', '37', '38', '39', '40', '41', '42', '43',
+                '44', '45', '46', '47', '48', '49', '50', '51', '52',
+            },
+        }
+        prefixes = set()
+        for pt in property_types:
+            key = pt.strip().lower()
+            if key in mapping:
+                prefixes.update(mapping[key])
+        return prefixes
+
+    def _search_via_api(self, search_criteria: Dict[str, Any], limit: Optional[int] = None) -> List[Dict[str, str]]:
+        """Search for properties via the PCPAO DataTables API (no Selenium needed).
+
+        Args:
+            search_criteria: Dict with search parameters (city, zip_code, address, owner_name)
+            limit: Optional max number of results to return
+
+        Returns:
+            List of dicts with parcel_id, detail_url, use_code, address, municipality
+        """
+        import requests as req
+
+        # Build search term from criteria
+        city = search_criteria.get('city')
+        muni_filter = set()
+
+        if search_criteria.get('address'):
+            search_input = search_criteria['address']
+        elif search_criteria.get('zip_code'):
+            search_input = search_criteria['zip_code']
+        elif search_criteria.get('owner_name'):
+            search_input = search_criteria['owner_name']
+        elif city:
+            # Use a city-specific search term to avoid street-name false matches
+            search_input = self.CITY_SEARCH_TERMS.get(city, city)
+            muni_filter = self.CITY_TO_MUNI.get(city, set())
+            if muni_filter:
+                logger.info(f"City '{city}': using search term '{search_input}', "
+                            f"filtering by municipality codes {muni_filter}")
+        else:
+            logger.warning("No search criteria provided, defaulting to 'Clearwater'")
+            search_input = 'Clearwater'
+
+        # Determine search sort
+        if search_criteria.get('owner_name'):
+            searchsort = 'owner'
+        elif search_criteria.get('address'):
+            searchsort = 'address'
+        else:
+            searchsort = 'address'
+
+        # Determine use code prefixes for pre-filtering
+        requested_types = search_criteria.get('property_type', [])
+        if isinstance(requested_types, str):
+            requested_types = [requested_types]
+        use_code_prefixes = self._get_use_code_prefixes(requested_types) if requested_types else set()
+
+        # Create session and establish cookies
+        session = req.Session()
+        session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest',
+        })
+
+        # GET a page first to establish session cookies
+        logger.info(f"Establishing session with {self.SEARCH_URL}")
+        init_resp = session.get(self.SEARCH_URL, timeout=15)
+        init_resp.raise_for_status()
+
+        api_url = 'https://www.pcpao.gov/dal/quicksearch/searchProperty'
+        results = []
+        draw = 1
+        start = 0
+        page_count = 0
+        # Overfetch to account for filtering
+        page_size = max(500, (limit or 100) * 3) if use_code_prefixes else (limit or 100)
+
+        try:
+            while True:
+                page_count += 1
+                if page_count > self.MAX_API_PAGES:
+                    logger.warning(f"Hit max API page limit ({self.MAX_API_PAGES}), stopping pagination")
+                    break
+
+                data = {
+                    'draw': str(draw),
+                    'start': str(start),
+                    'length': str(page_size),
+                    'input': search_input,
+                    'searchsort': searchsort,
+                    'url': '/quick-search',
+                    'columns[0][data]': '0',
+                    'columns[1][data]': '1',
+                    'columns[2][data]': '2',
+                    'columns[3][data]': '3',
+                    'columns[4][data]': '4',
+                    'columns[5][data]': '5',
+                    'columns[6][data]': '6',
+                    'columns[7][data]': '7',
+                    'columns[8][data]': '8',
+                    'order[0][column]': '0',
+                    'order[0][dir]': 'asc',
+                }
+
+                logger.info(f"API search: input='{search_input}', start={start}, length={page_size}")
+                resp = session.post(api_url, data=data, timeout=30)
+                resp.raise_for_status()
+                json_data = resp.json()
+
+                records_total = json_data.get('recordsTotal', 0)
+                records_filtered = json_data.get('recordsFiltered', 0)
+                rows = json_data.get('data', [])
+
+                logger.info(f"API response: {records_total} total, {records_filtered} filtered, {len(rows)} in page")
+
+                if not rows:
+                    break
+
+                for row in rows:
+                    try:
+                        # Parse columns - they contain HTML strings
+                        parcel_id = BeautifulSoup(str(row[4]), 'html.parser').get_text(strip=True)
+                        address = BeautifulSoup(str(row[5]), 'html.parser').get_text(strip=True)
+                        municipality = BeautifulSoup(str(row[6]), 'html.parser').get_text(strip=True)
+                        use_code_text = BeautifulSoup(str(row[7]), 'html.parser').get_text(strip=True)
+
+                        # Extract detail URL from col[2] link
+                        link_soup = BeautifulSoup(str(row[2]), 'html.parser')
+                        link_tag = link_soup.find('a')
+                        detail_url = ''
+                        if link_tag and link_tag.get('href'):
+                            href = link_tag['href']
+                            detail_url = href if href.startswith('http') else f"{self.BASE_URL}{href.lstrip('/')}"
+
+                        # Extract use code prefix (first 2 digits)
+                        use_code_prefix = use_code_text[:2] if len(use_code_text) >= 2 else ''
+
+                        # Pre-filter by use code if property types specified
+                        if use_code_prefixes and use_code_prefix not in use_code_prefixes:
+                            continue
+
+                        # Pre-filter by municipality code if city specified
+                        if muni_filter and municipality not in muni_filter:
+                            continue
+
+                        results.append({
+                            'parcel_id': parcel_id,
+                            'detail_url': detail_url,
+                            'use_code': use_code_text,
+                            'address': address,
+                            'municipality': municipality,
+                        })
+
+                        if limit and len(results) >= limit:
+                            break
+                    except (IndexError, Exception) as e:
+                        logger.warning(f"Error parsing API row: {e}")
+                        continue
+
+                if limit and len(results) >= limit:
+                    break
+
+                # Check if more pages available
+                start += page_size
+                draw += 1
+                if start >= records_filtered:
+                    break
+
+        except (req.exceptions.RequestException, ValueError) as e:
+            logger.error(f"API search failed: {e}")
+            logger.info(f"Returning {len(results)} parcels collected before failure")
+
+        logger.info(f"API search returned {len(results)} results")
+        return results
+
+    def _scrape_detail_via_requests(self, parcel_id: str, detail_url: str, session=None) -> Dict[str, Any]:
+        """Scrape property detail page using requests + BeautifulSoup (no Selenium).
+
+        Args:
+            parcel_id: The parcel ID
+            detail_url: URL to the property details page
+            session: Optional requests.Session to reuse (for cookie/connection reuse)
+
+        Returns:
+            Dict containing property data
+        """
+        import requests as req
+
+        property_data = {'parcel_id': parcel_id}
+
+        try:
+            if session is None:
+                session = req.Session()
+                session.headers.update({
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                })
+
+            resp = session.get(detail_url, timeout=30)
+            resp.raise_for_status()
+            property_data['appraiser_url'] = detail_url
+
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            extracted = self._extract_property_data_from_soup(soup, parcel_id)
+            property_data.update(extracted)
+
+        except Exception as e:
+            logger.error(f"Error scraping property {parcel_id} via requests: {e}")
+
+        logger.info(f"Scraped property {parcel_id}: address={property_data.get('address')}, "
+                    f"city={property_data.get('city')}, market_value={property_data.get('market_value')}, "
+                    f"owner={property_data.get('owner_name')}, sqft={property_data.get('building_sqft')}, "
+                    f"image={'found' if property_data.get('image_url') else 'not found'}")
+
+        return property_data
+
     def scrape_by_criteria(self, search_criteria: Dict[str, Any], limit: Optional[int] = None, max_workers: int = 3) -> List[Dict[str, Any]]:
-        """Search for properties and scrape their details using parallel browser instances.
+        """Search for properties and scrape their details using API + requests.
+
+        Uses the PCPAO DataTables API for search and requests for detail pages,
+        avoiding Selenium entirely.
 
         Args:
             search_criteria: Dict with search parameters (city, zip_code, address, owner_name)
             limit: Optional max number of properties to scrape
-            max_workers: Number of concurrent browser instances (default 3)
+            max_workers: Number of concurrent browser instances (unused, kept for API compat)
 
         Returns:
             List of property data dicts
         """
-        try:
-            self.setup_driver()
-            parcels = self.search_properties_with_urls(search_criteria)
+        import requests as req
 
-            if limit:
-                parcels = parcels[:limit]
+        parcels = self._search_via_api(search_criteria, limit=limit)
 
-            logger.info(f"Scraping details for {len(parcels)} properties")
-
-        finally:
-            self.close_driver()
-
-        # Use parallel scraping for property details (each worker creates its own browser)
         if not parcels:
             return []
 
-        if len(parcels) == 1:
-            # Single property - no need for parallel overhead
-            single_scraper = PCPAOScraper(headless=self.headless)
-            try:
-                single_scraper.setup_driver()
-                return [single_scraper.scrape_property_details(
-                    parcels[0]['parcel_id'],
-                    detail_url=parcels[0].get('detail_url')
-                )]
-            finally:
-                single_scraper.close_driver()
+        logger.info(f"Scraping details for {len(parcels)} properties via requests")
 
-        return self.scrape_properties_parallel(parcels, max_workers=max_workers)
+        # Create a shared session for detail scraping
+        session = req.Session()
+        session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        })
+
+        results = []
+        for i, parcel_info in enumerate(parcels):
+            parcel_id = parcel_info['parcel_id']
+            detail_url = parcel_info.get('detail_url')
+            if not detail_url:
+                logger.warning(f"No detail URL for parcel {parcel_id}, skipping")
+                results.append({'parcel_id': parcel_id})
+                continue
+
+            property_data = self._scrape_detail_via_requests(parcel_id, detail_url, session=session)
+            results.append(property_data)
+
+            if i < len(parcels) - 1:
+                time.sleep(0.3)
+
+        return results

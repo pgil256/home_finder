@@ -181,15 +181,9 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
         scraper = PCPAOScraper(headless=True)
         logger.info(f"Starting PCPAO scraping with criteria: {search_criteria}, limit: {limit}")
 
-        # Step 1: Search for parcels (uses one browser instance)
+        # Step 1: Search for parcels via API (no browser needed)
         progress_recorder.set_progress(5, 100, description="Searching for properties...")
-        scraper.setup_driver()
-        try:
-            parcels = scraper.search_properties_with_urls(search_criteria)
-            if limit:
-                parcels = parcels[:limit]
-        finally:
-            scraper.close_driver()
+        parcels = scraper._search_via_api(search_criteria, limit=limit)
 
         if not parcels:
             progress_recorder.set_progress(100, 100, description="No properties found")
@@ -241,15 +235,33 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
         else:
             cached_count = 0
 
-        # Step 3: Scrape non-cached properties in parallel
+        # Step 3: Scrape non-cached properties via requests (no browser needed)
         if parcels_to_scrape:
+            import requests as req
+            import time as _time
+
             progress_recorder.set_progress(10, 100,
                 description=f"Scraping {len(parcels_to_scrape)} properties ({cached_count} cached)...")
 
-            properties = scraper.scrape_properties_parallel(
-                parcels_to_scrape,
-                max_workers=3
-            )
+            session = req.Session()
+            session.headers.update({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            })
+
+            properties = []
+            for i, parcel_info in enumerate(parcels_to_scrape):
+                p_id = parcel_info['parcel_id']
+                d_url = parcel_info.get('detail_url')
+                if d_url:
+                    prop_data = scraper._scrape_detail_via_requests(p_id, d_url, session=session)
+                else:
+                    prop_data = {'parcel_id': p_id}
+                if len(prop_data) > 1:
+                    properties.append(prop_data)
+                else:
+                    logger.warning(f"Skipping parcel {p_id}: scrape returned no meaningful data")
+                if i < len(parcels_to_scrape) - 1:
+                    _time.sleep(0.3)
 
             # Post-filter by property type and price range
             # (PCPAO Quick Search doesn't support these filters)
