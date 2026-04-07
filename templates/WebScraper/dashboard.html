@@ -146,7 +146,7 @@
                 <div>
                     <label class="label">Bedrooms</label>
                     <div class="flex flex-wrap gap-2">
-                        {% for num in "0,1,2,3,4,5"|make_list %}
+                        {% for num in "012345"|make_list %}
                         {% with num|add:"0" as bed_num %}
                         <label class="cursor-pointer">
                             <input type="radio" name="beds" value="{{ bed_num }}" class="sr-only peer" {% if request.GET.beds == bed_num %}checked{% endif %}>
@@ -163,7 +163,7 @@
                 <div>
                     <label class="label">Bathrooms</label>
                     <div class="flex flex-wrap gap-2">
-                        {% for num in "0,1,2,3,4"|make_list %}
+                        {% for num in "01234"|make_list %}
                         {% with num|add:"0" as bath_num %}
                         <label class="cursor-pointer">
                             <input type="radio" name="baths" value="{{ bath_num }}" class="sr-only peer" {% if request.GET.baths == bath_num %}checked{% endif %}>
