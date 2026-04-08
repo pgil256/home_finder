@@ -41,16 +41,16 @@
 
                 <!-- Desktop Navigation -->
                 <nav class="hidden md:flex items-center gap-1">
-                    <a href="{% url 'home' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200">
+                    <a href="{% url 'home' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'home' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         Home
                     </a>
-                    <a href="{% url 'about' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200">
+                    <a href="{% url 'about' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'about' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         About
                     </a>
-                    <a href="{% url 'help' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200">
+                    <a href="{% url 'help' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'help' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         Help
                     </a>
-                    <a href="{% url 'dashboard' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200">
+                    <a href="{% url 'dashboard' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         Browse
                     </a>
 
@@ -85,16 +85,16 @@
         <!-- Mobile Navigation Menu -->
         <div id="mobile-menu" class="md:hidden hidden border-t border-charcoal-100 bg-white">
             <div class="container-app py-4 space-y-1">
-                <a href="{% url 'home' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200">
+                <a href="{% url 'home' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'home' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     Home
                 </a>
-                <a href="{% url 'about' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200">
+                <a href="{% url 'about' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'about' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     About
                 </a>
-                <a href="{% url 'help' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200">
+                <a href="{% url 'help' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'help' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     Help
                 </a>
-                <a href="{% url 'dashboard' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200">
+                <a href="{% url 'dashboard' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     Browse Properties
                 </a>
                 <div class="pt-3">
@@ -197,7 +197,7 @@
             <!-- Bottom Bar -->
             <div class="mt-8 pt-8 border-t border-charcoal-700 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <p class="text-charcoal-500 text-sm">
-                    2025 Pinellas Property Finder. All rights reserved.
+                    {% now "Y" %} Pinellas Property Finder. All rights reserved.
                 </p>
                 <div class="flex items-center gap-4">
                     <a href="https://www.linkedin.com/in/patrick-gilhooley-dev"

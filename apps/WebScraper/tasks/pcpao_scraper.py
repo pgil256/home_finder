@@ -538,14 +538,18 @@ class PCPAOScraper:
         tax_data = self._get_tax_data(soup)
         property_data.update(tax_data)
 
-        # Get Street View image URL
-        image_url = get_street_view_url(
-            address=property_data.get('address'),
-            city=property_data.get('city'),
-            zip_code=property_data.get('zip_code')
-        )
-        if image_url:
-            property_data['image_url'] = image_url
+        # Get property image: try PCPAO page image first, then Street View
+        pcpao_image = self._extract_property_image(soup)
+        if pcpao_image:
+            property_data['image_url'] = pcpao_image
+        else:
+            street_view_url = get_street_view_url(
+                address=property_data.get('address'),
+                city=property_data.get('city'),
+                zip_code=property_data.get('zip_code')
+            )
+            if street_view_url:
+                property_data['image_url'] = street_view_url
 
         return property_data
 

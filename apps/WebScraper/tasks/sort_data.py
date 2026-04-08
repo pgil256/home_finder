@@ -22,9 +22,6 @@ try:
 except OSError:
     REPORTS_DIR = os.path.join('/tmp', 'reports')
     os.makedirs(REPORTS_DIR, exist_ok=True)
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 
 
 def fetch_property_listings(property_ids=None):

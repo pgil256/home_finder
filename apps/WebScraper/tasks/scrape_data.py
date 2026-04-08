@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 # Cache duration for recently scraped properties
 CACHE_HOURS = 24
 
+# Retry configuration for scraping
+MAX_RETRIES = 3
+RETRY_BACKOFF_BASE = 2  # seconds, doubles each retry
+
 
 def filter_properties_by_criteria(properties, search_criteria):
     """
@@ -253,7 +257,19 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
                 p_id = parcel_info['parcel_id']
                 d_url = parcel_info.get('detail_url')
                 if d_url:
-                    prop_data = scraper._scrape_detail_via_requests(p_id, d_url, session=session)
+                    prop_data = None
+                    for attempt in range(MAX_RETRIES):
+                        try:
+                            prop_data = scraper._scrape_detail_via_requests(p_id, d_url, session=session)
+                            break
+                        except (req.exceptions.RequestException, req.exceptions.Timeout) as e:
+                            wait = RETRY_BACKOFF_BASE ** (attempt + 1)
+                            logger.warning(f"Retry {attempt + 1}/{MAX_RETRIES} for parcel {p_id}: {e}. "
+                                         f"Waiting {wait}s...")
+                            _time.sleep(wait)
+                    if prop_data is None:
+                        logger.error(f"Failed to scrape parcel {p_id} after {MAX_RETRIES} retries")
+                        prop_data = {'parcel_id': p_id}
                 else:
                     prop_data = {'parcel_id': p_id}
                 if len(prop_data) > 1:
@@ -326,8 +342,11 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
         progress_recorder.set_progress(100, 100,
             description=f"Completed: {total_properties} properties ({cached_count} cached, {scraped_count} scraped)")
 
-    except Exception as e:
-        logger.error(f"Error in scrape_pinellas_properties: {e}")
+    except (ValueError, TypeError, KeyError) as e:
+        logger.error(f"Data error in scrape_pinellas_properties: {e}")
+        raise
+    except OSError as e:
+        logger.error(f"Network/IO error in scrape_pinellas_properties: {e}")
         raise
 
     return {

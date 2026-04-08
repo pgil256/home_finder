@@ -4,7 +4,7 @@ from django.db import models
 class PropertyListing(models.Model):
     # Property Appraiser Data
     parcel_id = models.CharField(max_length=50, unique=True)
-    address = models.CharField(max_length=255)
+    address = models.CharField(max_length=255, db_index=True)
     city = models.CharField(max_length=100, db_index=True)
     zip_code = models.CharField(max_length=10, db_index=True)
     owner_name = models.CharField(max_length=255, null=True, blank=True)
@@ -48,6 +48,8 @@ class PropertyListing(models.Model):
             models.Index(fields=['city', 'zip_code'], name='idx_city_zip'),
             models.Index(fields=['city', 'market_value'], name='idx_city_value'),
             models.Index(fields=['property_type', 'market_value'], name='idx_proptype_value'),
+            # Triple compound for the primary dashboard search pattern
+            models.Index(fields=['city', 'property_type', 'market_value'], name='idx_city_type_value'),
         ]
 
     def __str__(self):

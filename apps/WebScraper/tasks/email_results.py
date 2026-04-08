@@ -3,11 +3,7 @@ from django.conf import settings
 from celery import shared_task
 import logging
 
-# Setup logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 
 email_host_user = settings.EMAIL_HOST_USER
 

@@ -1,10 +1,12 @@
 import json
 import logging
+import time
 from io import BytesIO
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -33,6 +35,9 @@ PROPERTY_TYPES = [
     'Single Family', 'Condo', 'Townhouse', 'Multi-Family',
     'Vacant Land', 'Mobile Home', 'Commercial'
 ]
+
+# Rate limiting: minimum seconds between scrape submissions per IP
+SCRAPE_RATE_LIMIT_SECONDS = 60
 
 
 def build_processing_pipeline(search_criteria, limit=10, user_email=None):
@@ -80,9 +85,33 @@ def build_processing_pipeline(search_criteria, limit=10, user_email=None):
     return AsyncResult(first_task_id)
 
 
+def _get_client_ip(request):
+    """Extract client IP from request, accounting for proxies."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
 def web_scraper_view(request):
     """Main view for the property scraper interface"""
     if request.method == 'POST':
+        # Rate limit: one scrape submission per IP per SCRAPE_RATE_LIMIT_SECONDS
+        client_ip = _get_client_ip(request)
+        rate_key = f'scrape_rate:{client_ip}'
+        last_submission = cache.get(rate_key)
+        if last_submission:
+            wait_seconds = SCRAPE_RATE_LIMIT_SECONDS - (time.time() - last_submission)
+            if wait_seconds > 0:
+                logger.warning(f"Rate limited scrape request from {client_ip}")
+                context = {
+                    'cities': sorted(PINELLAS_CITIES),
+                    'property_types': PROPERTY_TYPES,
+                    'error': f'Please wait {int(wait_seconds)} seconds before submitting another search.',
+                }
+                return render(request, 'WebScraper/search.html', context)
+        cache.set(rate_key, time.time(), timeout=SCRAPE_RATE_LIMIT_SECONDS)
+
         # Get search criteria from the new unified search form
         property_types = request.POST.getlist('property_type')
 
@@ -103,7 +132,10 @@ def web_scraper_view(request):
         # Remove empty values
         search_criteria = {k: v for k, v in search_criteria.items() if v}
 
-        limit = int(request.POST.get('limit', 50))
+        try:
+            limit = int(request.POST.get('limit', 50))
+        except ValueError:
+            limit = 50
         user_email = request.POST.get('email', '')
 
         # Start the pipeline - track the chain's first task for progress
@@ -125,7 +157,7 @@ def scraping_progress(request, task_id):
     return render(request, 'WebScraper/scraping-progress.html', context)
 
 
-@csrf_exempt
+@require_GET
 def get_task_status(request, task_id):
     """API endpoint to get task status with chain progress aggregation."""
     # Check if this is part of a chain
@@ -272,31 +304,31 @@ def property_dashboard(request):
         try:
             properties = properties.filter(market_value__gte=float(min_price))
         except ValueError:
-            pass
+            logger.warning(f"Invalid min_price filter value: {min_price!r}")
 
     if max_price:
         try:
             properties = properties.filter(market_value__lte=float(max_price))
         except ValueError:
-            pass
+            logger.warning(f"Invalid max_price filter value: {max_price!r}")
 
     if beds and beds != '0':
         try:
             properties = properties.filter(bedrooms__gte=int(beds))
         except ValueError:
-            pass
+            logger.warning(f"Invalid beds filter value: {beds!r}")
 
     if baths and baths != '0':
         try:
             properties = properties.filter(bathrooms__gte=float(baths))
         except ValueError:
-            pass
+            logger.warning(f"Invalid baths filter value: {baths!r}")
 
     if year_built:
         try:
             properties = properties.filter(year_built__gte=int(year_built))
         except ValueError:
-            pass
+            logger.warning(f"Invalid year_built filter value: {year_built!r}")
 
     if tax_status:
         properties = properties.filter(tax_status=tax_status)
@@ -367,12 +399,17 @@ def property_detail(request, parcel_id):
     return render(request, 'WebScraper/property-detail.html', context)
 
 
+@login_required
 def download_excel(request):
     """Generate and serve an Excel file of all properties on-demand."""
     import openpyxl
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
-    properties = PropertyListing.objects.all().order_by('-market_value')
+    properties = PropertyListing.objects.only(
+        'parcel_id', 'address', 'city', 'zip_code', 'property_type',
+        'market_value', 'assessed_value', 'bedrooms', 'bathrooms',
+        'building_sqft', 'year_built', 'lot_sqft', 'tax_amount', 'tax_status',
+    ).order_by('-market_value')
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -428,6 +465,7 @@ def download_excel(request):
     return response
 
 
+@login_required
 def download_pdf(request):
     """Generate PDF report with property listings and market analysis charts."""
     import matplotlib
@@ -444,7 +482,12 @@ def download_pdf(request):
     )
     from reportlab.lib.units import inch
 
-    properties = PropertyListing.objects.all().order_by('-market_value')[:200]
+    MAX_PDF_PROPERTIES = 200
+    properties = PropertyListing.objects.only(
+        'parcel_id', 'address', 'city', 'property_type', 'market_value',
+        'assessed_value', 'bedrooms', 'bathrooms', 'building_sqft',
+        'year_built', 'tax_amount',
+    ).order_by('-market_value')[:MAX_PDF_PROPERTIES]
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(

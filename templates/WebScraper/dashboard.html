@@ -215,7 +215,10 @@
         <!-- Property Grid -->
         <div id="property-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             {% for property in properties %}
-            <article class="property-card group animate-fade-in-up" style="animation-delay: {{ forloop.counter0|divisibleby:3 }}00ms">
+            <article class="property-card group animate-fade-in-up cursor-pointer"
+                     data-href="{% url 'property-detail' property.parcel_id %}"
+                     onclick="if(!event.target.closest('a,button')){window.location=this.dataset.href}"
+                     style="animation-delay: {{ forloop.counter0|divisibleby:3 }}00ms">
                 <!-- Property Image -->
                 <div class="relative overflow-hidden">
                     {% if property.image_url %}
@@ -371,7 +374,10 @@
         <!-- List View (hidden by default) -->
         <div id="property-list" class="hidden space-y-3">
             {% for property in properties %}
-            <article class="card card-hover p-4 animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}0ms">
+            <article class="card card-hover p-4 animate-fade-in-up cursor-pointer"
+                     data-href="{% url 'property-detail' property.parcel_id %}"
+                     onclick="if(!event.target.closest('a,button')){window.location=this.dataset.href}"
+                     style="animation-delay: {{ forloop.counter0 }}0ms">
                 <div class="flex flex-col sm:flex-row gap-4">
                     <!-- Thumbnail -->
                     {% if property.image_url %}
@@ -414,9 +420,10 @@
                             <span class="badge badge-neutral">{{ property.property_type }}</span>
                         </div>
                     </div>
+                </div>
 
                     <!-- Actions -->
-                    <div class="flex sm:flex-col items-center gap-2">
+                    <div class="flex sm:flex-col items-center gap-2 mt-2">
                         <a href="{% url 'property-detail' property.parcel_id %}" class="btn btn-primary btn-sm">
                             Details
                         </a>
@@ -426,7 +433,6 @@
                             </svg>
                         </button>
                     </div>
-                </div>
             </article>
             {% endfor %}
         </div>

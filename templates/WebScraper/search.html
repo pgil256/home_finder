@@ -101,7 +101,7 @@
                     {% for ptype in property_types %}
                     <label class="chip cursor-pointer transition-all duration-200 hover:shadow-soft-sm">
                         <input type="checkbox" name="property_type" value="{{ ptype }}" class="sr-only peer">
-                        <span class="peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 rounded-full px-4 py-2 border border-charcoal-200 bg-white transition-all duration-200">
+                        <span class="peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-400 peer-focus-visible:ring-offset-2 rounded-full px-4 py-2 border border-charcoal-200 bg-white transition-all duration-200">
                             {{ ptype }}
                         </span>
                     </label>

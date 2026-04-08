@@ -24,9 +24,6 @@ from django.conf import settings
 from celery_progress.backend import ProgressRecorder
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 
 REPORTS_DIR = os.path.join(settings.MEDIA_ROOT, 'reports')
 try:
