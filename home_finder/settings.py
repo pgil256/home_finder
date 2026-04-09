@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 from pathlib import Path
 import os
 from decouple import config
@@ -313,3 +312,24 @@ LOGGING = {
         },
     },
 }
+
+# Production security hardening
+if not DEBUG:
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Sentry error tracking (optional)
+SENTRY_DSN = config('SENTRY_DSN', default='')
+if SENTRY_DSN:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=0.1,
+        profiles_sample_rate=0.1,
+        environment='production' if not DEBUG else 'development',
+    )

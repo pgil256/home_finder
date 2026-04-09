@@ -20,6 +20,11 @@
 
 <body class="bg-charcoal-50 font-body leading-normal tracking-normal text-charcoal-800 flex flex-col min-h-screen">
 
+    <!-- Skip to main content for keyboard/screen reader users -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg focus:outline-none">
+        Skip to main content
+    </a>
+
     <!-- Header with glass effect -->
     <header class="header sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-charcoal-100">
         <div class="container-app">
@@ -40,7 +45,7 @@
                 </a>
 
                 <!-- Desktop Navigation -->
-                <nav class="hidden md:flex items-center gap-1">
+                <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
                     <a href="{% url 'home' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'home' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         Home
                     </a>
@@ -83,7 +88,7 @@
         </div>
 
         <!-- Mobile Navigation Menu -->
-        <div id="mobile-menu" class="md:hidden hidden border-t border-charcoal-100 bg-white">
+        <nav id="mobile-menu" class="md:hidden hidden border-t border-charcoal-100 bg-white" aria-label="Mobile navigation">
             <div class="container-app py-4 space-y-1">
                 <a href="{% url 'home' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'home' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     Home
@@ -106,11 +111,11 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </nav>
     </header>
 
     <!-- Main Content -->
-    <main class="flex flex-1 flex-col">
+    <main id="main-content" class="flex flex-1 flex-col">
         {% block hero-image-content %}
         {% endblock %}
 
@@ -144,7 +149,7 @@
                 </div>
 
                 <!-- Quick Links -->
-                <div>
+                <nav aria-label="Footer navigation">
                     <h4 class="font-display font-semibold text-sm uppercase tracking-wider text-charcoal-400 mb-4">
                         Quick Links
                     </h4>
@@ -170,7 +175,7 @@
                             </a>
                         </li>
                     </ul>
-                </div>
+                </nav>
 
                 <!-- Data Sources -->
                 <div>
@@ -179,13 +184,13 @@
                     </h4>
                     <ul class="space-y-2 text-sm text-charcoal-400">
                         <li class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-success-500" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4 text-success-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
                             <span>Pinellas County Property Appraiser</span>
                         </li>
                         <li class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-success-500" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="w-4 h-4 text-success-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
                             <span>Pinellas County Tax Collector</span>

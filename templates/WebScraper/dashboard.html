@@ -79,7 +79,7 @@
 <div class="flex flex-col md:flex-row gap-6 -mt-4">
 
     <!-- Filter Sidebar -->
-    <aside id="filter-sidebar" class="hidden md:block w-full md:w-72 lg:w-80 flex-shrink-0">
+    <aside id="filter-sidebar" class="hidden md:block w-full md:w-72 lg:w-80 flex-shrink-0" aria-label="Property filters">
         <div class="card sticky top-24">
             <div class="card-header flex items-center justify-between">
                 <h2 class="font-display font-semibold text-charcoal-800">Filters</h2>
@@ -121,32 +121,36 @@
                 </div>
 
                 <!-- Price Range -->
-                <div>
-                    <label class="label">Price Range</label>
+                <fieldset>
+                    <legend class="label">Price Range</legend>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                            <label for="filter-min-price" class="sr-only">Minimum price</label>
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm" aria-hidden="true">$</span>
                             <input type="number"
+                                   id="filter-min-price"
                                    name="min_price"
                                    value="{{ request.GET.min_price }}"
                                    placeholder="Min"
                                    class="input input-sm pl-7">
                         </div>
                         <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                            <label for="filter-max-price" class="sr-only">Maximum price</label>
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm" aria-hidden="true">$</span>
                             <input type="number"
+                                   id="filter-max-price"
                                    name="max_price"
                                    value="{{ request.GET.max_price }}"
                                    placeholder="Max"
                                    class="input input-sm pl-7">
                         </div>
                     </div>
-                </div>
+                </fieldset>
 
                 <!-- Bedrooms -->
-                <div>
-                    <label class="label">Bedrooms</label>
-                    <div class="flex flex-wrap gap-2">
+                <fieldset>
+                    <legend class="label">Bedrooms</legend>
+                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Minimum bedrooms">
                         {% for num in "012345"|make_list %}
                         {% with num|add:"0" as bed_num %}
                         <label class="cursor-pointer">
@@ -158,12 +162,12 @@
                         {% endwith %}
                         {% endfor %}
                     </div>
-                </div>
+                </fieldset>
 
                 <!-- Bathrooms -->
-                <div>
-                    <label class="label">Bathrooms</label>
-                    <div class="flex flex-wrap gap-2">
+                <fieldset>
+                    <legend class="label">Bathrooms</legend>
+                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Minimum bathrooms">
                         {% for num in "01234"|make_list %}
                         {% with num|add:"0" as bath_num %}
                         <label class="cursor-pointer">
@@ -175,7 +179,7 @@
                         {% endwith %}
                         {% endfor %}
                     </div>
-                </div>
+                </fieldset>
 
                 <!-- Year Built -->
                 <div>

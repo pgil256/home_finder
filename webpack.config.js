@@ -1,7 +1,10 @@
 const path = require('path');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 module.exports = {
-  mode: "development",
+  mode: isProduction ? 'production' : 'development',
+  devtool: isProduction ? 'source-map' : 'eval-source-map',
   entry: {
     common: "./static/js/dev/common.js",
     mobile: "./static/js/dev/mobile.js",
@@ -10,6 +13,7 @@ module.exports = {
   output: {
     filename: "[name].bundle.js",
     path: path.resolve(__dirname, "static/js/dist"),
+    clean: true,
   },
   module: {
     rules: [
@@ -24,5 +28,8 @@ module.exports = {
         },
       },
     ],
+  },
+  optimization: {
+    minimize: isProduction,
   },
 };

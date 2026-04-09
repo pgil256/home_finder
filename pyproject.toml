@@ -1,0 +1,46 @@
+[project]
+name = "pinellas-property-finder"
+version = "1.0.0"
+description = "Property data aggregation system for Pinellas County, Florida"
+requires-python = ">=3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+src = ["apps", "home_finder"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "SIM108", # ternary operator (readability preference)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "home_finder"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "home_finder.settings"
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short --strict-markers --cov=apps --cov-report=term-missing --cov-fail-under=50"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "selenium: marks tests requiring selenium/browser",
+    "celery: marks tests requiring celery worker",
+]
+testpaths = ["apps"]

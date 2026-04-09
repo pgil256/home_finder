@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.core.cache import cache as django_cache
 from django.test import Client
 from django.urls import reverse
-from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
 
 pytestmark = pytest.mark.django_db
@@ -77,7 +76,7 @@ class TestWebScraperViews:
         response = client.get('/scraper/progress/test-task-123/')
         assert response.context['task_id'] == 'test-task-123'
 
-    @patch('apps.WebScraper.views.AsyncResult')
+    @patch('apps.WebScraper.services.task_management.AsyncResult')
     def test_task_status_api_pending(self, mock_async_result, client):
         """Test task status API returns JSON for pending task."""
         mock_result = MagicMock()
@@ -92,7 +91,7 @@ class TestWebScraperViews:
         assert data['state'] == 'PENDING'
         assert data['current'] == 0
 
-    @patch('apps.WebScraper.views.AsyncResult')
+    @patch('apps.WebScraper.services.task_management.AsyncResult')
     def test_task_status_api_progress(self, mock_async_result, client):
         """Test task status API returns progress info."""
         mock_result = MagicMock()
@@ -107,7 +106,7 @@ class TestWebScraperViews:
         assert data['current'] == 50
         assert data['total'] == 100
 
-    @patch('apps.WebScraper.views.AsyncResult')
+    @patch('apps.WebScraper.services.task_management.AsyncResult')
     def test_task_status_api_success(self, mock_async_result, client):
         """Test task status API returns result on success."""
         mock_result = MagicMock()
@@ -122,7 +121,7 @@ class TestWebScraperViews:
         assert data['state'] == 'SUCCESS'
         assert data['result'] == {'properties_found': 10}
 
-    @patch('apps.WebScraper.views.AsyncResult')
+    @patch('apps.WebScraper.services.task_management.AsyncResult')
     def test_task_status_api_failure(self, mock_async_result, client):
         """Test task status API returns error on failure."""
         mock_result = MagicMock()
@@ -137,29 +136,15 @@ class TestWebScraperViews:
         assert 'Test error' in data['status']
 
 
-class TestExportAuthRequired:
-    """Export endpoints require authentication."""
+class TestExportGuestAccess:
+    """Export endpoints are accessible to all users (guest-friendly)."""
 
-    def test_download_excel_requires_login(self, client):
-        response = client.get('/scraper/download/excel/')
-        assert response.status_code == 302
-        assert '/accounts/login/' in response.url or '/login/' in response.url
-
-    def test_download_pdf_requires_login(self, client):
-        response = client.get('/scraper/download/pdf/')
-        assert response.status_code == 302
-        assert '/accounts/login/' in response.url or '/login/' in response.url
-
-    def test_download_excel_works_when_logged_in(self, client, db):
-        user = User.objects.create_user(username='testuser', password='testpass')
-        client.login(username='testuser', password='testpass')
+    def test_download_excel_works_for_guests(self, client, db):
         response = client.get('/scraper/download/excel/')
         assert response.status_code == 200
         assert 'spreadsheetml' in response['Content-Type']
 
-    def test_download_pdf_works_when_logged_in(self, client, sample_property):
-        user = User.objects.create_user(username='testuser', password='testpass')
-        client.login(username='testuser', password='testpass')
+    def test_download_pdf_works_for_guests(self, client, sample_property):
         response = client.get('/scraper/download/pdf/')
         assert response.status_code == 200
         assert response['Content-Type'] == 'application/pdf'

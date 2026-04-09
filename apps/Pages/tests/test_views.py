@@ -35,3 +35,22 @@ class TestPagesViews:
         """Test help page uses the correct template."""
         response = client.get('/help')
         assert 'Pages/help.html' in [t.name for t in response.templates]
+
+
+class TestHealthAndStatus:
+    def test_health_check_returns_ok(self, client):
+        """Test health endpoint returns 200 with status ok."""
+        response = client.get('/health/')
+        assert response.status_code == 200
+        data = response.json()
+        assert data['status'] == 'ok'
+        assert 'database' in data['checks']
+        assert 'cache' in data['checks']
+
+    def test_api_status_returns_property_count(self, client):
+        """Test status endpoint returns property count."""
+        response = client.get('/api/status/')
+        assert response.status_code == 200
+        data = response.json()
+        assert 'total_properties' in data
+        assert 'last_updated' in data

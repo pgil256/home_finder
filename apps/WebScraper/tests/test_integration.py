@@ -145,7 +145,7 @@ class TestTaskStatusAPI:
 
     def test_task_status_endpoint_returns_json(self, client):
         """Test task status API returns JSON response."""
-        with patch('apps.WebScraper.views.AsyncResult') as mock_result:
+        with patch('apps.WebScraper.services.task_management.AsyncResult') as mock_result:
             mock_result.return_value.state = 'PENDING'
             mock_result.return_value.info = None
 
@@ -156,7 +156,7 @@ class TestTaskStatusAPI:
 
     def test_task_status_pending_state(self, client):
         """Test task status returns correct format for PENDING state."""
-        with patch('apps.WebScraper.views.AsyncResult') as mock_result:
+        with patch('apps.WebScraper.services.task_management.AsyncResult') as mock_result:
             mock_result.return_value.state = 'PENDING'
             mock_result.return_value.info = None
 
@@ -169,7 +169,7 @@ class TestTaskStatusAPI:
 
     def test_task_status_progress_state(self, client):
         """Test task status returns progress info correctly."""
-        with patch('apps.WebScraper.views.AsyncResult') as mock_result:
+        with patch('apps.WebScraper.services.task_management.AsyncResult') as mock_result:
             mock_result.return_value.state = 'PROGRESS'
             mock_result.return_value.info = {
                 'current': 50,
