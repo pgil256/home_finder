@@ -74,6 +74,7 @@
                         onclick="toggleMobileMenu()"
                         aria-label="Toggle menu"
                         aria-expanded="false"
+                        aria-controls="mobile-menu"
                         id="mobile-menu-button">
                     <!-- Hamburger icon -->
                     <svg id="menu-icon-open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -127,6 +128,17 @@
             </div>
         </div>
     </main>
+
+    <!-- Back to Top Button -->
+    <button type="button"
+            id="back-to-top"
+            onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+            class="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-primary-500 text-white shadow-lg hover:bg-primary-600 transition-all duration-300 flex items-center justify-center opacity-0 pointer-events-none"
+            aria-label="Back to top">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+    </button>
 
     <!-- Footer -->
     <footer class="bg-charcoal-800 text-white">
@@ -243,6 +255,21 @@
             iconClose.classList.toggle('hidden');
         }
 
+        // Close mobile menu on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const menu = document.getElementById('mobile-menu');
+                const button = document.getElementById('mobile-menu-button');
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    button.setAttribute('aria-expanded', 'false');
+                    document.getElementById('menu-icon-open').classList.remove('hidden');
+                    document.getElementById('menu-icon-close').classList.add('hidden');
+                    button.focus();
+                }
+            }
+        });
+
         // Close mobile menu when clicking outside
         document.addEventListener('click', function(event) {
             const menu = document.getElementById('mobile-menu');
@@ -256,9 +283,10 @@
             }
         });
 
-        // Add scroll effect to header
+        // Add scroll effect to header and back-to-top button
         let lastScroll = 0;
         const header = document.querySelector('header');
+        const backToTop = document.getElementById('back-to-top');
 
         window.addEventListener('scroll', () => {
             const currentScroll = window.pageYOffset;
@@ -267,6 +295,15 @@
                 header.classList.add('shadow-soft');
             } else {
                 header.classList.remove('shadow-soft');
+            }
+
+            // Show/hide back-to-top button
+            if (currentScroll > 400) {
+                backToTop.classList.remove('opacity-0', 'pointer-events-none');
+                backToTop.classList.add('opacity-100');
+            } else {
+                backToTop.classList.add('opacity-0', 'pointer-events-none');
+                backToTop.classList.remove('opacity-100');
             }
 
             lastScroll = currentScroll;

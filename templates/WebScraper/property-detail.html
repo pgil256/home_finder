@@ -206,11 +206,11 @@
                     </div>
 
                     <div class="space-y-3">
-                        <button type="button" onclick="toggleSave('{{ property.parcel_id }}')" class="btn btn-primary w-full">
+                        <button type="button" id="save-btn" onclick="toggleSave('{{ property.parcel_id }}')" class="btn btn-primary w-full">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
-                            Save Property
+                            <span>Save Property</span>
                         </button>
                         <button type="button" onclick="shareProperty()" class="btn btn-secondary w-full">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -250,8 +250,8 @@
                                target="_blank"
                                rel="noopener"
                                class="btn btn-ghost btn-sm justify-start text-charcoal-600">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                                 Zillow
                             </a>
@@ -259,8 +259,8 @@
                                target="_blank"
                                rel="noopener"
                                class="btn btn-ghost btn-sm justify-start text-charcoal-600">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                                 Redfin
                             </a>
@@ -268,8 +268,8 @@
                                target="_blank"
                                rel="noopener"
                                class="btn btn-ghost btn-sm justify-start text-charcoal-600">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/>
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                 </svg>
                                 Realtor
                             </a>
@@ -363,6 +363,30 @@
         </div>
     </section>
     {% endif %}
+    <!-- Mobile Sticky CTA Bar -->
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-charcoal-200 shadow-lg z-40 px-4 py-3 safe-area-inset-bottom">
+        <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+                <p class="font-display text-lg font-bold text-primary-600">{{ property.market_value|format_price }}</p>
+                <p class="text-xs text-charcoal-500 truncate">{{ property.address }}</p>
+            </div>
+            <div class="flex gap-2 flex-shrink-0">
+                <button type="button" onclick="toggleSave('{{ property.parcel_id }}')" class="btn btn-secondary btn-sm btn-icon" aria-label="Save property">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                </button>
+                <button type="button" onclick="shareProperty()" class="btn btn-primary btn-sm">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    Share
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Bottom padding to prevent content hidden behind sticky bar -->
+    <div class="lg:hidden h-20"></div>
 </div>
 {% endblock %}
 
@@ -370,8 +394,46 @@
 {{ block.super }}
 <script>
     function toggleSave(parcelId) {
-        showToast('Property saved to your list');
+        const saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+        const btn = document.getElementById('save-btn');
+        const icon = btn.querySelector('svg');
+        const label = btn.querySelector('span');
+        const idx = saved.indexOf(parcelId);
+
+        if (idx === -1) {
+            saved.push(parcelId);
+            icon.setAttribute('fill', 'currentColor');
+            label.textContent = 'Saved';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-coral');
+            showToast('Property saved to your list');
+        } else {
+            saved.splice(idx, 1);
+            icon.setAttribute('fill', 'none');
+            label.textContent = 'Save Property';
+            btn.classList.remove('btn-coral');
+            btn.classList.add('btn-primary');
+            showToast('Property removed from your list');
+        }
+        localStorage.setItem('savedProperties', JSON.stringify(saved));
     }
+
+    // Restore saved state on load
+    (function() {
+        const saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+        const parcelId = '{{ property.parcel_id }}';
+        if (saved.includes(parcelId)) {
+            const btn = document.getElementById('save-btn');
+            if (btn) {
+                const icon = btn.querySelector('svg');
+                const label = btn.querySelector('span');
+                icon.setAttribute('fill', 'currentColor');
+                label.textContent = 'Saved';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-coral');
+            }
+        }
+    })();
 
     function shareProperty() {
         if (navigator.share) {

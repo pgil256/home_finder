@@ -135,6 +135,7 @@
                                    placeholder="0"
                                    min="0"
                                    step="10000"
+                                   oninput="updatePriceDisplay()"
                                    onchange="updatePriceDisplay()">
                         </div>
                     </div>
@@ -149,6 +150,7 @@
                                    placeholder="No limit"
                                    min="0"
                                    step="10000"
+                                   oninput="updatePriceDisplay()"
                                    onchange="updatePriceDisplay()">
                         </div>
                     </div>
@@ -339,21 +341,41 @@
 {% block scripts %}
 {{ block.super }}
 <script>
-    // Price display update
+    // Price display update with inline validation
     function updatePriceDisplay() {
-        const min = document.getElementById('min_value').value;
-        const max = document.getElementById('max_value').value;
+        const minEl = document.getElementById('min_value');
+        const maxEl = document.getElementById('max_value');
+        const min = parseInt(minEl.value) || 0;
+        const max = parseInt(maxEl.value) || 0;
         const display = document.getElementById('price-range-display');
+        const warning = document.getElementById('price-warning');
 
         const formatPrice = (val) => {
             if (!val) return null;
             return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
         };
 
-        const minFormatted = formatPrice(min) || '$0';
-        const maxFormatted = formatPrice(max) || 'No limit';
+        const minFormatted = formatPrice(minEl.value) || '$0';
+        const maxFormatted = formatPrice(maxEl.value) || 'No limit';
 
         display.textContent = `${minFormatted} - ${maxFormatted}`;
+
+        // Show inline validation warning
+        if (min > 0 && max > 0 && min > max) {
+            if (!warning) {
+                const el = document.createElement('p');
+                el.id = 'price-warning';
+                el.className = 'text-sm text-danger-600 mt-2 flex items-center gap-1';
+                el.textContent = 'Minimum price exceeds maximum price';
+                maxEl.closest('.grid').after(el);
+            }
+            minEl.classList.add('input-error');
+            maxEl.classList.add('input-error');
+        } else {
+            if (warning) warning.remove();
+            minEl.classList.remove('input-error');
+            maxEl.classList.remove('input-error');
+        }
     }
 
     // Quick price buttons
