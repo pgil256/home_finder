@@ -1,14 +1,4 @@
 {
-  "builds": [
-    {
-      "src": "home_finder/wsgi.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "home_finder/wsgi.py"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "django"
 }
