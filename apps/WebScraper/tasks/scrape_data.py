@@ -323,8 +323,8 @@ def scrape_pinellas_properties(self, search_criteria, limit=10):
                     if property_data.get('tax_status') and property_data['tax_status'] != 'Unknown':
                         defaults['tax_status'] = property_data['tax_status']
                     logger.info(f"Saving property {parcel_id} to database: "
-                                f"address={defaults['address']}, city={defaults['city']}, "
-                                f"market_value={defaults['market_value']}")
+                                f"address={defaults.get('address')}, city={defaults.get('city')}, "
+                                f"market_value={defaults.get('market_value')}")
                     listing, created = PropertyListing.objects.update_or_create(
                         parcel_id=parcel_id,
                         defaults=defaults
