@@ -1,18 +1,15 @@
-from celery import shared_task
-from celery_progress.backend import ProgressRecorder
 import logging
 from datetime import timedelta
+
 from django.utils import timezone
+
 from apps.WebScraper.models import PropertyListing
 
 logger = logging.getLogger(__name__)
 
-# Cache duration for recently scraped properties
 CACHE_HOURS = 24
-
-# Retry configuration for scraping
 MAX_RETRIES = 3
-RETRY_BACKOFF_BASE = 2  # seconds, doubles each retry
+RETRY_BACKOFF_BASE = 2
 
 
 def filter_properties_by_criteria(properties, search_criteria):
@@ -21,22 +18,9 @@ def filter_properties_by_criteria(properties, search_criteria):
 
     PCPAO Quick Search only supports keyword search, so we post-filter
     the results to match the user's actual criteria.
-
-    Supported filters:
-    - property_type: Match property type (substring, case-insensitive)
-    - min_value/max_value: Filter by market value range
-    - bedrooms_min: Minimum number of bedrooms
-    - bathrooms_min: Minimum number of bathrooms
-    - year_built_after: Minimum year built
-    - sqft_min/sqft_max: Building square footage range
-    - tax_status: Exact match on tax status
-
-    Properties with null values for a filtered field pass through
-    (cannot be filtered when data is unavailable).
     """
     filtered = []
 
-    # Get filter criteria
     requested_types = search_criteria.get('property_type', [])
     if isinstance(requested_types, str):
         requested_types = [requested_types]
@@ -45,7 +29,6 @@ def filter_properties_by_criteria(properties, search_criteria):
     min_value = search_criteria.get('min_value')
     max_value = search_criteria.get('max_value')
 
-    # Convert to float if provided
     try:
         min_value = float(min_value) if min_value else None
     except (ValueError, TypeError):
@@ -56,17 +39,12 @@ def filter_properties_by_criteria(properties, search_criteria):
         max_value = None
 
     for prop in properties:
-        # Check property type filter
         if requested_types_lower:
             prop_type = (prop.get('property_type') or '').lower()
-            # Match if the property type contains any of the requested types
             type_match = any(req_type in prop_type for req_type in requested_types_lower)
             if not type_match:
-                logger.debug(f"Filtered out {prop.get('parcel_id')}: type '{prop.get('property_type')}' "
-                           f"doesn't match {requested_types}")
                 continue
 
-        # Check price range filter
         market_value = prop.get('market_value')
         if market_value is not None:
             try:
@@ -74,90 +52,65 @@ def filter_properties_by_criteria(properties, search_criteria):
             except (ValueError, TypeError):
                 market_value = None
 
-        if min_value is not None and market_value is not None:
-            if market_value < min_value:
-                logger.debug(f"Filtered out {prop.get('parcel_id')}: value ${market_value:,.0f} "
-                           f"below min ${min_value:,.0f}")
-                continue
+        if min_value is not None and market_value is not None and market_value < min_value:
+            continue
+        if max_value is not None and market_value is not None and market_value > max_value:
+            continue
 
-        if max_value is not None and market_value is not None:
-            if market_value > max_value:
-                logger.debug(f"Filtered out {prop.get('parcel_id')}: value ${market_value:,.0f} "
-                           f"above max ${max_value:,.0f}")
-                continue
-
-        # Check bedrooms filter
         bedrooms_min = search_criteria.get('bedrooms_min')
         if bedrooms_min:
             try:
                 bedrooms_min_val = int(bedrooms_min)
                 prop_bedrooms = prop.get('bedrooms')
                 if prop_bedrooms is not None and prop_bedrooms < bedrooms_min_val:
-                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_bedrooms} beds "
-                               f"< min {bedrooms_min_val}")
                     continue
             except (ValueError, TypeError):
                 pass
 
-        # Check bathrooms filter
         bathrooms_min = search_criteria.get('bathrooms_min')
         if bathrooms_min:
             try:
                 bathrooms_min_val = float(bathrooms_min)
                 prop_bathrooms = prop.get('bathrooms')
                 if prop_bathrooms is not None and float(prop_bathrooms) < bathrooms_min_val:
-                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_bathrooms} baths "
-                               f"< min {bathrooms_min_val}")
                     continue
             except (ValueError, TypeError):
                 pass
 
-        # Check year built filter
         year_built_after = search_criteria.get('year_built_after')
         if year_built_after:
             try:
                 year_built_min = int(year_built_after)
                 prop_year = prop.get('year_built')
                 if prop_year is not None and prop_year < year_built_min:
-                    logger.debug(f"Filtered out {prop.get('parcel_id')}: built {prop_year} "
-                               f"< min year {year_built_min}")
                     continue
             except (ValueError, TypeError):
                 pass
 
-        # Check sqft min filter
         sqft_min = search_criteria.get('sqft_min')
         if sqft_min:
             try:
                 sqft_min_val = int(sqft_min)
                 prop_sqft = prop.get('building_sqft')
                 if prop_sqft is not None and prop_sqft < sqft_min_val:
-                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_sqft} sqft "
-                               f"< min {sqft_min_val}")
                     continue
             except (ValueError, TypeError):
                 pass
 
-        # Check sqft max filter
         sqft_max = search_criteria.get('sqft_max')
         if sqft_max:
             try:
                 sqft_max_val = int(sqft_max)
                 prop_sqft = prop.get('building_sqft')
                 if prop_sqft is not None and prop_sqft > sqft_max_val:
-                    logger.debug(f"Filtered out {prop.get('parcel_id')}: {prop_sqft} sqft "
-                               f"> max {sqft_max_val}")
                     continue
             except (ValueError, TypeError):
                 pass
 
-        # Check tax status filter
         tax_status_filter = search_criteria.get('tax_status')
         if tax_status_filter:
             prop_tax_status = prop.get('tax_status')
             if prop_tax_status is not None and prop_tax_status != tax_status_filter:
-                logger.debug(f"Filtered out {prop.get('parcel_id')}: tax status '{prop_tax_status}' "
-                           f"!= '{tax_status_filter}'")
                 continue
 
         filtered.append(prop)
@@ -165,230 +118,108 @@ def filter_properties_by_criteria(properties, search_criteria):
     return filtered
 
 
-@shared_task(bind=True)
-def scrape_pinellas_properties(self, search_criteria, limit=10):
+def run_scrape(search_criteria, limit=10):
     """
-    Scrape property data from Pinellas County Property Appraiser.
+    Scrape property data from PCPAO synchronously and persist to the DB.
 
-    Uses parallel browser instances for faster scraping and skips
-    properties that were scraped within the last 24 hours.
+    Returns a list of parcel_ids that ended up in the result set
+    (cached + freshly scraped, capped at `limit`).
     """
-    progress_recorder = ProgressRecorder(self)
-    progress_recorder.set_progress(0, 100, description="Starting property scraper...")
+    from .pcpao_scraper import PCPAOScraper
+    import requests as req
+    import time as _time
+
+    scraper = PCPAOScraper(headless=True)
+    logger.info("Starting PCPAO scrape: criteria=%s limit=%s", search_criteria, limit)
+
+    parcels = scraper._search_via_api(search_criteria, limit=limit)
+    if not parcels:
+        return []
+
+    parcel_ids = [p['parcel_id'] for p in parcels]
+    cache_cutoff = timezone.now() - timedelta(hours=CACHE_HOURS)
+    cached_parcels = set(
+        PropertyListing.objects.filter(
+            parcel_id__in=parcel_ids,
+            last_scraped__gte=cache_cutoff,
+        ).values_list('parcel_id', flat=True)
+    )
+    parcels_to_scrape = [p for p in parcels if p['parcel_id'] not in cached_parcels]
+    logger.info("Cache: %d hits, %d to scrape", len(cached_parcels), len(parcels_to_scrape))
 
     property_ids = []
-    cached_count = 0
 
-    try:
-        # Lazy import to avoid loading selenium at startup
-        from .pcpao_scraper import PCPAOScraper
-        scraper = PCPAOScraper(headless=True)
-        logger.info(f"Starting PCPAO scraping with criteria: {search_criteria}, limit: {limit}")
+    if cached_parcels:
+        cached_listings = PropertyListing.objects.filter(parcel_id__in=cached_parcels)
+        cached_properties = [{
+            'parcel_id': l.parcel_id,
+            'property_type': l.property_type,
+            'market_value': l.market_value,
+            'bedrooms': l.bedrooms,
+            'bathrooms': l.bathrooms,
+            'year_built': l.year_built,
+            'building_sqft': l.building_sqft,
+            'tax_status': l.tax_status,
+        } for l in cached_listings]
+        filtered_cached = filter_properties_by_criteria(cached_properties, search_criteria)
+        property_ids.extend([p['parcel_id'] for p in filtered_cached])
 
-        # Step 1: Search for parcels via API (no browser needed)
-        progress_recorder.set_progress(5, 100, description="Searching for properties...")
-        parcels = scraper._search_via_api(search_criteria, limit=limit)
+    if parcels_to_scrape:
+        session = req.Session()
+        session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        })
 
-        if not parcels:
-            progress_recorder.set_progress(100, 100, description="No properties found")
-            return {'property_ids': [], 'search_criteria': search_criteria}
+        properties = []
+        for i, parcel_info in enumerate(parcels_to_scrape):
+            p_id = parcel_info['parcel_id']
+            d_url = parcel_info.get('detail_url')
+            prop_data = {'parcel_id': p_id}
+            if d_url:
+                for attempt in range(MAX_RETRIES):
+                    try:
+                        prop_data = scraper._scrape_detail_via_requests(p_id, d_url, session=session)
+                        break
+                    except (req.exceptions.RequestException, req.exceptions.Timeout) as e:
+                        wait = RETRY_BACKOFF_BASE ** (attempt + 1)
+                        logger.warning("Retry %d/%d for %s: %s (waiting %ds)",
+                                       attempt + 1, MAX_RETRIES, p_id, e, wait)
+                        _time.sleep(wait)
+                else:
+                    logger.error("Failed to scrape %s after %d retries", p_id, MAX_RETRIES)
+            if len(prop_data) > 1:
+                properties.append(prop_data)
+            if i < len(parcels_to_scrape) - 1:
+                _time.sleep(0.3)
 
-        logger.info(f"Found {len(parcels)} parcels to process")
+        properties = filter_properties_by_criteria(properties, search_criteria)
+        logger.info("Saving %d properties to database", len(properties))
 
-        # Step 2: Check cache - skip properties scraped within CACHE_HOURS
-        parcel_ids = [p['parcel_id'] for p in parcels]
-        cache_cutoff = timezone.now() - timedelta(hours=CACHE_HOURS)
-
-        cached_parcels = set(
-            PropertyListing.objects.filter(
-                parcel_id__in=parcel_ids,
-                last_scraped__gte=cache_cutoff
-            ).values_list('parcel_id', flat=True)
+        optional_fields = (
+            'address', 'city', 'zip_code', 'owner_name',
+            'market_value', 'assessed_value', 'building_sqft',
+            'year_built', 'bedrooms', 'bathrooms', 'land_size',
+            'lot_sqft', 'appraiser_url', 'image_url',
+            'tax_collector_url', 'tax_amount', 'tax_year',
         )
+        for property_data in properties:
+            parcel_id = property_data.get('parcel_id')
+            if not parcel_id:
+                continue
+            defaults = {'property_type': property_data.get('property_type', 'Unknown')}
+            for field in optional_fields:
+                value = property_data.get(field)
+                if value is not None:
+                    defaults[field] = value
+            tax_status = property_data.get('tax_status')
+            if tax_status and tax_status != 'Unknown':
+                defaults['tax_status'] = tax_status
+            PropertyListing.objects.update_or_create(parcel_id=parcel_id, defaults=defaults)
+            property_ids.append(parcel_id)
 
-        parcels_to_scrape = [p for p in parcels if p['parcel_id'] not in cached_parcels]
+    if limit and len(property_ids) > limit:
+        property_ids = property_ids[:limit]
 
-        logger.info(f"Cache check: {len(cached_parcels)} cached (< {CACHE_HOURS}h old), "
-                    f"{len(parcels_to_scrape)} need scraping")
-
-        # Filter cached properties by search criteria before adding
-        # (they may have been scraped with different criteria previously)
-        if cached_parcels:
-            cached_listings = PropertyListing.objects.filter(parcel_id__in=cached_parcels)
-            cached_properties = []
-            for listing in cached_listings:
-                cached_properties.append({
-                    'parcel_id': listing.parcel_id,
-                    'property_type': listing.property_type,
-                    'market_value': listing.market_value,
-                    'bedrooms': listing.bedrooms,
-                    'bathrooms': listing.bathrooms,
-                    'year_built': listing.year_built,
-                    'building_sqft': listing.building_sqft,
-                    'tax_status': listing.tax_status,
-                })
-
-            # Apply same filter criteria to cached properties
-            filtered_cached = filter_properties_by_criteria(cached_properties, search_criteria)
-            cached_count = len(filtered_cached)
-
-            logger.info(f"Cached properties: {len(cached_parcels)} total, {cached_count} match current criteria")
-
-            # Only add cached properties that match current search criteria
-            property_ids.extend([p['parcel_id'] for p in filtered_cached])
-        else:
-            cached_count = 0
-
-        # Step 3: Scrape non-cached properties via requests (no browser needed)
-        if parcels_to_scrape:
-            import requests as req
-            import time as _time
-
-            progress_recorder.set_progress(10, 100,
-                description=f"Scraping {len(parcels_to_scrape)} properties ({cached_count} cached)...")
-
-            session = req.Session()
-            session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            })
-
-            properties = []
-            for i, parcel_info in enumerate(parcels_to_scrape):
-                p_id = parcel_info['parcel_id']
-                d_url = parcel_info.get('detail_url')
-                if d_url:
-                    prop_data = None
-                    for attempt in range(MAX_RETRIES):
-                        try:
-                            prop_data = scraper._scrape_detail_via_requests(p_id, d_url, session=session)
-                            break
-                        except (req.exceptions.RequestException, req.exceptions.Timeout) as e:
-                            wait = RETRY_BACKOFF_BASE ** (attempt + 1)
-                            logger.warning(f"Retry {attempt + 1}/{MAX_RETRIES} for parcel {p_id}: {e}. "
-                                         f"Waiting {wait}s...")
-                            _time.sleep(wait)
-                    if prop_data is None:
-                        logger.error(f"Failed to scrape parcel {p_id} after {MAX_RETRIES} retries")
-                        prop_data = {'parcel_id': p_id}
-                else:
-                    prop_data = {'parcel_id': p_id}
-                if len(prop_data) > 1:
-                    properties.append(prop_data)
-                else:
-                    logger.warning(f"Skipping parcel {p_id}: scrape returned no meaningful data")
-                if i < len(parcels_to_scrape) - 1:
-                    _time.sleep(0.3)
-
-            # Post-filter by property type and price range
-            # (PCPAO Quick Search doesn't support these filters)
-            pre_filter_count = len(properties)
-            properties = filter_properties_by_criteria(properties, search_criteria)
-            filtered_out = pre_filter_count - len(properties)
-
-            if filtered_out > 0:
-                logger.info(f"Filtered out {filtered_out} properties that didn't match criteria")
-
-            total_to_save = len(properties)
-            logger.info(f"Scraped {pre_filter_count} properties, {total_to_save} match criteria, saving to database")
-
-            if total_to_save == 0:
-                logger.info("No properties matched the filter criteria")
-
-            for i, property_data in enumerate(properties, 1):
-                progress_recorder.set_progress(
-                    10 + int((i / max(total_to_save, 1)) * 85),
-                    100,
-                    description=f"Saving property {i}/{total_to_save}..."
-                )
-
-                parcel_id = property_data.get('parcel_id')
-                if parcel_id:
-                    # Build defaults, only setting fields that have data
-                    # to avoid overwriting bulk-imported data with None
-                    defaults = {
-                        'property_type': property_data.get('property_type', 'Unknown'),
-                    }
-                    # Only update fields that the scraper actually returned
-                    optional_fields = [
-                        'address', 'city', 'zip_code', 'owner_name',
-                        'market_value', 'assessed_value', 'building_sqft',
-                        'year_built', 'bedrooms', 'bathrooms', 'land_size',
-                        'lot_sqft', 'appraiser_url', 'image_url',
-                        'tax_collector_url', 'tax_amount', 'tax_year',
-                    ]
-                    for field in optional_fields:
-                        value = property_data.get(field)
-                        if value is not None:
-                            defaults[field] = value
-                    if property_data.get('tax_status') and property_data['tax_status'] != 'Unknown':
-                        defaults['tax_status'] = property_data['tax_status']
-                    logger.info(f"Saving property {parcel_id} to database: "
-                                f"address={defaults.get('address')}, city={defaults.get('city')}, "
-                                f"market_value={defaults.get('market_value')}")
-                    listing, created = PropertyListing.objects.update_or_create(
-                        parcel_id=parcel_id,
-                        defaults=defaults
-                    )
-                    logger.info(f"Property {parcel_id} {'created' if created else 'updated'} in database (pk={listing.pk})")
-                    property_ids.append(parcel_id)
-
-        # Cap results at the requested limit
-        if limit and len(property_ids) > limit:
-            logger.info(f"Capping results from {len(property_ids)} to limit of {limit}")
-            property_ids = property_ids[:limit]
-
-        total_properties = len(property_ids)
-        scraped_count = total_properties - cached_count
-        progress_recorder.set_progress(100, 100,
-            description=f"Completed: {total_properties} properties ({cached_count} cached, {scraped_count} scraped)")
-
-    except (ValueError, TypeError, KeyError) as e:
-        logger.error(f"Data error in scrape_pinellas_properties: {e}")
-        raise
-    except OSError as e:
-        logger.error(f"Network/IO error in scrape_pinellas_properties: {e}")
-        raise
-
-    return {
-        'property_ids': property_ids,
-        'search_criteria': search_criteria,
-        'cached_count': min(cached_count, len(property_ids)),
-        'scraped_count': scraped_count,
-        'limit': limit
-    }
-
-
-@shared_task(bind=True)
-def scrape_tax_data(self, scrape_result):
-    """
-    Tax data passthrough - tax data now comes from PCPAO bulk import only.
-
-    The real-time tax collector scraper has been disabled because:
-    1. pinellastaxcollector.gov doesn't have property-specific tax data
-    2. pinellas.county-taxes.com has Cloudflare protection
-
-    Tax data should be populated via the PCPAO bulk data import command:
-        python manage.py import_pcpao_data
-
-    This task is preserved for pipeline compatibility.
-    """
-    progress_recorder = ProgressRecorder(self)
-
-    property_ids = scrape_result.get('property_ids', [])
-    search_criteria = scrape_result.get('search_criteria', {})
-    cached_count = scrape_result.get('cached_count', 0)
-    limit = scrape_result.get('limit', 10)
-
-    logger.info(f"Tax data passthrough: {len(property_ids)} properties (tax data from PCPAO bulk import)")
-
-    progress_recorder.set_progress(100, 100,
-        description="Tax data sourced from PCPAO bulk import")
-
-    return {
-        'status': 'Tax data from PCPAO bulk import',
-        'property_ids': property_ids,
-        'total_processed': len(property_ids),
-        'search_criteria': search_criteria,
-        'cached_count': cached_count,
-        'limit': limit
-    }
+    logger.info("Scrape complete: %d properties", len(property_ids))
+    return property_ids

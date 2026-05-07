@@ -52,8 +52,6 @@ INSTALLED_APPS = [
     "apps.KeywordSelection.apps.KeywordSelectionConfig",
     "apps.Pages.apps.PagesConfig",
     "apps.WebScraper.apps.WebScraperConfig",
-    "celery",
-    "celery_progress",
     "rest_framework",
 ]
 
@@ -165,35 +163,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # X frame config
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
-# Celery Config
-# Uses CELERY_BROKER_URL if set, falls back to REDIS_URL, then memory:// for local dev
-_redis_url = config('CELERY_BROKER_URL', default=config('REDIS_URL', default=''))
-CELERY_BROKER_URL = _redis_url if _redis_url else 'memory://'
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default=_redis_url if _redis_url else 'cache+memory://')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
-# Run tasks synchronously when no Redis is available (for local dev without Redis)
-# Auto-detects: uses eager mode only when using memory broker
-CELERY_TASK_ALWAYS_EAGER = config('CELERY_TASK_ALWAYS_EAGER', default=not bool(_redis_url), cast=bool)
-CELERY_TASK_EAGER_PROPAGATES = True
-
-# Cache configuration - use Redis if available for cross-process chain tracking
-if _redis_url:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': _redis_url,
-        }
+# Cache: database-backed (works on Vercel without external Redis).
+# Run `python manage.py createcachetable` once after deploy to create the table.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
     }
-else:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        }
-    }
+}
 
 # Email settings (example using Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

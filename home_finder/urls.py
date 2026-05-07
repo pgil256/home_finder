@@ -24,7 +24,6 @@ urlpatterns = [
     path("keyword/", include("apps.KeywordSelection.urls")),
     path("scraper/", include("apps.WebScraper.urls")),
     path("", include("apps.Pages.urls")),
-    path("celery-progress/", include("celery_progress.urls")),
 ]
 
 # Serve media files through Django (needed for dynamically generated reports)

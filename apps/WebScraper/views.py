@@ -3,24 +3,28 @@ from __future__ import annotations
 import logging
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.http import require_GET
+from django.urls import reverse
 
 from .models import PropertyListing
 from .services.filtering import (
     PINELLAS_CITIES, PROPERTY_TYPES,
     apply_filters, apply_sorting, paginate,
 )
-from .services.task_management import (
-    build_processing_pipeline, get_client_ip, check_rate_limit,
-    get_task_status_response,
-)
+from .services.task_management import get_client_ip, check_rate_limit
 from .services.exports import generate_excel_response, generate_pdf_response
+from .tasks.scrape_data import run_scrape
 
 logger = logging.getLogger(__name__)
 
+MAX_SCRAPE_LIMIT = 25
+
 
 def web_scraper_view(request):
-    """Main view for the property scraper interface."""
+    """Main view for the property scraper interface.
+
+    POST runs the scrape synchronously inside the request (Vercel maxDuration: 60s),
+    then redirects to the dashboard filtered by the search criteria.
+    """
     if request.method == 'POST':
         client_ip = get_client_ip(request)
         wait = check_rate_limit(client_ip)
@@ -52,29 +56,39 @@ def web_scraper_view(request):
         search_criteria = {k: v for k, v in search_criteria.items() if v}
 
         try:
-            limit = int(request.POST.get('limit', 50))
+            limit = int(request.POST.get('limit', MAX_SCRAPE_LIMIT))
         except ValueError:
-            limit = 50
-        user_email = request.POST.get('email', '')
+            limit = MAX_SCRAPE_LIMIT
+        limit = min(limit, MAX_SCRAPE_LIMIT)
 
-        result = build_processing_pipeline(search_criteria, limit, user_email)
-        return redirect('scraping-progress', task_id=result.id)
+        try:
+            run_scrape(search_criteria, limit)
+        except Exception:
+            logger.exception("Scrape failed")
+            return render(request, 'WebScraper/search.html', {
+                'cities': sorted(PINELLAS_CITIES),
+                'property_types': PROPERTY_TYPES,
+                'error': 'Something went wrong while scraping. Please try again with fewer filters or a smaller limit.',
+            })
+
+        params = []
+        if search_criteria.get('city'):
+            params.append(f"city={search_criteria['city']}")
+        types = search_criteria.get('property_type')
+        if isinstance(types, list):
+            for t in types:
+                params.append(f"property_types={t}")
+        elif types:
+            params.append(f"property_types={types}")
+        url = reverse('dashboard')
+        if params:
+            url += '?' + '&'.join(params)
+        return redirect(url)
 
     return render(request, 'WebScraper/search.html', {
         'cities': sorted(PINELLAS_CITIES),
         'property_types': PROPERTY_TYPES,
     })
-
-
-def scraping_progress(request, task_id: str):
-    """View to track scraping progress."""
-    return render(request, 'WebScraper/scraping-progress.html', {'task_id': task_id})
-
-
-@require_GET
-def get_task_status(request, task_id: str):
-    """API endpoint to get task status with chain progress aggregation."""
-    return get_task_status_response(task_id)
 
 
 def property_dashboard(request):
