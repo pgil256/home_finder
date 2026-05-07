@@ -30,7 +30,25 @@
             </div>
 
             <!-- View Controls -->
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Download Buttons (preserve current filters) -->
+                <a href="{% url 'download-excel' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}"
+                   class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-charcoal-200 bg-white hover:bg-charcoal-50 text-sm font-medium text-charcoal-700 transition-colors"
+                   title="Download spreadsheet of these properties (up to 5,000 rows)">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6h6v6m2 4H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/>
+                    </svg>
+                    Excel
+                </a>
+                <a href="{% url 'download-pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}"
+                   class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-charcoal-200 bg-white hover:bg-charcoal-50 text-sm font-medium text-charcoal-700 transition-colors"
+                   title="Download PDF report with property listings and market analysis charts (top 200 by value)">
+                    <svg class="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    PDF report
+                </a>
+
                 <!-- Sort Dropdown -->
                 <div class="relative">
                     <label for="sort-select" class="sr-only">Sort by</label>
