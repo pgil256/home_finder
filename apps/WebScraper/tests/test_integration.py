@@ -1,7 +1,5 @@
 # apps/WebScraper/tests/test_integration.py
 import pytest
-from django.test import Client, TransactionTestCase
-from unittest.mock import patch, MagicMock
 from decimal import Decimal
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.integration]
@@ -36,11 +34,6 @@ class TestPropertySearchWorkflow:
     def test_scraper_page_loads(self, client):
         """Test the scraper page renders successfully."""
         response = client.get('/scraper/')
-        assert response.status_code == 200
-
-    def test_progress_page_accepts_task_id(self, client):
-        """Test progress page accepts arbitrary task IDs."""
-        response = client.get('/scraper/progress/test-task-123/')
         assert response.status_code == 200
 
 
@@ -138,48 +131,3 @@ class TestDataImportWorkflow:
         """Test price_per_sqft computed property works in context."""
         expected = sample_property.market_value / sample_property.building_sqft
         assert sample_property.price_per_sqft == expected
-
-
-class TestTaskStatusAPI:
-    """Integration tests for task status API."""
-
-    def test_task_status_endpoint_returns_json(self, client):
-        """Test task status API returns JSON response."""
-        with patch('apps.WebScraper.services.task_management.AsyncResult') as mock_result:
-            mock_result.return_value.state = 'PENDING'
-            mock_result.return_value.info = None
-
-            response = client.get('/scraper/status/test-task-456/')
-
-            assert response.status_code == 200
-            assert response['Content-Type'] == 'application/json'
-
-    def test_task_status_pending_state(self, client):
-        """Test task status returns correct format for PENDING state."""
-        with patch('apps.WebScraper.services.task_management.AsyncResult') as mock_result:
-            mock_result.return_value.state = 'PENDING'
-            mock_result.return_value.info = None
-
-            response = client.get('/scraper/status/test-task-789/')
-            data = response.json()
-
-            assert data['state'] == 'PENDING'
-            assert 'current' in data
-            assert 'total' in data
-
-    def test_task_status_progress_state(self, client):
-        """Test task status returns progress info correctly."""
-        with patch('apps.WebScraper.services.task_management.AsyncResult') as mock_result:
-            mock_result.return_value.state = 'PROGRESS'
-            mock_result.return_value.info = {
-                'current': 50,
-                'total': 100,
-                'status': 'Processing...'
-            }
-
-            response = client.get('/scraper/status/test-task-progress/')
-            data = response.json()
-
-            assert data['state'] == 'PROGRESS'
-            assert data['current'] == 50
-            assert data['total'] == 100

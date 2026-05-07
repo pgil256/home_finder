@@ -58,85 +58,100 @@ class TestSafeInt:
 
 
 class TestMapCsvRowToProperty:
+    """Column names match the current PCPAO RP_PROPERTY_INFO schema
+    (PARCEL_NUMBER, SITE_ADDRESS, STR_CITY, STR_ZIP, OWNER1,
+    CNTY_JST_VALUE, CNTY_ASD_VALUE, TOTAL_LIVING_SQFT, YEAR_BUILT,
+    PROPERTY_USE = '<code> <description>', ACREAGE, TAX_AMOUNT_NO_EX).
+    """
+
     def test_maps_basic_fields(self):
-        """Test CSV row mapping to PropertyListing fields."""
         row = {
-            'PARCEL_ID': '15-29-16-12345-000-0010',
-            'SITE_ADDR': '123 Main St',
-            'SITE_CITY': 'CLEARWATER',
-            'SITE_ZIP': '33755',
-            'OWN_NAME': 'John Doe',
-            'JV': '245000',
-            'AV': '220500',
-            'LIV_AREA': '1450',
-            'YR_BLT': '1987',
-            'BEDS': '3',
-            'BATHS': '2',
-            'LAND_SQFT': '10890',
-            'DOR_UC': '0100',
+            'PARCEL_NUMBER': '15-29-16-12345-000-0010',
+            'SITE_ADDRESS': '123 MAIN ST',
+            'STR_CITY': 'CLEARWATER',
+            'STR_ZIP': '33755',
+            'OWNER1': 'DOE, JOHN',
+            'CNTY_JST_VALUE': '245000',
+            'CNTY_ASD_VALUE': '220500',
+            'TOTAL_LIVING_SQFT': '1450',
+            'YEAR_BUILT': '1987',
+            'ACREAGE': '0.25',
+            'PROPERTY_USE': '0110 Single Family Home',
         }
         result = map_csv_row_to_property(row)
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
-        assert result['address'] == '123 Main St'
-        assert result['city'] == 'CLEARWATER'
+        assert result['address'] == '123 MAIN ST'
+        assert result['city'] == 'Clearwater'   # normalized from uppercase
+        assert result['zip_code'] == '33755'
+        assert result['owner_name'] == 'DOE, JOHN'
         assert result['market_value'] == Decimal('245000')
+        assert result['assessed_value'] == Decimal('220500')
         assert result['building_sqft'] == 1450
-        assert result['property_type'] == 'Single Family'
+        assert result['year_built'] == 1987
+        assert result['property_type'] == 'Single Family Home'
+
+    def test_normalizes_st_petersburg(self):
+        """PCPAO ships 'ST PETERSBURG'; canonical form for the form dropdown
+        is 'St. Petersburg'."""
+        row = {
+            'PARCEL_NUMBER': '01-30-14-00000-000-0001',
+            'SITE_ADDRESS': '500 4TH ST N',
+            'STR_CITY': 'ST PETERSBURG',
+        }
+        assert map_csv_row_to_property(row)['city'] == 'St. Petersburg'
 
     def test_handles_missing_fields(self):
-        """Test mapping handles missing optional fields."""
         row = {
-            'PARCEL_ID': '15-29-16-12345-000-0010',
-            'SITE_ADDR': '123 Main St',
+            'PARCEL_NUMBER': '15-29-16-12345-000-0010',
+            'SITE_ADDRESS': '123 MAIN ST',
         }
         result = map_csv_row_to_property(row)
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
         assert result['market_value'] is None
+        assert result['city'] is None
+        assert result['property_type'] == 'Unknown'
 
     def test_handles_empty_numeric_values(self):
-        """Test mapping handles empty strings for numeric fields."""
         row = {
-            'PARCEL_ID': '15-29-16-12345-000-0010',
-            'SITE_ADDR': '123 Main St',
-            'JV': '',
-            'LIV_AREA': '',
-            'BEDS': '',
+            'PARCEL_NUMBER': '15-29-16-12345-000-0010',
+            'SITE_ADDRESS': '123 MAIN ST',
+            'CNTY_JST_VALUE': '',
+            'TOTAL_LIVING_SQFT': '',
+            'ACREAGE': '',
         }
         result = map_csv_row_to_property(row)
 
-        assert result['parcel_id'] == '15-29-16-12345-000-0010'
         assert result['market_value'] is None
         assert result['building_sqft'] is None
-        assert result['bedrooms'] is None
+        assert result['land_size'] is None
+        assert result['lot_sqft'] is None
 
-    def test_calculates_land_size_from_sqft(self):
-        """Test land_size is calculated from lot_sqft."""
+    def test_acreage_converts_to_lot_sqft(self):
+        """1 acre = 43,560 sqft."""
         row = {
-            'PARCEL_ID': 'test-land',
-            'LAND_SQFT': '43560',  # 1 acre
+            'PARCEL_NUMBER': 'test-land',
+            'ACREAGE': '1.0',
         }
         result = map_csv_row_to_property(row)
 
         assert result['lot_sqft'] == 43560
-        assert result['land_size'] == Decimal('1')
+        assert result['land_size'] == Decimal('1.0')
 
-    def test_land_size_none_when_no_sqft(self):
-        """Test land_size is None when lot_sqft is missing."""
+    def test_property_use_strips_dor_code(self):
+        """PROPERTY_USE in the new schema is '<4-digit-code> <description>';
+        we keep only the description."""
         row = {
-            'PARCEL_ID': 'test-no-land',
+            'PARCEL_NUMBER': 'test-condo',
+            'PROPERTY_USE': '0430 Condominium',
         }
-        result = map_csv_row_to_property(row)
-
-        assert result['lot_sqft'] is None
-        assert result['land_size'] is None
+        assert map_csv_row_to_property(row)['property_type'] == 'Condominium'
 
     def test_maps_tax_amount_from_pcpao(self):
-        """Test CSV row mapping includes tax_amount from TAX_AMOUNT_NO_EX field."""
         row = {
-            'PARCEL_ID': '15-29-16-12345-000-0010',
-            'SITE_ADDR': '123 Main St',
+            'PARCEL_NUMBER': '15-29-16-12345-000-0010',
+            'SITE_ADDRESS': '123 MAIN ST',
             'TAX_AMOUNT_NO_EX': '4567.89',
         }
         result = map_csv_row_to_property(row)
@@ -145,10 +160,9 @@ class TestMapCsvRowToProperty:
         assert result['tax_status'] == 'From PCPAO'
 
     def test_tax_amount_none_when_missing(self):
-        """Test tax_amount is None when TAX_AMOUNT_NO_EX is missing."""
         row = {
-            'PARCEL_ID': 'test-no-tax',
-            'SITE_ADDR': '456 Oak Ave',
+            'PARCEL_NUMBER': 'test-no-tax',
+            'SITE_ADDRESS': '456 OAK AVE',
         }
         result = map_csv_row_to_property(row)
 

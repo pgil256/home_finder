@@ -22,6 +22,21 @@ PropertyListings.xlsx
 *.xlsx
 *.pdf
 staticfiles/
+media/reports/
+
+# Test / dev artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
+# Browser automation traces
+.playwright-mcp/
+screenshots/
+
+# Cookie jars / scratch files from curl-based testing
+cookies.txt
+progress-check
 
 # Claude related files
 CLAUDE.md

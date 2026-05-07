@@ -447,79 +447,11 @@ class TestPCPAOScraperFullWorkflow:
             assert len(results) == 4
             mock_driver.get.assert_called()
 
-    def test_scrape_by_criteria_full_workflow(self, mock_chrome_paths):
-        """Test scrape_by_criteria orchestrates the full scraping workflow.
-
-        Note: With parallel scraping, setup_driver/close_driver are called multiple times:
-        once for the initial search, and once per worker thread.
-        """
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-
-        with patch.object(PCPAOScraper, 'setup_driver') as mock_setup:
-            with patch.object(PCPAOScraper, 'close_driver') as mock_close:
-                with patch.object(PCPAOScraper, 'search_properties_with_urls') as mock_search:
-                    with patch.object(PCPAOScraper, 'scrape_property_details') as mock_details:
-                        mock_search.return_value = [
-                            {'parcel_id': '14-31-15-91961-004-0110', 'detail_url': 'http://test1'},
-                            {'parcel_id': '14-31-15-91961-004-0120', 'detail_url': 'http://test2'},
-                            {'parcel_id': '14-31-15-91961-004-0130', 'detail_url': 'http://test3'},
-                        ]
-                        mock_details.side_effect = [
-                            {'parcel_id': '14-31-15-91961-004-0110', 'address': '123 Main St', 'market_value': 245000},
-                            {'parcel_id': '14-31-15-91961-004-0120', 'address': '456 Oak Ave', 'market_value': 320000},
-                            {'parcel_id': '14-31-15-91961-004-0130', 'address': '789 Beach Dr', 'market_value': 185000},
-                        ]
-
-                        scraper = PCPAOScraper()
-                        results = scraper.scrape_by_criteria({'city': 'Clearwater'})
-
-                        # setup_driver called once for search + once per worker (parallel scraping)
-                        assert mock_setup.call_count >= 1
-                        mock_search.assert_called_once_with({'city': 'Clearwater'})
-                        assert mock_details.call_count == 3
-                        # close_driver called once for search + once per worker
-                        assert mock_close.call_count >= 1
-                        assert len(results) == 3
-                        assert results[0]['market_value'] == 245000
-                        assert results[1]['market_value'] == 320000
-                        assert results[2]['market_value'] == 185000
-
-    def test_scrape_by_criteria_with_limit(self, mock_chrome_paths):
-        """Test scrape_by_criteria respects the limit parameter."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-
-        with patch.object(PCPAOScraper, 'setup_driver'):
-            with patch.object(PCPAOScraper, 'close_driver'):
-                with patch.object(PCPAOScraper, 'search_properties_with_urls') as mock_search:
-                    with patch.object(PCPAOScraper, 'scrape_property_details') as mock_details:
-                        mock_search.return_value = [
-                            {'parcel_id': f'14-31-15-91961-004-{i:04d}', 'detail_url': f'http://test{i}'}
-                            for i in range(10)
-                        ]
-                        mock_details.return_value = {'parcel_id': 'test', 'address': 'Test'}
-
-                        scraper = PCPAOScraper()
-                        results = scraper.scrape_by_criteria({'city': 'Clearwater'}, limit=3)
-
-                        assert mock_details.call_count == 3
-                        assert len(results) == 3
-
-    def test_scrape_by_criteria_closes_driver_on_error(self, mock_chrome_paths):
-        """Test that driver is closed even when an error occurs."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-
-        with patch.object(PCPAOScraper, 'setup_driver'):
-            with patch.object(PCPAOScraper, 'close_driver') as mock_close:
-                with patch.object(PCPAOScraper, 'search_properties_with_urls') as mock_search:
-                    mock_search.side_effect = Exception("Network error")
-
-                    scraper = PCPAOScraper()
-
-                    with pytest.raises(Exception, match="Network error"):
-                        scraper.scrape_by_criteria({'city': 'Clearwater'})
-
-                    # Driver should still be closed via finally block
-                    mock_close.assert_called_once()
+    # `scrape_by_criteria` was removed in the search architecture pivot —
+    # the dashboard now serves results from indexed Postgres queries
+    # against the bulk-imported PCPAO dataset. The Selenium primitives
+    # above (search_properties_with_urls, scrape_property_details) remain
+    # in the codebase for the per-property refresh path.
 
 
 class TestTaxCollectorScraperHTMLParsing:

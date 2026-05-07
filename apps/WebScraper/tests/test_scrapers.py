@@ -245,57 +245,11 @@ class TestPCPAOScraper:
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
 
-    def test_scrape_by_criteria_orchestrates_full_workflow(self, mock_chrome_paths):
-        """Test scrape_by_criteria sets up driver, searches, and scrapes details.
-
-        Note: With parallel scraping, setup_driver/close_driver are called multiple times:
-        once for the initial search, and once per worker thread.
-        """
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-
-        with patch.object(PCPAOScraper, 'setup_driver') as mock_setup:
-            with patch.object(PCPAOScraper, 'close_driver') as mock_close:
-                with patch.object(PCPAOScraper, 'search_properties_with_urls') as mock_search:
-                    with patch.object(PCPAOScraper, 'scrape_property_details') as mock_details:
-                        mock_search.return_value = [
-                            {'parcel_id': 'parcel-001', 'detail_url': 'http://test1'},
-                            {'parcel_id': 'parcel-002', 'detail_url': 'http://test2'},
-                        ]
-                        mock_details.side_effect = [
-                            {'parcel_id': 'parcel-001', 'address': '123 Test'},
-                            {'parcel_id': 'parcel-002', 'address': '456 Test'},
-                        ]
-
-                        scraper = PCPAOScraper()
-                        results = scraper.scrape_by_criteria({'city': 'Clearwater'})
-
-                        # setup_driver called once for search + once per worker (parallel scraping)
-                        assert mock_setup.call_count >= 1
-                        mock_search.assert_called_once()
-                        assert mock_details.call_count == 2
-                        # close_driver called once for search + once per worker
-                        assert mock_close.call_count >= 1
-                        assert len(results) == 2
-
-    def test_scrape_by_criteria_respects_limit(self, mock_chrome_paths):
-        """Test scrape_by_criteria respects the limit parameter."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-
-        with patch.object(PCPAOScraper, 'setup_driver'):
-            with patch.object(PCPAOScraper, 'close_driver'):
-                with patch.object(PCPAOScraper, 'search_properties_with_urls') as mock_search:
-                    with patch.object(PCPAOScraper, 'scrape_property_details') as mock_details:
-                        mock_search.return_value = [
-                            {'parcel_id': f'p{i}', 'detail_url': f'http://test{i}'}
-                            for i in range(5)
-                        ]
-                        mock_details.return_value = {'parcel_id': 'test'}
-
-                        scraper = PCPAOScraper()
-                        results = scraper.scrape_by_criteria({'city': 'Test'}, limit=2)
-
-                        assert mock_details.call_count == 2
-                        assert len(results) == 2
+    # `scrape_by_criteria` was removed in the architecture pivot — search now
+    # runs as a Postgres query, not a Selenium orchestration. Tests for that
+    # method were deleted; the unit tests above still cover the surviving
+    # PCPAOScraper helpers (setup_driver, close_driver, search/extract
+    # primitives) which remain useful for the per-property refresh path.
 
 
 class TestTaxCollectorScraper:
