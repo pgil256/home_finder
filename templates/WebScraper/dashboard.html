@@ -76,12 +76,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col md:flex-row gap-6 -mt-4">
-
-    <!-- Active Filter Chips -->
-    {% if request.GET.city or request.GET.min_price or request.GET.max_price or request.GET.beds or request.GET.baths or request.GET.property_type or request.GET.tax_status or request.GET.year_built %}
-    <div class="w-full flex flex-wrap items-center gap-2 -mb-4">
-        <span class="text-sm text-charcoal-500">Active filters:</span>
+<!-- Active Filter Chips (above the row layout so they don't displace siblings) -->
+{% if request.GET.city or request.GET.min_price or request.GET.max_price or request.GET.beds or request.GET.baths or request.GET.property_type or request.GET.tax_status or request.GET.year_built %}
+<div class="flex flex-wrap items-center gap-2 mb-4 -mt-4">
+    <span class="text-sm text-charcoal-500">Active filters:</span>
         {% if request.GET.city %}
         <a href="?{% for key, value in request.GET.items %}{% if key != 'city' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
            class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
@@ -131,10 +129,11 @@
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
-        <a href="{% url 'dashboard' %}" class="text-sm text-charcoal-500 hover:text-charcoal-700 transition-colors ml-2">Clear all</a>
-    </div>
-    {% endif %}
+    <a href="{% url 'dashboard' %}" class="text-sm text-charcoal-500 hover:text-charcoal-700 transition-colors ml-2">Clear all</a>
+</div>
+{% endif %}
 
+<div class="flex flex-col md:flex-row gap-6">
     <!-- Filter Sidebar -->
     <aside id="filter-sidebar" class="hidden md:block w-full md:w-72 lg:w-80 flex-shrink-0" aria-label="Property filters">
         <div class="card sticky top-24">
@@ -204,39 +203,8 @@
                     </div>
                 </fieldset>
 
-                <!-- Bedrooms -->
-                <fieldset>
-                    <legend class="label">Bedrooms</legend>
-                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Minimum bedrooms">
-                        {% for num in "012345"|make_list %}
-                        {% with num|add:"0" as bed_num %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="beds" value="{{ bed_num }}" class="sr-only peer" {% if request.GET.beds == bed_num %}checked{% endif %}>
-                            <span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all duration-200 hover:border-charcoal-300">
-                                {% if bed_num == "0" %}Any{% else %}{{ bed_num }}+{% endif %}
-                            </span>
-                        </label>
-                        {% endwith %}
-                        {% endfor %}
-                    </div>
-                </fieldset>
-
-                <!-- Bathrooms -->
-                <fieldset>
-                    <legend class="label">Bathrooms</legend>
-                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Minimum bathrooms">
-                        {% for num in "01234"|make_list %}
-                        {% with num|add:"0" as bath_num %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="baths" value="{{ bath_num }}" class="sr-only peer" {% if request.GET.baths == bath_num %}checked{% endif %}>
-                            <span class="inline-block px-3 py-1.5 text-sm rounded-lg border border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all duration-200 hover:border-charcoal-300">
-                                {% if bath_num == "0" %}Any{% else %}{{ bath_num }}+{% endif %}
-                            </span>
-                        </label>
-                        {% endwith %}
-                        {% endfor %}
-                    </div>
-                </fieldset>
+                {# Bedrooms / bathrooms intentionally omitted: PCPAO bulk
+                   data doesn't expose these fields. #}
 
                 <!-- Year Built -->
                 <div>
@@ -282,9 +250,10 @@
                      style="animation-delay: {{ forloop.counter0|divisibleby:3 }}00ms">
                 <!-- Property Image -->
                 <div class="relative overflow-hidden">
-                    {% if property.image_url %}
+                    {% street_view_url property.address property.city property.zip_code as sv_url %}
+                    {% if property.image_url or sv_url %}
                     <img
-                        src="{{ property.image_url }}"
+                        src="{{ property.image_url|default:sv_url }}"
                         alt="Property at {{ property.address }}"
                         class="property-card-image object-cover"
                         loading="lazy"
@@ -448,9 +417,10 @@
                      style="animation-delay: {{ forloop.counter0 }}0ms">
                 <div class="flex flex-col sm:flex-row gap-4">
                     <!-- Thumbnail -->
-                    {% if property.image_url %}
+                    {% street_view_url property.address property.city property.zip_code "320x240" as sv_url_list %}
+                    {% if property.image_url or sv_url_list %}
                     <img
-                        src="{{ property.image_url }}"
+                        src="{{ property.image_url|default:sv_url_list }}"
                         alt="Property at {{ property.address }}"
                         class="w-full sm:w-32 h-24 rounded-lg flex-shrink-0 object-cover"
                         loading="lazy"
@@ -613,47 +583,8 @@
                 </div>
             </div>
 
-            <!-- Bedrooms - Horizontal Scroll -->
-            <div>
-                <label class="label">Bedrooms</label>
-                <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                    <label class="cursor-pointer flex-shrink-0">
-                        <input type="radio" name="beds" value="" class="sr-only peer" {% if not request.GET.beds %}checked{% endif %}>
-                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
-                            Any
-                        </span>
-                    </label>
-                    {% for num in "1234" %}
-                    <label class="cursor-pointer flex-shrink-0">
-                        <input type="radio" name="beds" value="{{ num }}" class="sr-only peer" {% if request.GET.beds == num %}checked{% endif %}>
-                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
-                            {{ num }}+
-                        </span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Bathrooms - Horizontal Scroll -->
-            <div>
-                <label class="label">Bathrooms</label>
-                <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                    <label class="cursor-pointer flex-shrink-0">
-                        <input type="radio" name="baths" value="" class="sr-only peer" {% if not request.GET.baths %}checked{% endif %}>
-                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
-                            Any
-                        </span>
-                    </label>
-                    {% for num in "1234" %}
-                    <label class="cursor-pointer flex-shrink-0">
-                        <input type="radio" name="baths" value="{{ num }}" class="sr-only peer" {% if request.GET.baths == num %}checked{% endif %}>
-                        <span class="inline-flex items-center justify-center min-w-[48px] h-12 px-4 text-sm font-medium rounded-xl border-2 border-charcoal-200 peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition-all">
-                            {{ num }}+
-                        </span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
+            {# Bedrooms / bathrooms intentionally omitted: PCPAO bulk
+               data doesn't expose these fields. #}
 
             <!-- Property Type Chips -->
             <div>

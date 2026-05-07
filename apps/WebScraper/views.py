@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 # property_type is handled separately because it's multi-value.
 PASSTHROUGH_FIELDS = (
     'city', 'zip_code', 'min_price', 'max_price',
-    'beds', 'baths', 'year_built', 'tax_status',
-    'min_sqft', 'max_sqft',
+    'year_built', 'tax_status', 'min_sqft', 'max_sqft',
 )
+# beds/baths intentionally excluded — PCPAO doesn't expose this data.
 
 
 def web_scraper_view(request):

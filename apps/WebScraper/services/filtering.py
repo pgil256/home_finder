@@ -4,7 +4,7 @@ import logging
 from typing import Optional
 
 from django.core.paginator import Paginator, Page
-from django.db.models import QuerySet
+from django.db.models import F, QuerySet
 
 from ..models import PropertyListing
 
@@ -113,10 +113,18 @@ def apply_filters(request) -> tuple[QuerySet, list[str]]:
 
 
 def apply_sorting(properties: QuerySet, sort: Optional[str] = None) -> QuerySet:
-    """Apply sorting to queryset. Falls back to default if invalid."""
-    if sort in VALID_SORT_FIELDS:
-        return properties.order_by(sort)
-    return properties.order_by(DEFAULT_SORT)
+    """Apply sorting to queryset. Falls back to default if invalid.
+
+    Sorts NULLs last for any field — Postgres' default for DESC puts NULLs
+    first, which surfaces 'Contact for Price' rows (condo common areas, etc.)
+    above real listings on the first page. The dashboard is for browsing
+    sellable properties, so push the no-data rows to the back.
+    """
+    field = sort if sort in VALID_SORT_FIELDS else DEFAULT_SORT
+    descending = field.startswith('-')
+    base = field.lstrip('-')
+    expr = F(base).desc(nulls_last=True) if descending else F(base).asc(nulls_last=True)
+    return properties.order_by(expr)
 
 
 def paginate(properties: QuerySet, page_number: int = 1) -> Page:
