@@ -1,0 +1,43 @@
+name: Refresh PCPAO data
+
+on:
+  schedule:
+    # Monthly on the 5th at 06:00 UTC. PCPAO updates monthly; this gives them a few days.
+    - cron: "0 6 5 * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max records to import (blank = all)"
+        required: false
+        default: ""
+
+jobs:
+  import:
+    name: Bulk import RP_PROPERTY_INFO
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bulk import
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY || 'github-actions-import-not-secret' }}
+          DEBUG: "False"
+          ALLOWED_HOSTS: "localhost"
+          IMPORT_LIMIT: ${{ github.event.inputs.limit }}
+        run: |
+          if [ -n "$IMPORT_LIMIT" ]; then
+            python manage.py import_pcpao_data --limit "$IMPORT_LIMIT"
+          else
+            python manage.py import_pcpao_data
+          fi

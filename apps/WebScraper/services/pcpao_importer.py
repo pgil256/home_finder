@@ -3,8 +3,14 @@ PCPAO Bulk Data Importer
 
 Imports property data from PCPAO CSV downloads.
 Data source: https://www.pcpao.gov/tools-data/data-downloads/raw-database-files
+
+PCPAO serves files as zipped CSVs via a POST endpoint (the public download buttons
+on the page POST to /dal/databasefile/downloadDatabaseFile with hdn_tbl_name and
+hdn_ftype). The legacy /Data/Downloads/<file>.csv path no longer exists.
 """
+import io
 import os
+import zipfile
 import requests
 import logging
 from decimal import Decimal, InvalidOperation
@@ -16,8 +22,8 @@ from apps.WebScraper.services.property_types import dor_code_to_description
 
 logger = logging.getLogger(__name__)
 
-# PCPAO data download URL pattern
-PCPAO_DATA_URL = "https://www.pcpao.gov/Data/Downloads/{filename}.csv"
+PCPAO_DOWNLOAD_URL = "https://www.pcpao.gov/dal/databasefile/downloadDatabaseFile"
+PCPAO_DOWNLOAD_TIMEOUT = 600  # PCPAO files can be 100MB+; allow 10 min
 
 
 # PCPAO CSV column to PropertyListing field mapping
@@ -42,27 +48,45 @@ FIELD_MAPPING = {
 
 def download_pcpao_file(filename: str, output_dir: str) -> str:
     """
-    Download a PCPAO data file.
+    Download a PCPAO data file. PCPAO returns a zip; we extract the CSV inside.
 
     Args:
-        filename: Name of the file (e.g., 'RP_PROPERTY_INFO')
-        output_dir: Directory to save the downloaded file
+        filename: Database table name (e.g., 'RP_PROPERTY_INFO')
+        output_dir: Directory to save the extracted CSV file
 
     Returns:
-        Path to the downloaded file
+        Path to the extracted CSV file.
     """
-    url = PCPAO_DATA_URL.format(filename=filename)
     output_path = os.path.join(output_dir, f"{filename}.csv")
+    logger.info(f"Downloading {filename} from {PCPAO_DOWNLOAD_URL}")
 
-    logger.info(f"Downloading {filename} from {url}")
+    response = requests.post(
+        PCPAO_DOWNLOAD_URL,
+        data={"hdn_tbl_name": filename, "hdn_ftype": "csv"},
+        timeout=PCPAO_DOWNLOAD_TIMEOUT,
+    )
+    response.raise_for_status()
 
-    with requests.get(url, stream=True) as response:
-        response.raise_for_status()
-        with open(output_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+    content_type = response.headers.get("Content-Type", "")
+    if "zip" not in content_type.lower():
+        raise RuntimeError(
+            f"Expected zip from PCPAO, got Content-Type={content_type!r}; "
+            "the download endpoint may have changed again."
+        )
 
-    logger.info(f"Downloaded {filename} to {output_path}")
+    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+        csv_names = [n for n in zf.namelist() if n.lower().endswith(".csv")]
+        if not csv_names:
+            raise RuntimeError(f"No CSV inside PCPAO zip: {zf.namelist()}")
+        # Prefer the file whose basename matches the requested table
+        target = next(
+            (n for n in csv_names if filename.lower() in n.lower()),
+            csv_names[0],
+        )
+        with zf.open(target) as src, open(output_path, "wb") as dst:
+            dst.write(src.read())
+
+    logger.info(f"Extracted {target} to {output_path}")
     return output_path
 
 
@@ -86,44 +110,72 @@ def safe_int(value: str) -> Optional[int]:
         return None
 
 
+_CITY_FIXUPS = {
+    'St Petersburg': 'St. Petersburg',
+    'St Pete Beach': 'St. Pete Beach',
+}
+
+
+def _normalize_city(value: Optional[str]) -> Optional[str]:
+    """PCPAO ships city names uppercased ('ST PETERSBURG'); convert to the
+    canonical title-cased form the search form's dropdown uses
+    ('St. Petersburg')."""
+    if not value:
+        return None
+    s = value.strip()
+    if not s:
+        return None
+    titled = s.title().replace("'S", "'s")
+    return _CITY_FIXUPS.get(titled, titled)
+
+
+def _split_property_use(value: str) -> Optional[str]:
+    """PROPERTY_USE in the new schema looks like '0110 Single Family Home'.
+    Return the human-readable description (everything after the leading code)."""
+    if not value:
+        return None
+    parts = value.strip().split(None, 1)
+    if len(parts) == 2 and parts[0].isdigit():
+        return parts[1].strip() or None
+    return value.strip() or None
+
+
 def map_csv_row_to_property(row: Dict[str, str]) -> Dict[str, Any]:
+    """Map a PCPAO RP_PROPERTY_INFO row to PropertyListing fields.
+
+    Schema reference:
+      - PARCEL_NUMBER, SITE_ADDRESS, STR_CITY, STR_ZIP, OWNER1
+      - CNTY_JST_VALUE (just/market value), CNTY_ASD_VALUE (assessed)
+      - TOTAL_LIVING_SQFT, YEAR_BUILT, ACREAGE
+      - PROPERTY_USE (e.g. '0110 Single Family Home')
+      - TAX_AMOUNT_NO_EX
+
+    Beds/baths aren't in this table — they live in RP_BUILDING (not yet imported).
     """
-    Map a PCPAO CSV row to PropertyListing fields.
+    result: Dict[str, Any] = {}
 
-    Args:
-        row: Dictionary with CSV column names as keys
+    result['parcel_id'] = row.get('PARCEL_NUMBER', '').strip()
+    result['address'] = (row.get('SITE_ADDRESS') or '').strip() or None
+    result['city'] = _normalize_city(row.get('STR_CITY'))
+    result['zip_code'] = (row.get('STR_ZIP') or '').strip() or None
+    result['owner_name'] = (row.get('OWNER1') or '').strip() or None
+    result['property_type'] = _split_property_use(row.get('PROPERTY_USE', '')) or 'Unknown'
 
-    Returns:
-        Dictionary with PropertyListing field names and converted values
-    """
-    result = {}
+    result['market_value'] = safe_decimal(row.get('CNTY_JST_VALUE', ''))
+    result['assessed_value'] = safe_decimal(row.get('CNTY_ASD_VALUE', ''))
 
-    # String fields
-    result['parcel_id'] = row.get('PARCEL_ID', '').strip()
-    result['address'] = row.get('SITE_ADDR', '').strip() or None
-    result['city'] = row.get('SITE_CITY', '').strip() or None
-    result['zip_code'] = row.get('SITE_ZIP', '').strip() or None
-    result['owner_name'] = row.get('OWN_NAME', '').strip() or None
-    result['property_type'] = dor_code_to_description(row.get('DOR_UC', ''))
+    result['building_sqft'] = safe_int(row.get('TOTAL_LIVING_SQFT', ''))
+    result['year_built'] = safe_int(row.get('YEAR_BUILT', ''))
 
-    # Decimal fields
-    result['market_value'] = safe_decimal(row.get('JV', ''))
-    result['assessed_value'] = safe_decimal(row.get('AV', ''))
-    result['bathrooms'] = safe_decimal(row.get('BATHS', ''))
-
-    # Integer fields
-    result['building_sqft'] = safe_int(row.get('LIV_AREA', ''))
-    result['year_built'] = safe_int(row.get('YR_BLT', ''))
-    result['bedrooms'] = safe_int(row.get('BEDS', ''))
-    result['lot_sqft'] = safe_int(row.get('LAND_SQFT', ''))
-
-    # Calculate land_size in acres from lot_sqft
-    if result['lot_sqft']:
-        result['land_size'] = Decimal(str(result['lot_sqft'])) / Decimal('43560')
+    # ACREAGE → land_size (acres) and lot_sqft (1 acre = 43,560 sqft)
+    acreage = safe_decimal(row.get('ACREAGE', ''))
+    if acreage is not None:
+        result['land_size'] = acreage
+        result['lot_sqft'] = int(acreage * Decimal('43560'))
     else:
         result['land_size'] = None
+        result['lot_sqft'] = None
 
-    # Tax data from PCPAO
     result['tax_amount'] = safe_decimal(row.get('TAX_AMOUNT_NO_EX', ''))
     if result['tax_amount'] is not None:
         result['tax_status'] = 'From PCPAO'

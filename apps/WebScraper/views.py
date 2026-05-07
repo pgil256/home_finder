@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlencode
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -10,79 +11,38 @@ from .services.filtering import (
     PINELLAS_CITIES, PROPERTY_TYPES,
     apply_filters, apply_sorting, paginate,
 )
-from .services.task_management import get_client_ip, check_rate_limit
 from .services.exports import generate_excel_response, generate_pdf_response
-from .tasks.scrape_data import run_scrape
 
 logger = logging.getLogger(__name__)
 
-MAX_SCRAPE_LIMIT = 15
+# Form fields whose names already match the dashboard's apply_filters params.
+# property_type is handled separately because it's multi-value.
+PASSTHROUGH_FIELDS = (
+    'city', 'zip_code', 'min_price', 'max_price',
+    'beds', 'baths', 'year_built', 'tax_status',
+    'min_sqft', 'max_sqft',
+)
 
 
 def web_scraper_view(request):
-    """Main view for the property scraper interface.
+    """Search form. POST translates form fields to dashboard query params and 302s.
 
-    POST runs the scrape synchronously inside the request (Vercel maxDuration: 60s),
-    then redirects to the dashboard filtered by the search criteria.
+    Searches are now DB queries against the bulk-imported PCPAO data, not live
+    scrapes — fast, accurate, no rate limit, no loading state needed.
     """
     if request.method == 'POST':
-        client_ip = get_client_ip(request)
-        wait = check_rate_limit(client_ip)
-        if wait:
-            logger.warning("Rate limited scrape request from %s", client_ip)
-            return render(request, 'WebScraper/search.html', {
-                'cities': sorted(PINELLAS_CITIES),
-                'property_types': PROPERTY_TYPES,
-                'error': f'Please wait {wait} seconds before submitting another search.',
-            })
+        params: list[tuple[str, str]] = []
+        for field in PASSTHROUGH_FIELDS:
+            value = request.POST.get(field)
+            if value:
+                params.append((field, value))
+        for property_type in request.POST.getlist('property_type'):
+            if property_type:
+                params.append(('property_type', property_type))
 
-        property_types = request.POST.getlist('property_type')
-        search_criteria = {
-            'city': request.POST.get('city'),
-            'zip_code': request.POST.get('zip_code'),
-            'property_type': (
-                property_types[0] if len(property_types) == 1
-                else property_types if property_types else None
-            ),
-            'min_value': request.POST.get('min_value'),
-            'max_value': request.POST.get('max_value'),
-            'bedrooms_min': request.POST.get('bedrooms_min'),
-            'bathrooms_min': request.POST.get('bathrooms_min'),
-            'year_built_after': request.POST.get('year_built_after'),
-            'tax_status': request.POST.get('tax_status'),
-            'sqft_min': request.POST.get('sqft_min'),
-            'sqft_max': request.POST.get('sqft_max'),
-        }
-        search_criteria = {k: v for k, v in search_criteria.items() if v}
-
-        try:
-            limit = int(request.POST.get('limit', MAX_SCRAPE_LIMIT))
-        except ValueError:
-            limit = MAX_SCRAPE_LIMIT
-        limit = min(limit, MAX_SCRAPE_LIMIT)
-
-        try:
-            run_scrape(search_criteria, limit)
-        except Exception:
-            logger.exception("Scrape failed")
-            return render(request, 'WebScraper/search.html', {
-                'cities': sorted(PINELLAS_CITIES),
-                'property_types': PROPERTY_TYPES,
-                'error': 'Something went wrong while scraping. Please try again with fewer filters or a smaller limit.',
-            })
-
-        params = []
-        if search_criteria.get('city'):
-            params.append(f"city={search_criteria['city']}")
-        types = search_criteria.get('property_type')
-        if isinstance(types, list):
-            for t in types:
-                params.append(f"property_types={t}")
-        elif types:
-            params.append(f"property_types={types}")
         url = reverse('dashboard')
         if params:
-            url += '?' + '&'.join(params)
+            url += '?' + urlencode(params)
         return redirect(url)
 
     return render(request, 'WebScraper/search.html', {

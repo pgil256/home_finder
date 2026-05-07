@@ -138,7 +138,7 @@
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
                             <input type="number"
                                    id="min_value"
-                                   name="min_value"
+                                   name="min_price"
                                    class="input pl-8"
                                    placeholder="0"
                                    min="0"
@@ -153,7 +153,7 @@
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
                             <input type="number"
                                    id="max_value"
-                                   name="max_value"
+                                   name="max_price"
                                    class="input pl-8"
                                    placeholder="No limit"
                                    min="0"
@@ -197,7 +197,7 @@
                             <button type="button" data-value="4" class="bed-btn btn btn-secondary btn-sm">4+</button>
                             <button type="button" data-value="5" class="bed-btn btn btn-secondary btn-sm">5+</button>
                         </div>
-                        <input type="hidden" name="bedrooms_min" id="bedrooms_min" value="">
+                        <input type="hidden" name="beds" id="bedrooms_min" value="">
                     </div>
 
                     <!-- Bathrooms -->
@@ -210,7 +210,7 @@
                             <button type="button" data-value="3" class="bath-btn btn btn-secondary btn-sm">3+</button>
                             <button type="button" data-value="4" class="bath-btn btn btn-secondary btn-sm">4+</button>
                         </div>
-                        <input type="hidden" name="bathrooms_min" id="bathrooms_min" value="">
+                        <input type="hidden" name="baths" id="bathrooms_min" value="">
                     </div>
                 </div>
             </div>
@@ -235,7 +235,7 @@
                             <label for="year_built_after" class="label">Year Built (after)</label>
                             <input type="number"
                                    id="year_built_after"
-                                   name="year_built_after"
+                                   name="year_built"
                                    class="input"
                                    placeholder="e.g., 2000"
                                    min="1900"
@@ -260,7 +260,7 @@
                             <label for="sqft_min" class="label">Min Square Feet</label>
                             <input type="number"
                                    id="sqft_min"
-                                   name="sqft_min"
+                                   name="min_sqft"
                                    class="input"
                                    placeholder="e.g., 1000"
                                    min="0"
@@ -270,7 +270,7 @@
                             <label for="sqft_max" class="label">Max Square Feet</label>
                             <input type="number"
                                    id="sqft_max"
-                                   name="sqft_max"
+                                   name="max_sqft"
                                    class="input"
                                    placeholder="No limit"
                                    min="0"

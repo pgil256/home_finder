@@ -39,6 +39,7 @@ def apply_filters(request) -> tuple[QuerySet, list[str]]:
     properties = PropertyListing.objects.all()
 
     city = request.GET.get('city')
+    zip_code = request.GET.get('zip_code')
     property_types_filter = request.GET.getlist('property_type')
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
@@ -46,12 +47,22 @@ def apply_filters(request) -> tuple[QuerySet, list[str]]:
     baths = request.GET.get('baths')
     year_built = request.GET.get('year_built')
     tax_status = request.GET.get('tax_status')
+    min_sqft = request.GET.get('min_sqft')
+    max_sqft = request.GET.get('max_sqft')
 
     if city:
         properties = properties.filter(city__iexact=city)
 
+    if zip_code:
+        properties = properties.filter(zip_code=zip_code.strip())
+
     if property_types_filter:
-        properties = properties.filter(property_type__in=property_types_filter)
+        # Use icontains so 'Single Family' matches 'Single Family Home', etc.
+        from django.db.models import Q
+        type_q = Q()
+        for t in property_types_filter:
+            type_q |= Q(property_type__icontains=t)
+        properties = properties.filter(type_q)
 
     if min_price:
         try:
@@ -85,6 +96,18 @@ def apply_filters(request) -> tuple[QuerySet, list[str]]:
 
     if tax_status:
         properties = properties.filter(tax_status=tax_status)
+
+    if min_sqft:
+        try:
+            properties = properties.filter(building_sqft__gte=int(min_sqft))
+        except ValueError:
+            logger.warning("Invalid min_sqft filter value: %r", min_sqft)
+
+    if max_sqft:
+        try:
+            properties = properties.filter(building_sqft__lte=int(max_sqft))
+        except ValueError:
+            logger.warning("Invalid max_sqft filter value: %r", max_sqft)
 
     return properties, property_types_filter
 

@@ -65,27 +65,34 @@ class Command(BaseCommand):
         """Process CSV file and import records."""
         properties = []
         count = 0
+        skipped = 0
 
         with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 prop = map_csv_row_to_property(row)
-                if prop.get('parcel_id'):
-                    properties.append(prop)
-                    count += 1
+                # Need parcel_id (PK) AND address (NOT NULL in model) AND city
+                # (essential for the search use case). Vacant/orphan parcels skip.
+                if not (prop.get('parcel_id') and prop.get('address') and prop.get('city')):
+                    skipped += 1
+                    continue
 
-                    if limit and count >= limit:
-                        break
+                properties.append(prop)
+                count += 1
 
-                    # Process in batches of 5000
-                    if len(properties) >= 5000:
-                        stats = bulk_upsert_properties(properties)
-                        if not quiet:
-                            self.stdout.write(
-                                f'Processed {count} records '
-                                f'(created: {stats["created"]}, updated: {stats["updated"]})'
-                            )
-                        properties = []
+                if limit and count >= limit:
+                    break
+
+                # Process in batches of 5000
+                if len(properties) >= 5000:
+                    stats = bulk_upsert_properties(properties)
+                    if not quiet:
+                        self.stdout.write(
+                            f'Processed {count} records '
+                            f'(created: {stats["created"]}, updated: {stats["updated"]}, '
+                            f'skipped so far: {skipped})'
+                        )
+                    properties = []
 
         # Process remaining records
         if properties:
