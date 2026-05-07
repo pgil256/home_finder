@@ -1,0 +1,84 @@
+name: E2E
+
+on:
+  schedule:
+    # Smoke against production every 4 hours
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Override target URL (defaults to production)"
+        required: false
+        default: "https://homefinder.patbuilds.dev"
+      run_full_suite:
+        description: "Also run functional + browser tests (writes to DB; requires E2E_DATABASE_URL secret)"
+        type: boolean
+        default: false
+
+jobs:
+  smoke:
+    name: Smoke (read-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install requests pytest
+
+      - name: Run smoke suite
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://homefinder.patbuilds.dev' }}
+        run: python -m pytest tests/e2e/test_smoke.py -v --no-header -p no:cacheprovider
+
+  functional:
+    name: Functional (write paths)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_suite == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install requests pytest psycopg2-binary
+
+      - name: Run functional suite
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url }}
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+        run: python -m pytest tests/e2e/test_functional.py -v --no-header -p no:cacheprovider
+
+  browser:
+    name: Browser (Playwright)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_suite == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install requests pytest psycopg2-binary playwright pytest-playwright
+
+      - name: Install Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Run browser suite
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url }}
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+        run: python -m pytest tests/e2e/browser/ -v --no-header -p no:cacheprovider

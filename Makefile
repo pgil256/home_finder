@@ -23,6 +23,14 @@ test-js: ## Run JavaScript tests
 e2e-smoke: ## Run E2E smoke tests against deployed app (set E2E_BASE_URL to override)
 	python -m pytest tests/e2e/test_smoke.py -v --no-header -p no:cacheprovider
 
+e2e-functional: ## Run E2E functional tests (POSTs real scrapes; needs E2E_DATABASE_URL)
+	python -m pytest tests/e2e/test_functional.py -v --no-header -p no:cacheprovider
+
+e2e-browser: ## Run E2E browser tests via Playwright (headless)
+	python -m pytest tests/e2e/browser/ -v --no-header -p no:cacheprovider
+
+e2e-all: e2e-smoke e2e-functional e2e-browser ## Run all E2E suites in sequence
+
 dev: ## Start development server + frontend watchers
 	npm run dev & python3 manage.py runserver
 

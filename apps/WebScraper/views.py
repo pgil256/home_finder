@@ -16,7 +16,7 @@ from .tasks.scrape_data import run_scrape
 
 logger = logging.getLogger(__name__)
 
-MAX_SCRAPE_LIMIT = 25
+MAX_SCRAPE_LIMIT = 15
 
 
 def web_scraper_view(request):
