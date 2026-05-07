@@ -7,6 +7,7 @@ from typing import Any
 from django.http import HttpResponse
 
 from ..models import PropertyListing
+from .filtering import apply_filters
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +23,29 @@ EXCEL_HEADERS = [
     'Sq Ft', 'Year Built', 'Lot Sq Ft', 'Tax Amount', 'Tax Status',
 ]
 
+# Caps: full DB is ~440k rows; serving everything would OOM the Vercel function.
+MAX_EXCEL_PROPERTIES = 5000
 MAX_PDF_PROPERTIES = 200
 
 
-def generate_excel_response() -> HttpResponse:
-    """Generate and return an Excel file of all properties."""
+def _filtered_queryset(request):
+    """Apply dashboard filters if a request is provided, otherwise return everything."""
+    if request is None:
+        return PropertyListing.objects.all()
+    qs, _ = apply_filters(request)
+    return qs
+
+
+def generate_excel_response(request=None) -> HttpResponse:
+    """Generate and return an Excel file of properties matching the dashboard filters."""
     import openpyxl
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
-    properties = PropertyListing.objects.only(*EXCEL_FIELDS).order_by('-market_value')
+    properties = (
+        _filtered_queryset(request)
+        .only(*EXCEL_FIELDS)
+        .order_by('-market_value')[:MAX_EXCEL_PROPERTIES]
+    )
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -81,7 +96,7 @@ def generate_excel_response() -> HttpResponse:
     return response
 
 
-def generate_pdf_response() -> HttpResponse:
+def generate_pdf_response(request=None) -> HttpResponse:
     """Generate a PDF report with property listings and market analysis charts."""
     import matplotlib
     matplotlib.use('Agg')
@@ -98,11 +113,15 @@ def generate_pdf_response() -> HttpResponse:
     )
     from reportlab.lib.units import inch
 
-    properties = PropertyListing.objects.only(
-        'parcel_id', 'address', 'city', 'property_type', 'market_value',
-        'assessed_value', 'bedrooms', 'bathrooms', 'building_sqft',
-        'year_built', 'tax_amount',
-    ).order_by('-market_value')[:MAX_PDF_PROPERTIES]
+    properties = (
+        _filtered_queryset(request)
+        .only(
+            'parcel_id', 'address', 'city', 'property_type', 'market_value',
+            'assessed_value', 'bedrooms', 'bathrooms', 'building_sqft',
+            'year_built', 'tax_amount',
+        )
+        .order_by('-market_value')[:MAX_PDF_PROPERTIES]
+    )
 
     buf = BytesIO()
     doc = SimpleDocTemplate(

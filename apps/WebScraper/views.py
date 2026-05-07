@@ -103,10 +103,10 @@ def property_detail(request, parcel_id: str):
 
 
 def download_excel(request):
-    """Generate and serve an Excel file of all properties."""
-    return generate_excel_response()
+    """Generate and serve an Excel file of properties matching the dashboard filters."""
+    return generate_excel_response(request)
 
 
 def download_pdf(request):
-    """Generate PDF report with property listings and market analysis charts."""
-    return generate_pdf_response()
+    """Generate PDF report of properties matching the dashboard filters."""
+    return generate_pdf_response(request)
