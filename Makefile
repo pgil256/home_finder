@@ -1,4 +1,4 @@
-.PHONY: help lint format test test-cov dev build migrate
+.PHONY: help lint format test test-cov e2e-smoke dev build migrate
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -19,6 +19,9 @@ test-cov: ## Run tests with coverage report
 
 test-js: ## Run JavaScript tests
 	npm test
+
+e2e-smoke: ## Run E2E smoke tests against deployed app (set E2E_BASE_URL to override)
+	python -m pytest tests/e2e/test_smoke.py -v --no-header -p no:cacheprovider
 
 dev: ## Start development server + frontend watchers
 	npm run dev & python3 manage.py runserver
