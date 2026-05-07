@@ -12,8 +12,12 @@
             <!-- Results Info -->
             <div>
                 <h1 class="font-display text-display-sm text-charcoal-800">
-                    {% if search_criteria %}
-                        Properties in {{ search_criteria.city|default:"Pinellas County" }}
+                    {% if search_criteria.city %}
+                        {% if search_criteria.city in cities %}
+                            Properties in {{ search_criteria.city }}
+                        {% else %}
+                            "{{ search_criteria.city }}" — check spelling
+                        {% endif %}
                     {% else %}
                         All Properties
                     {% endif %}
@@ -94,6 +98,18 @@
 {% endblock %}
 
 {% block content %}
+{% if defaulted_to_residential %}
+<div class="flex items-center gap-3 mb-4 -mt-4 px-4 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-charcoal-700">
+    <svg class="w-4 h-4 text-primary-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>Showing residential properties only.</span>
+    <a href="?{{ show_all_querystring }}" class="text-primary-600 hover:text-primary-700 font-medium ml-auto">
+        Show all property types &rarr;
+    </a>
+</div>
+{% endif %}
+
 <!-- Active Filter Chips (above the row layout so they don't displace siblings) -->
 {% if request.GET.city or request.GET.min_price or request.GET.max_price or request.GET.beds or request.GET.baths or request.GET.property_type or request.GET.tax_status or request.GET.year_built %}
 <div class="flex flex-wrap items-center gap-2 mb-4 -mt-4">

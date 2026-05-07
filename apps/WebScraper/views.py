@@ -53,7 +53,7 @@ def web_scraper_view(request):
 
 def property_dashboard(request):
     """Property dashboard with filtering, sorting, and pagination."""
-    properties, selected_types = apply_filters(request)
+    properties, selected_types, defaulted_to_residential = apply_filters(request)
     sort = request.GET.get('sort', '-market_value')
     properties = apply_sorting(properties, sort)
     total_count = properties.count()
@@ -67,6 +67,10 @@ def property_dashboard(request):
     if selected_types:
         search_criteria['property_types'] = selected_types
 
+    # Build the "show all property types" URL = current querystring + include_all=1
+    show_all_qs = request.GET.copy()
+    show_all_qs['include_all'] = '1'
+
     return render(request, 'WebScraper/dashboard.html', {
         'properties': properties_page,
         'total_count': total_count,
@@ -75,6 +79,8 @@ def property_dashboard(request):
         'selected_property_types': selected_types,
         'search_criteria': search_criteria,
         'sort': sort,
+        'defaulted_to_residential': defaulted_to_residential,
+        'show_all_querystring': show_all_qs.urlencode(),
     })
 
 

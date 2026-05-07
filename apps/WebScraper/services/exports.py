@@ -43,7 +43,7 @@ LISTING_COLUMNS = (
 def _filtered_queryset(request):
     if request is None:
         return PropertyListing.objects.all()
-    qs, _ = apply_filters(request)
+    qs, _, _ = apply_filters(request)
     return qs
 
 

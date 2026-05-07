@@ -23,6 +23,37 @@ PROPERTY_TYPES = [
     'Vacant Land', 'Mobile Home', 'Commercial',
 ]
 
+# Map each form-friendly property-type label to the substrings that should
+# match in the PCPAO `property_type` column (which has values like
+# 'Single Family Home', 'Duplex-Triplex-Fourplex', 'Manufactured Home (Co-Op
+# or Share Owned)', etc.). The match is case-insensitive `icontains` OR.
+PROPERTY_TYPE_KEYWORDS = {
+    'Single Family': ['Single Family', 'Planned Unit Development'],
+    'Condo': ['Condominium', 'Condo Conversion', 'Condo Common'],
+    'Townhouse': ['Townhouse', 'Townhome'],
+    'Multi-Family': [
+        'Duplex-Triplex-Fourplex', 'Multi-Family',
+        'Apartments (5-9 units)', 'Apartments (10-49 units)',
+        'Apartments (50 or more', 'ALF',
+    ],
+    'Vacant Land': ['Vacant Residential', 'Acreage - Vacant'],
+    'Mobile Home': ['Mobile Home', 'Manufactured Home'],
+    'Commercial': [
+        'Office', 'Store', 'Warehouse', 'Restaurant', 'Hotel', 'Motel',
+        'Hospital', 'Auto', 'Medical', 'Vacant Commercial', 'Federal',
+        'Municipal', 'Bank', 'Marina', 'School', 'Church', 'Industrial',
+        'Drive-In', 'Service', 'Cafeteria', 'Shopping',
+    ],
+}
+
+# Default property-type filter — used when the user hasn't picked any types.
+# The home page is pitched at finding a place to live, so commercial,
+# institutional, and miscellaneous parcels stay out of the default view.
+RESIDENTIAL_DEFAULT_LABELS = (
+    'Single Family', 'Condo', 'Townhouse',
+    'Multi-Family', 'Mobile Home', 'Vacant Land',
+)
+
 VALID_SORT_FIELDS = [
     'market_value', '-market_value',
     'created_at', '-created_at',
@@ -34,8 +65,18 @@ DEFAULT_SORT = '-market_value'
 PAGE_SIZE = 12
 
 
-def apply_filters(request) -> tuple[QuerySet, list[str]]:
-    """Apply all query filters from request params. Returns (queryset, selected_property_types)."""
+def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
+    """Apply all query filters from request params.
+
+    Returns:
+        (queryset, user_selected_property_types, defaulted_to_residential)
+        - user_selected_property_types is *only* what the user explicitly
+          chose (drives chip rendering and checkbox state).
+        - defaulted_to_residential is True when no property_type filter was
+          set and `?include_all=1` wasn't passed, so the queryset is
+          silently constrained to residential types. Use this to render a
+          banner offering to show all types.
+    """
     properties = PropertyListing.objects.all()
 
     city = request.GET.get('city')
@@ -56,12 +97,20 @@ def apply_filters(request) -> tuple[QuerySet, list[str]]:
     if zip_code:
         properties = properties.filter(zip_code=zip_code.strip())
 
-    if property_types_filter:
-        # Use icontains so 'Single Family' matches 'Single Family Home', etc.
+    # Default to residential when no property_type is chosen, unless the
+    # user opted into the unfiltered view via ?include_all=1. This keeps the
+    # buyer-facing default (highest-value Single Family, Condo, etc.) instead
+    # of surfacing $300M hospitals on page one.
+    show_all_types = request.GET.get('include_all') == '1'
+    effective_types = property_types_filter or (
+        [] if show_all_types else list(RESIDENTIAL_DEFAULT_LABELS)
+    )
+    if effective_types:
         from django.db.models import Q
         type_q = Q()
-        for t in property_types_filter:
-            type_q |= Q(property_type__icontains=t)
+        for label in effective_types:
+            for keyword in PROPERTY_TYPE_KEYWORDS.get(label, [label]):
+                type_q |= Q(property_type__icontains=keyword)
         properties = properties.filter(type_q)
 
     if min_price:
@@ -109,7 +158,10 @@ def apply_filters(request) -> tuple[QuerySet, list[str]]:
         except ValueError:
             logger.warning("Invalid max_sqft filter value: %r", max_sqft)
 
-    return properties, property_types_filter
+    defaulted_to_residential = bool(
+        not property_types_filter and not show_all_types
+    )
+    return properties, property_types_filter, defaulted_to_residential
 
 
 def apply_sorting(properties: QuerySet, sort: Optional[str] = None) -> QuerySet:
