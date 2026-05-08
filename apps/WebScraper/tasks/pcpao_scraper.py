@@ -893,7 +893,9 @@ class PCPAOScraper:
         city = search_criteria.get('city')
         muni_filter = set()
 
-        if search_criteria.get('address'):
+        if search_criteria.get('parcel_id'):
+            search_input = search_criteria['parcel_id']
+        elif search_criteria.get('address'):
             search_input = search_criteria['address']
         elif search_criteria.get('zip_code'):
             search_input = search_criteria['zip_code']
@@ -910,11 +912,13 @@ class PCPAOScraper:
             logger.warning("No search criteria provided, defaulting to 'Clearwater'")
             search_input = 'Clearwater'
 
-        # Determine search sort
-        if search_criteria.get('owner_name'):
+        # Determine search sort. PCPAO requires the right `searchsort` key
+        # for parcel-number queries to return results — the default
+        # 'address' sort returns 0 hits when given a parcel ID.
+        if search_criteria.get('parcel_id'):
+            searchsort = 'parcel_number'
+        elif search_criteria.get('owner_name'):
             searchsort = 'owner'
-        elif search_criteria.get('address'):
-            searchsort = 'address'
         else:
             searchsort = 'address'
 

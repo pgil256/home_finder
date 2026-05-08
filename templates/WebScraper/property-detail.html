@@ -236,9 +236,21 @@
                         <p class="font-mono text-sm text-charcoal-800">{{ property.parcel_id }}</p>
                     </div>
 
-                    <!-- Last Updated -->
-                    <div class="text-xs text-charcoal-400">
-                        Last updated: {{ property.last_scraped|date:"M j, Y" }}
+                    <!-- Last Updated + Refresh -->
+                    <div class="flex items-center justify-between gap-3 text-xs text-charcoal-500">
+                        <span>Last updated: {{ property.last_scraped|date:"M j, Y" }}</span>
+                        <form method="post" action="{% url 'property-refresh' property.parcel_id %}" data-loading-form>
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 font-medium"
+                                    data-loading-text="Refreshing..."
+                                    title="Re-scrape this property from the County Property Appraiser (rate-limited to once per minute)">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Refresh
+                            </button>
+                        </form>
                     </div>
 
                     <div class="divider"></div>

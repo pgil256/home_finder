@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import logging
+import time
 from urllib.parse import urlencode
 
+from django.contrib import messages
+from django.core.cache import cache
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from .models import PropertyListing
 from .services.filtering import (
@@ -12,6 +16,11 @@ from .services.filtering import (
     apply_filters, apply_sorting, paginate,
 )
 from .services.exports import generate_excel_response, generate_pdf_response
+
+# Per-parcel refresh rate limit: 60s between refreshes for the same parcel,
+# regardless of who's asking. Prevents one user (or bot) from hammering
+# PCPAO for any single property.
+REFRESH_RATE_LIMIT_SECONDS = 60
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +115,62 @@ def property_detail(request, parcel_id: str):
         'property': property_obj,
         'similar_properties': similar_properties,
     })
+
+
+@require_POST
+def property_refresh(request, parcel_id: str):
+    """Re-scrape one parcel from PCPAO and update its row in Neon.
+
+    The bulk import refreshes the whole dataset monthly via GitHub Actions,
+    so this is for users who want fresh values on a specific listing
+    between refreshes (e.g. after a sale).
+    """
+    from .tasks.scrape_data import refresh_one_parcel, ParcelNotFoundError
+
+    detail_url = reverse('property-detail', args=[parcel_id])
+    rate_key = f'parcel_refresh:{parcel_id}'
+
+    # Rate-limit per parcel — 60 seconds between refresh attempts for the
+    # same listing. Cache failures fail open (request allowed); the same
+    # safe-cache pattern as task_management.py.
+    try:
+        last = cache.get(rate_key)
+    except Exception as e:
+        logger.warning("Cache GET failed during refresh: %s", e)
+        last = None
+    if last:
+        wait = int(REFRESH_RATE_LIMIT_SECONDS - (time.time() - last))
+        if wait > 0:
+            messages.warning(
+                request,
+                f'This property was just refreshed. Try again in {wait} seconds.',
+            )
+            return redirect(detail_url)
+
+    try:
+        cache.set(rate_key, time.time(), timeout=REFRESH_RATE_LIMIT_SECONDS)
+    except Exception as e:
+        logger.warning("Cache SET failed during refresh: %s", e)
+
+    try:
+        refresh_one_parcel(parcel_id)
+    except ParcelNotFoundError:
+        messages.error(
+            request,
+            'Could not find this parcel on the Property Appraiser site. '
+            'It may have been retired or the parcel ID changed.',
+        )
+    except Exception:
+        logger.exception("Refresh failed for parcel %s", parcel_id)
+        messages.error(
+            request,
+            'Something went wrong refreshing this property. '
+            'Please try again in a minute.',
+        )
+    else:
+        messages.success(request, 'Property data refreshed from the County Property Appraiser.')
+
+    return redirect(detail_url)
 
 
 def download_excel(request):

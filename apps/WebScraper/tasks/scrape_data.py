@@ -223,3 +223,91 @@ def run_scrape(search_criteria, limit=10):
 
     logger.info("Scrape complete: %d properties", len(property_ids))
     return property_ids
+
+
+# Optional fields the per-parcel refresh persists into PropertyListing.
+# Mirrors the keys `_scrape_detail_via_requests` returns; nullable in the
+# model. We only overwrite when the new value is not None so a partial
+# response doesn't wipe data populated by the bulk import.
+_REFRESH_OPTIONAL_FIELDS = (
+    'address', 'city', 'zip_code', 'owner_name',
+    'market_value', 'assessed_value', 'building_sqft',
+    'year_built', 'bedrooms', 'bathrooms', 'land_size',
+    'lot_sqft', 'appraiser_url', 'image_url',
+    'tax_collector_url', 'tax_amount', 'tax_year',
+)
+
+
+class ParcelNotFoundError(Exception):
+    """PCPAO returned no results for the parcel ID."""
+
+
+def refresh_one_parcel(parcel_id: str) -> "PropertyListing":
+    """Fetch fresh data for a single parcel from PCPAO and upsert it.
+
+    Used by the per-property "Refresh" button on the detail page.
+
+    Returns the updated `PropertyListing` instance on success.
+    Raises `ParcelNotFoundError` if PCPAO has no record for this parcel,
+    or `requests.RequestException` if the upstream scrape fails.
+    """
+    from .pcpao_scraper import PCPAOScraper
+    import requests as req
+
+    scraper = PCPAOScraper(headless=True)
+
+    # Search PCPAO for this parcel ID specifically. The scraper's
+    # _search_via_api recognizes a `parcel_id` key and switches the
+    # PCPAO `searchsort` parameter to `parcel_number` (other sorts
+    # return zero results for parcel-ID queries).
+    parcels = scraper._search_via_api({'parcel_id': parcel_id}, limit=5)
+    match = next((p for p in parcels if p['parcel_id'] == parcel_id), None)
+    if not match or not match.get('detail_url'):
+        raise ParcelNotFoundError(f"PCPAO returned no detail URL for {parcel_id}")
+
+    session = req.Session()
+    session.headers.update({
+        'User-Agent': (
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+            '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ),
+    })
+
+    last_error: Exception | None = None
+    prop_data: dict | None = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            prop_data = scraper._scrape_detail_via_requests(
+                parcel_id, match['detail_url'], session=session
+            )
+            break
+        except (req.exceptions.RequestException, req.exceptions.Timeout) as e:
+            last_error = e
+            wait = RETRY_BACKOFF_BASE ** (attempt + 1)
+            logger.warning(
+                "Refresh retry %d/%d for %s: %s (waiting %ds)",
+                attempt + 1, MAX_RETRIES, parcel_id, e, wait,
+            )
+            import time as _time
+            _time.sleep(wait)
+    if prop_data is None:
+        raise last_error or RuntimeError(
+            f"Failed to refresh parcel {parcel_id} after {MAX_RETRIES} retries"
+        )
+
+    defaults: dict = {}
+    if prop_data.get('property_type'):
+        defaults['property_type'] = prop_data['property_type']
+    for field in _REFRESH_OPTIONAL_FIELDS:
+        value = prop_data.get(field)
+        if value is not None:
+            defaults[field] = value
+    tax_status = prop_data.get('tax_status')
+    if tax_status and tax_status != 'Unknown':
+        defaults['tax_status'] = tax_status
+
+    listing, _created = PropertyListing.objects.update_or_create(
+        parcel_id=parcel_id, defaults=defaults,
+    )
+    logger.info("Refreshed parcel %s (pk=%s)", parcel_id, listing.pk)
+    return listing

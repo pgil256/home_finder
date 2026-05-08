@@ -129,6 +129,20 @@
 
     <!-- Main Content -->
     <main id="main-content" class="flex flex-1 flex-col">
+        {% if messages %}
+        <div class="px-4 py-2 sm:px-6 lg:px-8" role="status" aria-live="polite">
+            {% for message in messages %}
+            <div class="max-w-3xl mx-auto mb-2 px-4 py-2 rounded-lg border text-sm
+                        {% if message.tags == 'success' %}bg-green-50 border-green-200 text-green-800
+                        {% elif message.tags == 'error' %}bg-red-50 border-red-200 text-red-800
+                        {% elif message.tags == 'warning' %}bg-amber-50 border-amber-200 text-amber-900
+                        {% else %}bg-charcoal-50 border-charcoal-200 text-charcoal-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% block hero-image-content %}
         {% endblock %}
 
