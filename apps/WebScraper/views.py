@@ -99,11 +99,29 @@ def _search_url_from_values(values: dict[str, str | list[str]]) -> str:
     return url
 
 
+def _dashboard_querydict(request) -> QueryDict:
+    """Return dashboard params that still map to buyer-facing filters.
+
+    Old/shared links may arrive with removed fields like assessed value or
+    tax status. Keep the visible dashboard links from carrying those dead
+    params forward into exports, pagination, or active-filter chip URLs.
+    """
+    query = QueryDict(mutable=True)
+    values = _search_values_from_querydict(request.GET)
+    for key, value in _search_params_from_values(values):
+        query.appendlist(key, value)
+    sort = request.GET.get('sort', '').strip()
+    if sort:
+        query['sort'] = sort
+    if request.GET.get('include_all') == '1':
+        query['include_all'] = '1'
+    return query
+
+
 def _dashboard_query_without(request, *keys: str) -> str:
-    query = request.GET.copy()
+    query = _dashboard_querydict(request)
     for key in keys:
         query.pop(key, None)
-    query.pop('page', None)
     return query.urlencode()
 
 
@@ -200,10 +218,12 @@ def property_dashboard(request):
     if request.GET:
         request.session[SEARCH_SESSION_KEY] = _search_values_from_querydict(request.GET)
 
-    # Build the "show all property types" URL = current querystring + include_all=1
-    show_all_qs = request.GET.copy()
-    show_all_qs['include_all'] = '1'
     filter_values = _search_values_from_querydict(request.GET)
+    dashboard_qs = _dashboard_querydict(request)
+
+    # Build the "show all property types" URL = current buyer-facing filters + include_all=1
+    show_all_qs = dashboard_qs.copy()
+    show_all_qs['include_all'] = '1'
 
     return render(
         request,
@@ -218,6 +238,7 @@ def property_dashboard(request):
             'sort': sort,
             'defaulted_to_residential': defaulted_to_residential,
             'show_all_querystring': show_all_qs.urlencode(),
+            'dashboard_querystring': dashboard_qs.urlencode(),
             'filter_values': filter_values,
             'active_filter_chips': _active_filter_chips(request),
             'modify_search_url': _search_url_from_values(filter_values),

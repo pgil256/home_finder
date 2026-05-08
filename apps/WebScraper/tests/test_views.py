@@ -310,6 +310,42 @@ class TestDashboardFilterValidation:
         assert not any('Assessed' in label for label in chip_labels)
         assert not any('Tax:' in label for label in chip_labels)
 
+    def test_dashboard_links_drop_non_buyer_filter_params(self, client):
+        for i in range(13):
+            PropertyListing.objects.create(
+                parcel_id=f'buyer-link-{i:03d}',
+                address=f'{100 + i} Oak St',
+                city='Clearwater',
+                zip_code='33755',
+                property_type='Single Family',
+                market_value=Decimal('245000.00'),
+                assessed_value=Decimal('450000.00'),
+                building_sqft=1450,
+                year_built=1998,
+                lot_sqft=7000,
+                tax_amount=Decimal('3125.00'),
+                tax_status='Paid',
+            )
+
+        response = client.get(
+            '/scraper/dashboard/',
+            {
+                'q': 'Oak',
+                'zip_code': '33755',
+                'min_lot_sqft': '5000',
+                'min_assessed_value': '400000',
+                'tax_status': 'Delinquent',
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.context['total_count'] == 13
+        assert response.context['dashboard_querystring'] == 'q=Oak&zip_code=33755&min_lot_sqft=5000'
+        html = response.content.decode()
+        assert 'min_assessed_value' not in html
+        assert 'tax_status=Delinquent' not in html
+        assert 'page=2&q=Oak&amp;zip_code=33755&amp;min_lot_sqft=5000' in html
+
     def test_modify_search_url_preserves_current_dashboard_filters(self, client, sample_property):
         response = client.get(
             '/scraper/dashboard/',
