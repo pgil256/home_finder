@@ -1,26 +1,45 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
-from django.core.paginator import Paginator, Page
-from django.db.models import F, QuerySet
+from django.core.paginator import Page, Paginator
+from django.db.models import F, Q, QuerySet
 
 from ..models import PropertyListing
 
 logger = logging.getLogger(__name__)
 
 PINELLAS_CITIES = [
-    'Clearwater', 'St. Petersburg', 'Largo', 'Pinellas Park', 'Dunedin',
-    'Palm Harbor', 'Tarpon Springs', 'Seminole', 'Safety Harbor', 'Oldsmar',
-    'Gulfport', 'St. Pete Beach', 'Treasure Island', 'Madeira Beach',
-    'Indian Rocks Beach', 'Belleair', 'Kenneth City', 'South Pasadena',
-    'Indian Shores', 'Redington Beach',
+    'Clearwater',
+    'St. Petersburg',
+    'Largo',
+    'Pinellas Park',
+    'Dunedin',
+    'Palm Harbor',
+    'Tarpon Springs',
+    'Seminole',
+    'Safety Harbor',
+    'Oldsmar',
+    'Gulfport',
+    'St. Pete Beach',
+    'Treasure Island',
+    'Madeira Beach',
+    'Indian Rocks Beach',
+    'Belleair',
+    'Kenneth City',
+    'South Pasadena',
+    'Indian Shores',
+    'Redington Beach',
 ]
 
 PROPERTY_TYPES = [
-    'Single Family', 'Condo', 'Townhouse', 'Multi-Family',
-    'Vacant Land', 'Mobile Home', 'Commercial',
+    'Single Family',
+    'Condo',
+    'Townhouse',
+    'Multi-Family',
+    'Vacant Land',
+    'Mobile Home',
+    'Commercial',
 ]
 
 # Map each form-friendly property-type label to the substrings that should
@@ -32,17 +51,37 @@ PROPERTY_TYPE_KEYWORDS = {
     'Condo': ['Condominium', 'Condo Conversion', 'Condo Common'],
     'Townhouse': ['Townhouse', 'Townhome'],
     'Multi-Family': [
-        'Duplex-Triplex-Fourplex', 'Multi-Family',
-        'Apartments (5-9 units)', 'Apartments (10-49 units)',
-        'Apartments (50 or more', 'ALF',
+        'Duplex-Triplex-Fourplex',
+        'Multi-Family',
+        'Apartments (5-9 units)',
+        'Apartments (10-49 units)',
+        'Apartments (50 or more',
+        'ALF',
     ],
     'Vacant Land': ['Vacant Residential', 'Acreage - Vacant'],
     'Mobile Home': ['Mobile Home', 'Manufactured Home'],
     'Commercial': [
-        'Office', 'Store', 'Warehouse', 'Restaurant', 'Hotel', 'Motel',
-        'Hospital', 'Auto', 'Medical', 'Vacant Commercial', 'Federal',
-        'Municipal', 'Bank', 'Marina', 'School', 'Church', 'Industrial',
-        'Drive-In', 'Service', 'Cafeteria', 'Shopping',
+        'Office',
+        'Store',
+        'Warehouse',
+        'Restaurant',
+        'Hotel',
+        'Motel',
+        'Hospital',
+        'Auto',
+        'Medical',
+        'Vacant Commercial',
+        'Federal',
+        'Municipal',
+        'Bank',
+        'Marina',
+        'School',
+        'Church',
+        'Industrial',
+        'Drive-In',
+        'Service',
+        'Cafeteria',
+        'Shopping',
     ],
 }
 
@@ -50,15 +89,23 @@ PROPERTY_TYPE_KEYWORDS = {
 # The home page is pitched at finding a place to live, so commercial,
 # institutional, and miscellaneous parcels stay out of the default view.
 RESIDENTIAL_DEFAULT_LABELS = (
-    'Single Family', 'Condo', 'Townhouse',
-    'Multi-Family', 'Mobile Home', 'Vacant Land',
+    'Single Family',
+    'Condo',
+    'Townhouse',
+    'Multi-Family',
+    'Mobile Home',
+    'Vacant Land',
 )
 
 VALID_SORT_FIELDS = [
-    'market_value', '-market_value',
-    'created_at', '-created_at',
-    'building_sqft', '-building_sqft',
-    'year_built', '-year_built',
+    'market_value',
+    '-market_value',
+    'created_at',
+    '-created_at',
+    'building_sqft',
+    '-building_sqft',
+    'year_built',
+    '-year_built',
 ]
 
 DEFAULT_SORT = '-market_value'
@@ -79,6 +126,7 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
     """
     properties = PropertyListing.objects.all()
 
+    q = request.GET.get('q')
     city = request.GET.get('city')
     zip_code = request.GET.get('zip_code')
     property_types_filter = request.GET.getlist('property_type')
@@ -87,9 +135,16 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
     beds = request.GET.get('beds')
     baths = request.GET.get('baths')
     year_built = request.GET.get('year_built')
-    tax_status = request.GET.get('tax_status')
     min_sqft = request.GET.get('min_sqft')
     max_sqft = request.GET.get('max_sqft')
+    min_lot_sqft = request.GET.get('min_lot_sqft')
+    max_lot_sqft = request.GET.get('max_lot_sqft')
+    min_tax_amount = request.GET.get('min_tax_amount')
+    max_tax_amount = request.GET.get('max_tax_amount')
+
+    if q:
+        q = q.strip()
+        properties = properties.filter(Q(address__icontains=q) | Q(city__icontains=q) | Q(zip_code__icontains=q))
 
     if city:
         properties = properties.filter(city__iexact=city)
@@ -102,11 +157,8 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
     # buyer-facing default (highest-value Single Family, Condo, etc.) instead
     # of surfacing $300M hospitals on page one.
     show_all_types = request.GET.get('include_all') == '1'
-    effective_types = property_types_filter or (
-        [] if show_all_types else list(RESIDENTIAL_DEFAULT_LABELS)
-    )
+    effective_types = property_types_filter or ([] if show_all_types else list(RESIDENTIAL_DEFAULT_LABELS))
     if effective_types:
-        from django.db.models import Q
         type_q = Q()
         for label in effective_types:
             for keyword in PROPERTY_TYPE_KEYWORDS.get(label, [label]):
@@ -117,54 +169,73 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
         try:
             properties = properties.filter(market_value__gte=float(min_price))
         except ValueError:
-            logger.warning("Invalid min_price filter value: %r", min_price)
+            logger.warning('Invalid min_price filter value: %r', min_price)
 
     if max_price:
         try:
             properties = properties.filter(market_value__lte=float(max_price))
         except ValueError:
-            logger.warning("Invalid max_price filter value: %r", max_price)
+            logger.warning('Invalid max_price filter value: %r', max_price)
 
     if beds and beds != '0':
         try:
             properties = properties.filter(bedrooms__gte=int(beds))
         except ValueError:
-            logger.warning("Invalid beds filter value: %r", beds)
+            logger.warning('Invalid beds filter value: %r', beds)
 
     if baths and baths != '0':
         try:
             properties = properties.filter(bathrooms__gte=float(baths))
         except ValueError:
-            logger.warning("Invalid baths filter value: %r", baths)
+            logger.warning('Invalid baths filter value: %r', baths)
 
     if year_built:
         try:
             properties = properties.filter(year_built__gte=int(year_built))
         except ValueError:
-            logger.warning("Invalid year_built filter value: %r", year_built)
-
-    if tax_status:
-        properties = properties.filter(tax_status=tax_status)
+            logger.warning('Invalid year_built filter value: %r', year_built)
 
     if min_sqft:
         try:
             properties = properties.filter(building_sqft__gte=int(min_sqft))
         except ValueError:
-            logger.warning("Invalid min_sqft filter value: %r", min_sqft)
+            logger.warning('Invalid min_sqft filter value: %r', min_sqft)
 
     if max_sqft:
         try:
             properties = properties.filter(building_sqft__lte=int(max_sqft))
         except ValueError:
-            logger.warning("Invalid max_sqft filter value: %r", max_sqft)
+            logger.warning('Invalid max_sqft filter value: %r', max_sqft)
 
-    defaulted_to_residential = bool(
-        not property_types_filter and not show_all_types
-    )
+    if min_lot_sqft:
+        try:
+            properties = properties.filter(lot_sqft__gte=int(min_lot_sqft))
+        except ValueError:
+            logger.warning('Invalid min_lot_sqft filter value: %r', min_lot_sqft)
+
+    if max_lot_sqft:
+        try:
+            properties = properties.filter(lot_sqft__lte=int(max_lot_sqft))
+        except ValueError:
+            logger.warning('Invalid max_lot_sqft filter value: %r', max_lot_sqft)
+
+    if min_tax_amount:
+        try:
+            properties = properties.filter(tax_amount__gte=float(min_tax_amount))
+        except ValueError:
+            logger.warning('Invalid min_tax_amount filter value: %r', min_tax_amount)
+
+    if max_tax_amount:
+        try:
+            properties = properties.filter(tax_amount__lte=float(max_tax_amount))
+        except ValueError:
+            logger.warning('Invalid max_tax_amount filter value: %r', max_tax_amount)
+
+    defaulted_to_residential = bool(not property_types_filter and not show_all_types)
     return properties, property_types_filter, defaulted_to_residential
 
 
-def apply_sorting(properties: QuerySet, sort: Optional[str] = None) -> QuerySet:
+def apply_sorting(properties: QuerySet, sort: str | None = None) -> QuerySet:
     """Apply sorting to queryset. Falls back to default if invalid.
 
     Sorts NULLs last for any field — Postgres' default for DESC puts NULLs

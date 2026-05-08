@@ -77,3 +77,14 @@ def test_B4_form_renders_in_mobile_viewport(browser, base_url):
         assert overflow <= 1, f"horizontal overflow detected: {overflow}px"
     finally:
         context.close()
+
+
+def test_B5_empty_dashboard_has_no_javascript_errors(page: Page, base_url):
+    """An empty results page should not crash dashboard JavaScript."""
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+
+    page.goto(f"{base_url}/scraper/dashboard/?city=NotARealCity12345")
+    expect(page.get_by_text("No Properties Found")).to_be_visible(timeout=5_000)
+
+    assert errors == []

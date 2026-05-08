@@ -26,7 +26,7 @@
                     <span class="font-semibold text-charcoal-700">{{ total_count|default:"0" }}</span> properties found
                     {% if search_criteria %}
                         <span class="mx-2 text-charcoal-300">|</span>
-                        <a href="{% url 'scraper' %}" class="text-primary-500 hover:text-primary-600 transition-colors">
+                        <a href="{{ modify_search_url }}" class="text-primary-500 hover:text-primary-600 transition-colors">
                             Modify search
                         </a>
                     {% endif %}
@@ -111,58 +111,16 @@
 {% endif %}
 
 <!-- Active Filter Chips (above the row layout so they don't displace siblings) -->
-{% if request.GET.city or request.GET.min_price or request.GET.max_price or request.GET.beds or request.GET.baths or request.GET.property_type or request.GET.tax_status or request.GET.year_built %}
+{% if active_filter_chips %}
 <div class="flex flex-wrap items-center gap-2 mb-4 -mt-4">
     <span class="text-sm text-charcoal-500">Active filters:</span>
-        {% if request.GET.city %}
-        <a href="?{% for key, value in request.GET.items %}{% if key != 'city' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
-            {{ request.GET.city }}
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
-        {% if request.GET.min_price %}
-        <a href="?{% for key, value in request.GET.items %}{% if key != 'min_price' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
-            Min ${{ request.GET.min_price }}
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
-        {% if request.GET.max_price %}
-        <a href="?{% for key, value in request.GET.items %}{% if key != 'max_price' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
-            Max ${{ request.GET.max_price }}
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
-        {% if request.GET.beds %}
-        <a href="?{% for key, value in request.GET.items %}{% if key != 'beds' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
-            {{ request.GET.beds }}+ beds
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
-        {% if request.GET.baths %}
-        <a href="?{% for key, value in request.GET.items %}{% if key != 'baths' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
-            {{ request.GET.baths }}+ baths
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
-        {% if request.GET.tax_status %}
-        <a href="?{% for key, value in request.GET.items %}{% if key != 'tax_status' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
-            Tax: {{ request.GET.tax_status }}
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
-        {% if request.GET.year_built %}
-        <a href="?{% for key, value in request.GET.items %}{% if key != 'year_built' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-           class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
-            After {{ request.GET.year_built }}
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
+    {% for chip in active_filter_chips %}
+    <a href="{% url 'dashboard' %}{% if chip.querystring %}?{{ chip.querystring }}{% endif %}"
+       class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm hover:bg-primary-200 transition-colors">
+        {{ chip.label }}
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </a>
+    {% endfor %}
     <a href="{% url 'dashboard' %}" class="text-sm text-charcoal-500 hover:text-charcoal-700 transition-colors ml-2">Clear all</a>
 </div>
 {% endif %}
@@ -181,6 +139,20 @@
             <form id="filter-form" method="get" class="card-body space-y-6">
                 <!-- Preserve sort -->
                 <input type="hidden" name="sort" value="{{ sort|default:'-market_value' }}">
+                {% if request.GET.include_all %}
+                <input type="hidden" name="include_all" value="1">
+                {% endif %}
+
+                <!-- Keyword Filter -->
+                <div>
+                    <label for="filter-q" class="label">Address or Area</label>
+                    <input type="text"
+                           id="filter-q"
+                           name="q"
+                           value="{{ filter_values.q }}"
+                           placeholder="Search address or city"
+                           class="input input-sm">
+                </div>
 
                 <!-- City Filter -->
                 <div>
@@ -191,6 +163,18 @@
                         <option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>{{ city }}</option>
                         {% endfor %}
                     </select>
+                </div>
+
+                <!-- ZIP Filter -->
+                <div>
+                    <label for="filter-zip" class="label">ZIP Code</label>
+                    <input type="text"
+                           id="filter-zip"
+                           name="zip_code"
+                           value="{{ filter_values.zip_code }}"
+                           placeholder="33755"
+                           maxlength="5"
+                           class="input input-sm">
                 </div>
 
                 <!-- Property Type Filter -->
@@ -220,7 +204,7 @@
                             <input type="number"
                                    id="filter-min-price"
                                    name="min_price"
-                                   value="{{ request.GET.min_price }}"
+                                   value="{{ filter_values.min_price }}"
                                    placeholder="Min"
                                    class="input input-sm pl-7">
                         </div>
@@ -230,7 +214,7 @@
                             <input type="number"
                                    id="filter-max-price"
                                    name="max_price"
-                                   value="{{ request.GET.max_price }}"
+                                   value="{{ filter_values.max_price }}"
                                    placeholder="Max"
                                    class="input input-sm pl-7">
                         </div>
@@ -246,23 +230,76 @@
                     <input type="number"
                            id="filter-year"
                            name="year_built"
-                           value="{{ request.GET.year_built }}"
+                           value="{{ filter_values.year_built }}"
                            placeholder="e.g., 2000"
                            min="1900"
-                           max="2024"
                            class="input input-sm">
                 </div>
 
-                <!-- Tax Status -->
-                <div>
-                    <label for="filter-tax" class="label">Tax Status</label>
-                    <select id="filter-tax" name="tax_status" class="select">
-                        <option value="">All</option>
-                        <option value="Paid" {% if request.GET.tax_status == 'Paid' %}selected{% endif %}>Paid</option>
-                        <option value="Unpaid" {% if request.GET.tax_status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
-                        <option value="Delinquent" {% if request.GET.tax_status == 'Delinquent' %}selected{% endif %}>Delinquent</option>
-                    </select>
-                </div>
+                <!-- Building Size -->
+                <fieldset>
+                    <legend class="label">Building Sq Ft</legend>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number"
+                               id="filter-min-sqft"
+                               name="min_sqft"
+                               value="{{ filter_values.min_sqft }}"
+                               placeholder="Min"
+                               class="input input-sm">
+                        <input type="number"
+                               id="filter-max-sqft"
+                               name="max_sqft"
+                               value="{{ filter_values.max_sqft }}"
+                               placeholder="Max"
+                               class="input input-sm">
+                    </div>
+                </fieldset>
+
+                <!-- Lot Size -->
+                <fieldset>
+                    <legend class="label">Lot Sq Ft</legend>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number"
+                               id="filter-min-lot"
+                               name="min_lot_sqft"
+                               value="{{ filter_values.min_lot_sqft }}"
+                               placeholder="Min"
+                               class="input input-sm">
+                        <input type="number"
+                               id="filter-max-lot"
+                               name="max_lot_sqft"
+                               value="{{ filter_values.max_lot_sqft }}"
+                               placeholder="Max"
+                               class="input input-sm">
+                    </div>
+                </fieldset>
+
+                <!-- Annual Tax Amount -->
+                <fieldset>
+                    <legend class="label">Annual Tax</legend>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="relative">
+                            <label for="filter-min-tax" class="sr-only">Minimum annual tax</label>
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm" aria-hidden="true">$</span>
+                            <input type="number"
+                                   id="filter-min-tax"
+                                   name="min_tax_amount"
+                                   value="{{ filter_values.min_tax_amount }}"
+                                   placeholder="Min"
+                                   class="input input-sm pl-7">
+                        </div>
+                        <div class="relative">
+                            <label for="filter-max-tax" class="sr-only">Maximum annual tax</label>
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm" aria-hidden="true">$</span>
+                            <input type="number"
+                                   id="filter-max-tax"
+                                   name="max_tax_amount"
+                                   value="{{ filter_values.max_tax_amount }}"
+                                   placeholder="Max"
+                                   class="input input-sm pl-7">
+                        </div>
+                    </div>
+                </fieldset>
 
                 <!-- Apply Filters Button -->
                 <button type="submit" class="btn btn-primary w-full">
@@ -590,6 +627,15 @@
 
         <form method="get" class="space-y-6">
             <input type="hidden" name="sort" value="{{ sort|default:'-market_value' }}">
+            {% if request.GET.include_all %}
+            <input type="hidden" name="include_all" value="1">
+            {% endif %}
+
+            <!-- Keyword Filter -->
+            <div>
+                <label class="label">Address or Area</label>
+                <input type="text" name="q" value="{{ filter_values.q }}" placeholder="Search address or city" class="input">
+            </div>
 
             <!-- City Filter -->
             <div>
@@ -602,17 +648,23 @@
                 </select>
             </div>
 
+            <!-- ZIP Filter -->
+            <div>
+                <label class="label">ZIP Code</label>
+                <input type="text" name="zip_code" value="{{ filter_values.zip_code }}" placeholder="33755" maxlength="5" class="input">
+            </div>
+
             <!-- Price Range -->
             <div>
                 <label class="label">Price Range</label>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
-                        <input type="number" name="min_price" value="{{ request.GET.min_price }}" placeholder="Min" class="input pl-7">
+                        <input type="number" name="min_price" value="{{ filter_values.min_price }}" placeholder="Min" class="input pl-7">
                     </div>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
-                        <input type="number" name="max_price" value="{{ request.GET.max_price }}" placeholder="Max" class="input pl-7">
+                        <input type="number" name="max_price" value="{{ filter_values.max_price }}" placeholder="Max" class="input pl-7">
                     </div>
                 </div>
             </div>
@@ -635,15 +687,40 @@
                 </div>
             </div>
 
-            <!-- Tax Status -->
+            <!-- PCPAO Numeric Filters -->
             <div>
-                <label class="label">Tax Status</label>
-                <select name="tax_status" class="select">
-                    <option value="">All</option>
-                    <option value="Paid" {% if request.GET.tax_status == 'Paid' %}selected{% endif %}>Paid</option>
-                    <option value="Unpaid" {% if request.GET.tax_status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
-                    <option value="Delinquent" {% if request.GET.tax_status == 'Delinquent' %}selected{% endif %}>Delinquent</option>
-                </select>
+                <label class="label">Year Built</label>
+                <input type="number" name="year_built" value="{{ filter_values.year_built }}" placeholder="Built after" min="1900" class="input">
+            </div>
+
+            <div>
+                <label class="label">Building Sq Ft</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" name="min_sqft" value="{{ filter_values.min_sqft }}" placeholder="Min" class="input">
+                    <input type="number" name="max_sqft" value="{{ filter_values.max_sqft }}" placeholder="Max" class="input">
+                </div>
+            </div>
+
+            <div>
+                <label class="label">Lot Sq Ft</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" name="min_lot_sqft" value="{{ filter_values.min_lot_sqft }}" placeholder="Min" class="input">
+                    <input type="number" name="max_lot_sqft" value="{{ filter_values.max_lot_sqft }}" placeholder="Max" class="input">
+                </div>
+            </div>
+
+            <div>
+                <label class="label">Annual Tax</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                        <input type="number" name="min_tax_amount" value="{{ filter_values.min_tax_amount }}" placeholder="Min" class="input pl-7">
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400 text-sm">$</span>
+                        <input type="number" name="max_tax_amount" value="{{ filter_values.max_tax_amount }}" placeholder="Max" class="input pl-7">
+                    </div>
+                </div>
             </div>
 
             <!-- Action Buttons - Sticky at bottom -->
@@ -669,7 +746,7 @@
     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
     </svg>
-    {% if request.GET.city or request.GET.min_price or request.GET.beds or request.GET.tax_status %}
+    {% if active_filter_chips %}
     <span class="absolute -top-1 -right-1 w-5 h-5 bg-coral-500 text-white text-xs rounded-full flex items-center justify-center">
         !
     </span>
@@ -688,6 +765,10 @@
         const grid = document.getElementById('property-grid');
         const list = document.getElementById('property-list');
         const buttons = document.querySelectorAll('.view-toggle');
+
+        if (!grid || !list) {
+            return;
+        }
 
         buttons.forEach(btn => {
             btn.classList.toggle('bg-white', btn.dataset.view === view);

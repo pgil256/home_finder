@@ -67,6 +67,16 @@
                     <h3 class="font-display font-semibold text-charcoal-800">Location</h3>
                 </div>
 
+                <div class="mb-4">
+                    <label for="q" class="label">Address or Area</label>
+                    <input type="text"
+                           id="q"
+                           name="q"
+                           value="{{ search_values.q }}"
+                           class="input"
+                           placeholder="e.g., Main St or Clearwater">
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- City Select -->
                     <div>
@@ -74,7 +84,7 @@
                         <select id="city" name="city" class="select">
                             <option value="">All Cities</option>
                             {% for city in cities %}
-                            <option value="{{ city }}">{{ city }}</option>
+                            <option value="{{ city }}" {% if search_values.city == city %}selected{% endif %}>{{ city }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -85,6 +95,7 @@
                         <input type="text"
                                id="zip_code"
                                name="zip_code"
+                               value="{{ search_values.zip_code }}"
                                class="input"
                                placeholder="e.g., 33755"
                                pattern="(337[0-9]{2}|346(77|8[34589]|9[58]))"
@@ -108,7 +119,7 @@
                 <div class="flex flex-wrap gap-2" id="property-type-chips">
                     {% for ptype in property_types %}
                     <label class="chip cursor-pointer transition-all duration-200 hover:shadow-soft-sm">
-                        <input type="checkbox" name="property_type" value="{{ ptype }}" class="sr-only peer">
+                        <input type="checkbox" name="property_type" value="{{ ptype }}" class="sr-only peer" {% if ptype in search_values.property_type %}checked{% endif %}>
                         <span class="peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-400 peer-focus-visible:ring-offset-2 rounded-full px-4 py-2 border border-charcoal-200 bg-white transition-all duration-200">
                             {{ ptype }}
                         </span>
@@ -139,6 +150,7 @@
                             <input type="number"
                                    id="min_value"
                                    name="min_price"
+                                   value="{{ search_values.min_price }}"
                                    class="input pl-8"
                                    placeholder="0"
                                    min="0"
@@ -154,6 +166,7 @@
                             <input type="number"
                                    id="max_value"
                                    name="max_price"
+                                   value="{{ search_values.max_price }}"
                                    class="input pl-8"
                                    placeholder="No limit"
                                    min="0"
@@ -195,22 +208,12 @@
                             <input type="number"
                                    id="year_built_after"
                                    name="year_built"
+                                   value="{{ search_values.year_built }}"
                                    class="input"
                                    placeholder="e.g., 2000"
-                                   min="1900"
-                                   max="2024">
+                                   min="1900">
                         </div>
 
-                        <!-- Tax Status -->
-                        <div>
-                            <label for="tax_status" class="label">Tax Status</label>
-                            <select id="tax_status" name="tax_status" class="select">
-                                <option value="">All Properties</option>
-                                <option value="Paid">Taxes Paid</option>
-                                <option value="Unpaid">Taxes Unpaid</option>
-                                <option value="Delinquent">Tax Delinquent</option>
-                            </select>
-                        </div>
                     </div>
 
                     <!-- Square Footage -->
@@ -220,6 +223,7 @@
                             <input type="number"
                                    id="sqft_min"
                                    name="min_sqft"
+                                   value="{{ search_values.min_sqft }}"
                                    class="input"
                                    placeholder="e.g., 1000"
                                    min="0"
@@ -230,10 +234,66 @@
                             <input type="number"
                                    id="sqft_max"
                                    name="max_sqft"
+                                   value="{{ search_values.max_sqft }}"
                                    class="input"
                                    placeholder="No limit"
                                    min="0"
                                    step="100">
+                        </div>
+                    </div>
+
+                    <!-- Lot Size -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="lot_sqft_min" class="label">Min Lot Square Feet</label>
+                            <input type="number"
+                                   id="lot_sqft_min"
+                                   name="min_lot_sqft"
+                                   value="{{ search_values.min_lot_sqft }}"
+                                   class="input"
+                                   placeholder="e.g., 5000"
+                                   min="0"
+                                   step="500">
+                        </div>
+                        <div>
+                            <label for="lot_sqft_max" class="label">Max Lot Square Feet</label>
+                            <input type="number"
+                                   id="lot_sqft_max"
+                                   name="max_lot_sqft"
+                                   value="{{ search_values.max_lot_sqft }}"
+                                   class="input"
+                                   placeholder="No limit"
+                                   min="0"
+                                   step="500">
+                        </div>
+                    </div>
+
+                    <!-- Annual Tax Amount -->
+                    <div>
+                        <label class="label">Annual Tax Amount</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number"
+                                       id="tax_amount_min"
+                                       name="min_tax_amount"
+                                       value="{{ search_values.min_tax_amount }}"
+                                       class="input pl-8"
+                                       placeholder="Minimum tax"
+                                       min="0"
+                                       step="100">
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number"
+                                       id="tax_amount_max"
+                                       name="max_tax_amount"
+                                       value="{{ search_values.max_tax_amount }}"
+                                       class="input pl-8"
+                                       placeholder="Maximum tax"
+                                       min="0"
+                                       step="100">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -365,7 +425,18 @@
 
     // Reset form
     function resetForm() {
-        document.getElementById('search-form').reset();
+        const form = document.getElementById('search-form');
+        form.querySelectorAll('input').forEach((input) => {
+            if (input.type === 'hidden' || input.name === 'csrfmiddlewaretoken') return;
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+        form.querySelectorAll('select').forEach((select) => {
+            select.selectedIndex = 0;
+        });
 
         // Reset price display
         document.getElementById('price-range-display').textContent = '$0 - No limit';
@@ -377,29 +448,46 @@
 
     // Form validation
     document.getElementById('search-form').addEventListener('submit', function(e) {
-        const minPrice = parseInt(document.getElementById('min_value').value) || 0;
-        const maxPrice = parseInt(document.getElementById('max_value').value) || Infinity;
+        const validRange = (minId, maxId, label) => {
+            const min = parseInt(document.getElementById(minId).value) || 0;
+            const max = parseInt(document.getElementById(maxId).value) || Infinity;
+            if (min > max && max !== Infinity) {
+                window.Toast.warning(`Minimum ${label} cannot be greater than maximum.`);
+                return false;
+            }
+            return true;
+        };
 
-        if (minPrice > maxPrice && maxPrice !== Infinity) {
+        if (!validRange('min_value', 'max_value', 'price')) {
             e.preventDefault();
-            window.Toast.warning('Minimum price cannot be greater than maximum price.');
             return false;
         }
 
-        const minSqft = parseInt(document.getElementById('sqft_min').value) || 0;
-        const maxSqft = parseInt(document.getElementById('sqft_max').value) || Infinity;
-
-        if (minSqft > maxSqft && maxSqft !== Infinity) {
+        if (!validRange('sqft_min', 'sqft_max', 'square footage')) {
             e.preventDefault();
-            window.Toast.warning('Minimum square footage cannot be greater than maximum.');
+            return false;
+        }
+
+        if (!validRange('lot_sqft_min', 'lot_sqft_max', 'lot size')) {
+            e.preventDefault();
+            return false;
+        }
+
+        if (!validRange('tax_amount_min', 'tax_amount_max', 'tax amount')) {
+            e.preventDefault();
             return false;
         }
     });
 
-    // Initial state for bedroom/bathroom buttons
-    document.querySelector('.bed-btn').classList.add('btn-primary');
-    document.querySelector('.bed-btn').classList.remove('btn-secondary');
-    document.querySelector('.bath-btn').classList.add('btn-primary');
-    document.querySelector('.bath-btn').classList.remove('btn-secondary');
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePriceDisplay();
+
+        const hasAdvancedValue = Array.from(document.querySelectorAll('#advanced-filters input, #advanced-filters select'))
+            .some((field) => field.value);
+        if (hasAdvancedValue) {
+            document.getElementById('advanced-filters').classList.remove('hidden');
+            document.getElementById('advanced-icon').classList.add('rotate-180');
+        }
+    });
 </script>
 {% endblock %}
