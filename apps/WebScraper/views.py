@@ -18,8 +18,8 @@ from .services.filtering import (
     PROPERTY_TYPES,
     apply_filters,
     apply_sorting,
-    paginate,
 )
+from .services.market_insights import build_market_insights
 
 # Per-parcel refresh rate limit: 60s between refreshes for the same parcel,
 # regardless of who's asking. Prevents one user (or bot) from hammering
@@ -182,7 +182,7 @@ def web_scraper_view(request):
         request.session[SEARCH_SESSION_KEY] = search_values
         params = _search_params_from_values(search_values)
 
-        url = reverse('dashboard')
+        url = reverse('insights')
         if params:
             url += '?' + urlencode(params)
         return redirect(url)
@@ -200,13 +200,16 @@ def web_scraper_view(request):
 
 
 def property_dashboard(request):
-    """Property dashboard with filtering, sorting, and pagination."""
+    """Legacy dashboard URL; renders the market-insights experience."""
+    return insights_dashboard(request)
+
+
+def insights_dashboard(request):
+    """Market insights dashboard with filters, KPIs, charts, and drilldowns."""
     properties, selected_types, defaulted_to_residential = apply_filters(request)
     sort = request.GET.get('sort', '-market_value')
     properties = apply_sorting(properties, sort)
     total_count = properties.count()
-    page_number = request.GET.get('page', 1)
-    properties_page = paginate(properties, page_number)
 
     city = request.GET.get('city')
     search_criteria = {}
@@ -221,15 +224,17 @@ def property_dashboard(request):
     filter_values = _search_values_from_querydict(request.GET)
     dashboard_qs = _dashboard_querydict(request)
 
-    # Build the "show all property types" URL = current buyer-facing filters + include_all=1
+    # Build the "show all property types" URL = current filters + include_all=1
     show_all_qs = dashboard_qs.copy()
     show_all_qs['include_all'] = '1'
+    insights = build_market_insights(request)
 
     return render(
         request,
-        'WebScraper/dashboard.html',
+        'WebScraper/market-insights.html',
         {
-            'properties': properties_page,
+            'insights': insights,
+            'charts': insights['charts'],
             'total_count': total_count,
             'cities': sorted(PINELLAS_CITIES),
             'property_types': PROPERTY_TYPES,
@@ -242,6 +247,7 @@ def property_dashboard(request):
             'filter_values': filter_values,
             'active_filter_chips': _active_filter_chips(request),
             'modify_search_url': _search_url_from_values(filter_values),
+            'insights_url': reverse('insights'),
         },
     )
 

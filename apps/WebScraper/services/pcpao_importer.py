@@ -8,21 +8,22 @@ PCPAO serves files as zipped CSVs via a POST endpoint (the public download butto
 on the page POST to /dal/databasefile/downloadDatabaseFile with hdn_tbl_name and
 hdn_ftype). The legacy /Data/Downloads/<file>.csv path no longer exists.
 """
+
 import io
+import logging
 import os
 import zipfile
-import requests
-import logging
 from decimal import Decimal, InvalidOperation
-from typing import Dict, Any, Optional, List
+from typing import Any
 
+import requests
 from django.db import transaction
+
 from apps.WebScraper.models import PropertyListing
-from apps.WebScraper.services.property_types import dor_code_to_description
 
 logger = logging.getLogger(__name__)
 
-PCPAO_DOWNLOAD_URL = "https://www.pcpao.gov/dal/databasefile/downloadDatabaseFile"
+PCPAO_DOWNLOAD_URL = 'https://www.pcpao.gov/dal/databasefile/downloadDatabaseFile'
 PCPAO_DOWNLOAD_TIMEOUT = 600  # PCPAO files can be 100MB+; allow 10 min
 
 
@@ -34,13 +35,13 @@ FIELD_MAPPING = {
     'SITE_CITY': 'city',
     'SITE_ZIP': 'zip_code',
     'OWN_NAME': 'owner_name',
-    'JV': 'market_value',        # Just Value = Market Value
-    'AV': 'assessed_value',       # Assessed Value
+    'JV': 'market_value',  # Just Value = Market Value
+    'AV': 'assessed_value',  # Assessed Value
     'LIV_AREA': 'building_sqft',  # Living Area
     'YR_BLT': 'year_built',
     'BEDS': 'bedrooms',
     'BATHS': 'bathrooms',
-    'DOR_UC': 'property_type',    # DOR Use Code
+    'DOR_UC': 'property_type',  # DOR Use Code
     'LAND_SQFT': 'lot_sqft',
     'TAX_AMOUNT_NO_EX': 'tax_amount',  # Tax amount from PCPAO
 }
@@ -57,40 +58,39 @@ def download_pcpao_file(filename: str, output_dir: str) -> str:
     Returns:
         Path to the extracted CSV file.
     """
-    output_path = os.path.join(output_dir, f"{filename}.csv")
-    logger.info(f"Downloading {filename} from {PCPAO_DOWNLOAD_URL}")
+    output_path = os.path.join(output_dir, f'{filename}.csv')
+    logger.info(f'Downloading {filename} from {PCPAO_DOWNLOAD_URL}')
 
     response = requests.post(
         PCPAO_DOWNLOAD_URL,
-        data={"hdn_tbl_name": filename, "hdn_ftype": "csv"},
+        data={'hdn_tbl_name': filename, 'hdn_ftype': 'csv'},
         timeout=PCPAO_DOWNLOAD_TIMEOUT,
     )
     response.raise_for_status()
 
-    content_type = response.headers.get("Content-Type", "")
-    if "zip" not in content_type.lower():
+    content_type = response.headers.get('Content-Type', '')
+    if 'zip' not in content_type.lower():
         raise RuntimeError(
-            f"Expected zip from PCPAO, got Content-Type={content_type!r}; "
-            "the download endpoint may have changed again."
+            f'Expected zip from PCPAO, got Content-Type={content_type!r}; the download endpoint may have changed again.'
         )
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
-        csv_names = [n for n in zf.namelist() if n.lower().endswith(".csv")]
+        csv_names = [n for n in zf.namelist() if n.lower().endswith('.csv')]
         if not csv_names:
-            raise RuntimeError(f"No CSV inside PCPAO zip: {zf.namelist()}")
+            raise RuntimeError(f'No CSV inside PCPAO zip: {zf.namelist()}')
         # Prefer the file whose basename matches the requested table
         target = next(
             (n for n in csv_names if filename.lower() in n.lower()),
             csv_names[0],
         )
-        with zf.open(target) as src, open(output_path, "wb") as dst:
+        with zf.open(target) as src, open(output_path, 'wb') as dst:
             dst.write(src.read())
 
-    logger.info(f"Extracted {target} to {output_path}")
+    logger.info(f'Extracted {target} to {output_path}')
     return output_path
 
 
-def safe_decimal(value: str) -> Optional[Decimal]:
+def safe_decimal(value: str) -> Decimal | None:
     """Convert string to Decimal, returning None for empty/invalid values."""
     if not value or value.strip() == '':
         return None
@@ -100,7 +100,7 @@ def safe_decimal(value: str) -> Optional[Decimal]:
         return None
 
 
-def safe_int(value: str) -> Optional[int]:
+def safe_int(value: str) -> int | None:
     """Convert string to int, returning None for empty/invalid values."""
     if not value or value.strip() == '':
         return None
@@ -116,7 +116,7 @@ _CITY_FIXUPS = {
 }
 
 
-def _normalize_city(value: Optional[str]) -> Optional[str]:
+def _normalize_city(value: str | None) -> str | None:
     """PCPAO ships city names uppercased ('ST PETERSBURG'); convert to the
     canonical title-cased form the search form's dropdown uses
     ('St. Petersburg')."""
@@ -129,7 +129,7 @@ def _normalize_city(value: Optional[str]) -> Optional[str]:
     return _CITY_FIXUPS.get(titled, titled)
 
 
-def _split_property_use(value: str) -> Optional[str]:
+def _split_property_use(value: str) -> str | None:
     """PROPERTY_USE in the new schema looks like '0110 Single Family Home'.
     Return the human-readable description (everything after the leading code)."""
     if not value:
@@ -140,7 +140,7 @@ def _split_property_use(value: str) -> Optional[str]:
     return value.strip() or None
 
 
-def map_csv_row_to_property(row: Dict[str, str]) -> Dict[str, Any]:
+def map_csv_row_to_property(row: dict[str, str]) -> dict[str, Any]:
     """Map a PCPAO RP_PROPERTY_INFO row to PropertyListing fields.
 
     Schema reference:
@@ -152,7 +152,7 @@ def map_csv_row_to_property(row: Dict[str, str]) -> Dict[str, Any]:
 
     Beds/baths aren't in this table — they live in RP_BUILDING (not yet imported).
     """
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
 
     result['parcel_id'] = row.get('PARCEL_NUMBER', '').strip()
     result['address'] = (row.get('SITE_ADDRESS') or '').strip() or None
@@ -183,7 +183,7 @@ def map_csv_row_to_property(row: Dict[str, str]) -> Dict[str, Any]:
     return result
 
 
-def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1000) -> Dict[str, int]:
+def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1000) -> dict[str, int]:
     """
     Bulk insert or update property records.
 
@@ -211,10 +211,7 @@ def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1
 
     with transaction.atomic():
         # Single query to find all existing records (N+1 fix)
-        existing_records = {
-            p.parcel_id: p
-            for p in PropertyListing.objects.filter(parcel_id__in=parcel_ids)
-        }
+        existing_records = {p.parcel_id: p for p in PropertyListing.objects.filter(parcel_id__in=parcel_ids)}
 
         # Separate into new and existing
         new_properties = []
@@ -222,10 +219,21 @@ def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1
 
         # Fields to update (excluding parcel_id which is the lookup key)
         update_fields = [
-            'address', 'city', 'zip_code', 'owner_name', 'market_value',
-            'assessed_value', 'building_sqft', 'year_built', 'bedrooms',
-            'bathrooms', 'property_type', 'land_size', 'lot_sqft',
-            'tax_amount', 'tax_status'
+            'address',
+            'city',
+            'zip_code',
+            'owner_name',
+            'market_value',
+            'assessed_value',
+            'building_sqft',
+            'year_built',
+            'bedrooms',
+            'bathrooms',
+            'property_type',
+            'land_size',
+            'lot_sqft',
+            'tax_amount',
+            'tax_status',
         ]
 
         for prop in valid_properties:
@@ -240,10 +248,9 @@ def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1
                 properties_to_update.append(existing)
             else:
                 # Create new PropertyListing instance
-                new_properties.append(PropertyListing(
-                    parcel_id=parcel_id,
-                    **{k: v for k, v in prop.items() if k != 'parcel_id'}
-                ))
+                new_properties.append(
+                    PropertyListing(parcel_id=parcel_id, **{k: v for k, v in prop.items() if k != 'parcel_id'})
+                )
 
         # Bulk create new records (single query)
         if new_properties:
@@ -252,11 +259,7 @@ def bulk_upsert_properties(properties: List[Dict[str, Any]], batch_size: int = 1
 
         # Bulk update existing records (single query)
         if properties_to_update:
-            PropertyListing.objects.bulk_update(
-                properties_to_update,
-                update_fields,
-                batch_size=batch_size
-            )
+            PropertyListing.objects.bulk_update(properties_to_update, update_fields, batch_size=batch_size)
             stats['updated'] = len(properties_to_update)
 
     return stats

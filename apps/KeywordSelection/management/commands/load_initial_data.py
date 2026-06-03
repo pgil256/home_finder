@@ -1,8 +1,11 @@
-from django.core.management.base import BaseCommand
-from django.db import transaction
-from ...models import Keyword
 import json
 import os
+
+from django.core.management.base import BaseCommand
+from django.db import transaction
+
+from ...models import Keyword
+
 
 class Command(BaseCommand):
     help = 'Loads initial keyword data into the database'
@@ -13,7 +16,7 @@ class Command(BaseCommand):
         data_file_path = os.path.join(app_dir, 'data', 'initial_data.json')
 
         try:
-            with open(data_file_path, 'r') as file:
+            with open(data_file_path) as file:
                 data = json.load(file)
                 with transaction.atomic():
                     for item in data:
@@ -22,8 +25,8 @@ class Command(BaseCommand):
                             defaults={
                                 'data_type': item['data_type'],
                                 'help_text': item['help_text'],
-                                'extra_json': item['extra_json'] if 'extra_json' in item else {}
-                            }
+                                'extra_json': item.get('extra_json', {}),
+                            },
                         )
             self.stdout.write(self.style.SUCCESS('Successfully loaded initial data!'))
         except FileNotFoundError:

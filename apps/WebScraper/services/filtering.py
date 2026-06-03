@@ -48,7 +48,7 @@ PROPERTY_TYPES = [
 # or Share Owned)', etc.). The match is case-insensitive `icontains` OR.
 PROPERTY_TYPE_KEYWORDS = {
     'Single Family': ['Single Family', 'Planned Unit Development'],
-    'Condo': ['Condominium', 'Condo Conversion', 'Condo Common'],
+    'Condo': ['Condo', 'Condominium', 'Condo Conversion', 'Condo Common'],
     'Townhouse': ['Townhouse', 'Townhome'],
     'Multi-Family': [
         'Duplex-Triplex-Fourplex',

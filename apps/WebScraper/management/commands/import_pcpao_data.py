@@ -6,15 +6,18 @@ Usage:
     python manage.py import_pcpao_data --file /path/to/RP_PROPERTY_INFO.csv
     python manage.py import_pcpao_data --quiet
 """
-import os
+
 import csv
-import tempfile
 import logging
+import os
+import tempfile
+
 from django.core.management.base import BaseCommand
+
 from apps.WebScraper.services.pcpao_importer import (
+    bulk_upsert_properties,
     download_pcpao_file,
     map_csv_row_to_property,
-    bulk_upsert_properties,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,13 +70,13 @@ class Command(BaseCommand):
         count = 0
         skipped = 0
 
-        with open(csv_path, 'r', encoding='utf-8-sig') as f:
+        with open(csv_path, encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 prop = map_csv_row_to_property(row)
-                # Need parcel_id (PK) AND address (NOT NULL in model) AND city
-                # (essential for the search use case). Vacant/orphan parcels skip.
-                if not (prop.get('parcel_id') and prop.get('address') and prop.get('city')):
+                # Need parcel_id plus required/search-critical address fields.
+                # Vacant/orphan parcels with incomplete site data are skipped.
+                if not (prop.get('parcel_id') and prop.get('address') and prop.get('city') and prop.get('zip_code')):
                     skipped += 1
                     continue
 
@@ -99,8 +102,7 @@ class Command(BaseCommand):
             stats = bulk_upsert_properties(properties)
             if not quiet:
                 self.stdout.write(
-                    f'Processed {count} records '
-                    f'(created: {stats["created"]}, updated: {stats["updated"]})'
+                    f'Processed {count} records (created: {stats["created"]}, updated: {stats["updated"]})'
                 )
 
         if not quiet:

@@ -14,16 +14,20 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
+
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+
+from apps.WebScraper import views as scraper_views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("keyword/", include("apps.KeywordSelection.urls")),
-    path("scraper/", include("apps.WebScraper.urls")),
-    path("", include("apps.Pages.urls")),
+    path('admin/', admin.site.urls),
+    path('insights/', scraper_views.insights_dashboard, name='insights'),
+    path('keyword/', include('apps.KeywordSelection.urls')),
+    path('scraper/', include('apps.WebScraper.urls')),
+    path('', include('apps.Pages.urls')),
 ]
 
 # Serve media files through Django (needed for dynamically generated reports)

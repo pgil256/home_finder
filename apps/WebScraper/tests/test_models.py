@@ -1,6 +1,8 @@
-import pytest
 from decimal import Decimal
+
+import pytest
 from django.db import IntegrityError
+
 from apps.WebScraper.models import PropertyListing
 
 pytestmark = pytest.mark.django_db

@@ -5,9 +5,9 @@ These tests use mocked WebDriver to test scraper logic without requiring
 actual browser automation.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, PropertyMock
-from decimal import Decimal
 
 pytestmark = [pytest.mark.django_db, pytest.mark.selenium]
 
@@ -15,23 +15,25 @@ pytestmark = [pytest.mark.django_db, pytest.mark.selenium]
 @pytest.fixture(autouse=True)
 def mock_time_sleep():
     """Auto-mock time.sleep for all tests to prevent delays."""
-    with patch('apps.WebScraper.tasks.pcpao_scraper.time.sleep'):
-        with patch('apps.WebScraper.tasks.tax_collector_scraper.time.sleep'):
-            yield
+    with (
+        patch('apps.WebScraper.tasks.pcpao_scraper.time.sleep'),
+        patch('apps.WebScraper.tasks.tax_collector_scraper.time.sleep'),
+    ):
+        yield
 
 
 @pytest.fixture
 def mock_chrome_dependencies():
     """Mock Chrome binary paths and ChromeDriverManager to avoid TLS errors."""
-    with patch('apps.WebScraper.tasks.pcpao_scraper.os.path.exists', return_value=False):
-        with patch('apps.WebScraper.tasks.tax_collector_scraper.os.path.exists', return_value=False):
-            with patch('apps.WebScraper.tasks.pcpao_scraper.ChromeDriverManager') as mock_cdm1:
-                with patch('apps.WebScraper.tasks.tax_collector_scraper.ChromeDriverManager') as mock_cdm2:
-                    mock_service1 = MagicMock()
-                    mock_service2 = MagicMock()
-                    mock_cdm1.return_value.install.return_value = '/fake/chromedriver'
-                    mock_cdm2.return_value.install.return_value = '/fake/chromedriver'
-                    yield
+    with (
+        patch('apps.WebScraper.tasks.pcpao_scraper.os.path.exists', return_value=False),
+        patch('apps.WebScraper.tasks.tax_collector_scraper.os.path.exists', return_value=False),
+        patch('apps.WebScraper.tasks.pcpao_scraper.ChromeDriverManager') as mock_cdm1,
+        patch('apps.WebScraper.tasks.tax_collector_scraper.ChromeDriverManager') as mock_cdm2,
+    ):
+        mock_cdm1.return_value.install.return_value = '/fake/chromedriver'
+        mock_cdm2.return_value.install.return_value = '/fake/chromedriver'
+        yield
 
 
 class TestPCPAOScraper:
@@ -69,8 +71,8 @@ class TestPCPAOScraper:
 
     def test_setup_driver_creates_chrome_instance(self, mock_chrome_dependencies):
         """Test setup_driver creates Chrome WebDriver."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         import apps.WebScraper.tasks.pcpao_scraper as scraper_module
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -105,9 +107,10 @@ class TestPCPAOScraper:
 
     def test_search_properties_navigates_to_search_url(self, mock_webdriver, mock_chrome_paths):
         """Test search_properties navigates to PCPAO search page."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         from selenium.common.exceptions import NoSuchElementException, TimeoutException
         from selenium.webdriver.common.by import By
+
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         mock_search_input = MagicMock()
 
@@ -134,9 +137,10 @@ class TestPCPAOScraper:
 
     def test_search_properties_extracts_parcel_ids(self, mock_webdriver, mock_chrome_paths):
         """Test search_properties extracts parcel IDs from results."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         from selenium.common.exceptions import NoSuchElementException
         from selenium.webdriver.common.by import By
+
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         # HTML with parcel links (BeautifulSoup-based extraction)
         html_with_parcels = """
@@ -179,9 +183,10 @@ class TestPCPAOScraper:
 
     def test_search_properties_handles_empty_results(self, mock_webdriver, mock_chrome_paths):
         """Test search_properties handles empty search results gracefully."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         from selenium.common.exceptions import NoSuchElementException, TimeoutException
         from selenium.webdriver.common.by import By
+
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         mock_search_input = MagicMock()
 
@@ -207,7 +212,7 @@ class TestPCPAOScraper:
         """Test scrape_property_details returns dictionary with parcel_id."""
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
-        mock_webdriver.find_element.side_effect = Exception("Element not found")
+        mock_webdriver.find_element.side_effect = Exception('Element not found')
         mock_webdriver.page_source = '<html><body></body></html>'
         mock_webdriver.current_url = 'https://www.pcpao.gov/property-details'
 
@@ -222,8 +227,8 @@ class TestPCPAOScraper:
 
     def test_scrape_property_details_extracts_address(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_property_details extracts address when available."""
+
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
-        from selenium.webdriver.common.by import By
 
         mock_address_elem = MagicMock()
         mock_address_elem.text = '123 Main St'
@@ -233,7 +238,7 @@ class TestPCPAOScraper:
         def find_element_side_effect(by, selector):
             if 'address' in selector.lower():
                 return mock_address_elem
-            raise Exception("Not found")
+            raise Exception('Not found')
 
         mock_webdriver.find_element.side_effect = find_element_side_effect
 
@@ -280,8 +285,8 @@ class TestTaxCollectorScraper:
 
     def test_setup_driver_creates_chrome_instance(self, mock_chrome_dependencies):
         """Test setup_driver creates Chrome WebDriver."""
-        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         import apps.WebScraper.tasks.tax_collector_scraper as scraper_module
+        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -327,8 +332,8 @@ class TestTaxCollectorScraper:
 
     def test_scrape_tax_info_extracts_tax_amount(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_tax_info extracts tax amount."""
+
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
-        from selenium.webdriver.common.by import By
 
         # HTML with tax table data (BeautifulSoup parses this)
         html_with_tax = """
@@ -405,8 +410,8 @@ class TestTaxCollectorScraper:
 
     def test_scrape_tax_info_handles_missing_parcel(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_tax_info handles parcel not found gracefully."""
+
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
-        from selenium.common.exceptions import NoSuchElementException
 
         mock_webdriver.page_source = '<html><body><p>No search results found</p></body></html>'
         mock_webdriver.current_url = 'https://pinellastaxcollector.gov/search-results/'
@@ -424,8 +429,9 @@ class TestTaxCollectorScraper:
 
     def test_scrape_tax_info_handles_timeout(self, mock_webdriver, mock_chrome_paths):
         """Test scrape_tax_info handles timeout gracefully."""
-        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         from selenium.common.exceptions import TimeoutException
+
+        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
         mock_webdriver.get.side_effect = TimeoutException()
 
@@ -442,36 +448,40 @@ class TestTaxCollectorScraper:
         """Test scrape_batch processes list of parcel IDs."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
-        with patch.object(TaxCollectorScraper, 'setup_driver') as mock_setup:
-            with patch.object(TaxCollectorScraper, 'close_driver') as mock_close:
-                with patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape:
-                    mock_scrape.side_effect = [
-                        {'parcel_id': 'p1', 'tax_amount': 1000},
-                        {'parcel_id': 'p2', 'tax_amount': 2000},
-                        {'parcel_id': 'p3', 'tax_amount': 3000},
-                    ]
+        with (
+            patch.object(TaxCollectorScraper, 'setup_driver') as mock_setup,
+            patch.object(TaxCollectorScraper, 'close_driver') as mock_close,
+            patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape,
+        ):
+            mock_scrape.side_effect = [
+                {'parcel_id': 'p1', 'tax_amount': 1000},
+                {'parcel_id': 'p2', 'tax_amount': 2000},
+                {'parcel_id': 'p3', 'tax_amount': 3000},
+            ]
 
-                    scraper = TaxCollectorScraper()
-                    results = scraper.scrape_batch(['p1', 'p2', 'p3'])
+            scraper = TaxCollectorScraper()
+            results = scraper.scrape_batch(['p1', 'p2', 'p3'])
 
-                    mock_setup.assert_called_once()
-                    assert mock_scrape.call_count == 3
-                    mock_close.assert_called_once()
-                    assert len(results) == 3
+            mock_setup.assert_called_once()
+            assert mock_scrape.call_count == 3
+            mock_close.assert_called_once()
+            assert len(results) == 3
 
     def test_scrape_batch_closes_driver_on_error(self, mock_chrome_paths):
         """Test scrape_batch closes driver even when error occurs."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
-        with patch.object(TaxCollectorScraper, 'setup_driver'):
-            with patch.object(TaxCollectorScraper, 'close_driver') as mock_close:
-                with patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape:
-                    mock_scrape.side_effect = Exception("Unexpected error")
+        with (
+            patch.object(TaxCollectorScraper, 'setup_driver'),
+            patch.object(TaxCollectorScraper, 'close_driver') as mock_close,
+            patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape,
+        ):
+            mock_scrape.side_effect = Exception('Unexpected error')
 
-                    scraper = TaxCollectorScraper()
+            scraper = TaxCollectorScraper()
 
-                    with pytest.raises(Exception):
-                        scraper.scrape_batch(['p1'])
+            with pytest.raises(Exception, match='Unexpected error'):
+                scraper.scrape_batch(['p1'])
 
-                    # Driver should still be closed via finally block
-                    mock_close.assert_called_once()
+            # Driver should still be closed via finally block
+            mock_close.assert_called_once()

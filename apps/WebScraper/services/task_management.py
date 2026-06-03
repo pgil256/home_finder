@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 from django.core.cache import cache
 
@@ -15,16 +15,16 @@ def _safe_cache_get(key: str, default: Any = None) -> Any:
     try:
         return cache.get(key, default)
     except Exception as e:
-        logger.warning("Cache GET failed for %s: %s", key, e)
+        logger.warning('Cache GET failed for %s: %s', key, e)
         return default
 
 
-def _safe_cache_set(key: str, value: Any, timeout: Optional[int] = None) -> bool:
+def _safe_cache_set(key: str, value: Any, timeout: int | None = None) -> bool:
     try:
         cache.set(key, value, timeout=timeout)
         return True
     except Exception as e:
-        logger.warning("Cache SET failed for %s: %s", key, e)
+        logger.warning('Cache SET failed for %s: %s', key, e)
         return False
 
 
@@ -36,10 +36,10 @@ def get_client_ip(request) -> str:
     return request.META.get('REMOTE_ADDR', '')
 
 
-def check_rate_limit(client_ip: str) -> Optional[int]:
+def check_rate_limit(client_ip: str) -> int | None:
     """Return seconds to wait if rate-limited, else None.
 
-    Cache failures fail open (request allowed) so a Redis blip doesn't 500 the page.
+    Cache failures fail open (request allowed) so a cache-table issue doesn't 500 the page.
     """
     rate_key = f'scrape_rate:{client_ip}'
     last_submission = _safe_cache_get(rate_key)

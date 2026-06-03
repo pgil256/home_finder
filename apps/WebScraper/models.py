@@ -53,7 +53,7 @@ class PropertyListing(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.parcel_id} - {self.address}"
+        return f'{self.parcel_id} - {self.address}'
 
     @property
     def price_per_sqft(self):

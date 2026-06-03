@@ -1,15 +1,14 @@
 import pytest
-from django.test import Client
-from django.urls import reverse
 
 pytestmark = pytest.mark.django_db
 
 
 class TestPagesViews:
     def test_home_page_renders(self, client):
-        """Test home page returns 200 and uses correct template."""
+        """Test home page returns 200."""
         response = client.get('/')
         assert response.status_code == 200
+        assert b'Pinellas Market Lens' in response.content
 
     def test_about_page_renders(self, client):
         """Test about page returns 200."""
@@ -21,10 +20,10 @@ class TestPagesViews:
         response = client.get('/help')
         assert response.status_code == 200
 
-    def test_home_uses_correct_template(self, client):
-        """Test home page uses the correct template."""
+    def test_home_uses_insights_template(self, client):
+        """Test home page opens on the analytics dashboard."""
         response = client.get('/')
-        assert 'Pages/home.html' in [t.name for t in response.templates]
+        assert 'WebScraper/market-insights.html' in [t.name for t in response.templates]
 
     def test_about_uses_correct_template(self, client):
         """Test about page uses the correct template."""

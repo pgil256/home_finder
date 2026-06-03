@@ -6,13 +6,11 @@ to test the actual BeautifulSoup parsing logic without requiring
 live browser automation.
 """
 
-import os
-import pytest
-from pathlib import Path
 from decimal import Decimal
-from unittest.mock import patch, MagicMock, PropertyMock
-from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, PropertyMock, patch
 
+import pytest
 from bs4 import BeautifulSoup
 
 from apps.WebScraper.models import PropertyListing
@@ -24,24 +22,28 @@ FIXTURES_DIR = Path(__file__).parent / 'fixtures'
 
 def load_fixture(filename: str) -> str:
     """Load HTML fixture file content."""
-    with open(FIXTURES_DIR / filename, 'r') as f:
+    with open(FIXTURES_DIR / filename) as f:
         return f.read()
 
 
 @pytest.fixture(autouse=True)
 def mock_time_sleep():
     """Auto-mock time.sleep for all tests to prevent delays."""
-    with patch('apps.WebScraper.tasks.pcpao_scraper.time.sleep'):
-        with patch('apps.WebScraper.tasks.tax_collector_scraper.time.sleep'):
-            yield
+    with (
+        patch('apps.WebScraper.tasks.pcpao_scraper.time.sleep'),
+        patch('apps.WebScraper.tasks.tax_collector_scraper.time.sleep'),
+    ):
+        yield
 
 
 @pytest.fixture
 def mock_chrome_paths():
     """Mock Chrome binary path checks to always use webdriver-manager."""
-    with patch('apps.WebScraper.tasks.pcpao_scraper.os.path.exists', return_value=False):
-        with patch('apps.WebScraper.tasks.tax_collector_scraper.os.path.exists', return_value=False):
-            yield
+    with (
+        patch('apps.WebScraper.tasks.pcpao_scraper.os.path.exists', return_value=False),
+        patch('apps.WebScraper.tasks.tax_collector_scraper.os.path.exists', return_value=False),
+    ):
+        yield
 
 
 class TestPCPAOScraperHTMLParsing:
@@ -324,11 +326,11 @@ class TestPCPAOScraperDetailParsing:
         from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         scraper = PCPAOScraper()
-        html = '''<html><body>
+        html = """<html><body>
             <img src="/icon.png" width="16" height="16">
             <img src="/button.gif" alt="button">
             <img src="/logo.png" alt="company logo">
-        </body></html>'''
+        </body></html>"""
         soup = BeautifulSoup(html, 'html.parser')
 
         image_url = scraper._extract_property_image(soup)
@@ -342,8 +344,8 @@ class TestPCPAOScraperFullWorkflow:
 
     def test_scrape_property_details_full_extraction(self, mock_chrome_paths):
         """Test scrape_property_details extracts all fields correctly."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         import apps.WebScraper.tasks.pcpao_scraper as scraper_module
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -356,8 +358,7 @@ class TestPCPAOScraperFullWorkflow:
             scraper.wait = MagicMock()
 
             result = scraper.scrape_property_details(
-                '14-31-15-91961-004-0110',
-                detail_url='https://www.pcpao.gov/property-details?strap=143115919610040110'
+                '14-31-15-91961-004-0110', detail_url='https://www.pcpao.gov/property-details?strap=143115919610040110'
             )
 
             assert result['parcel_id'] == '14-31-15-91961-004-0110'
@@ -375,8 +376,8 @@ class TestPCPAOScraperFullWorkflow:
 
     def test_scrape_property_details_cleans_owner_name(self, mock_chrome_paths):
         """Test that owner name is cleaned (More suffix removed, spaces added)."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         import apps.WebScraper.tasks.pcpao_scraper as scraper_module
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -395,10 +396,11 @@ class TestPCPAOScraperFullWorkflow:
 
     def test_search_properties_with_urls_pagination_simulation(self, mock_chrome_paths):
         """Test search handles multiple pages of results."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         from selenium.common.exceptions import NoSuchElementException
         from selenium.webdriver.common.by import By
+
         import apps.WebScraper.tasks.pcpao_scraper as scraper_module
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -507,8 +509,8 @@ class TestTaxCollectorScraperFullWorkflow:
 
     def test_scrape_tax_info_paid_status(self, mock_chrome_paths):
         """Test scrape_tax_info correctly parses paid status."""
-        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         import apps.WebScraper.tasks.tax_collector_scraper as scraper_module
+        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -530,8 +532,8 @@ class TestTaxCollectorScraperFullWorkflow:
 
     def test_scrape_tax_info_delinquent_status(self, mock_chrome_paths):
         """Test scrape_tax_info correctly parses delinquent status."""
-        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         import apps.WebScraper.tasks.tax_collector_scraper as scraper_module
+        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -552,8 +554,8 @@ class TestTaxCollectorScraperFullWorkflow:
 
     def test_scrape_tax_info_no_results(self, mock_chrome_paths):
         """Test scrape_tax_info handles no results gracefully."""
-        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         import apps.WebScraper.tasks.tax_collector_scraper as scraper_module
+        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -575,42 +577,46 @@ class TestTaxCollectorScraperFullWorkflow:
         """Test scrape_batch processes a list of parcel IDs."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
-        with patch.object(TaxCollectorScraper, 'setup_driver') as mock_setup:
-            with patch.object(TaxCollectorScraper, 'close_driver') as mock_close:
-                with patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape:
-                    mock_scrape.side_effect = [
-                        {'parcel_id': 'p1', 'tax_amount': 1000, 'tax_status': 'Paid', 'delinquent': False},
-                        {'parcel_id': 'p2', 'tax_amount': 2000, 'tax_status': 'Unpaid', 'delinquent': False},
-                        {'parcel_id': 'p3', 'tax_amount': 3000, 'tax_status': 'Delinquent', 'delinquent': True},
-                    ]
+        with (
+            patch.object(TaxCollectorScraper, 'setup_driver') as mock_setup,
+            patch.object(TaxCollectorScraper, 'close_driver') as mock_close,
+            patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape,
+        ):
+            mock_scrape.side_effect = [
+                {'parcel_id': 'p1', 'tax_amount': 1000, 'tax_status': 'Paid', 'delinquent': False},
+                {'parcel_id': 'p2', 'tax_amount': 2000, 'tax_status': 'Unpaid', 'delinquent': False},
+                {'parcel_id': 'p3', 'tax_amount': 3000, 'tax_status': 'Delinquent', 'delinquent': True},
+            ]
 
-                    scraper = TaxCollectorScraper()
-                    results = scraper.scrape_batch(['p1', 'p2', 'p3'])
+            scraper = TaxCollectorScraper()
+            results = scraper.scrape_batch(['p1', 'p2', 'p3'])
 
-                    mock_setup.assert_called_once()
-                    assert mock_scrape.call_count == 3
-                    mock_close.assert_called_once()
+            mock_setup.assert_called_once()
+            assert mock_scrape.call_count == 3
+            mock_close.assert_called_once()
 
-                    assert len(results) == 3
-                    assert results[0]['tax_amount'] == 1000
-                    assert results[1]['tax_status'] == 'Unpaid'
-                    assert results[2]['delinquent'] is True
+            assert len(results) == 3
+            assert results[0]['tax_amount'] == 1000
+            assert results[1]['tax_status'] == 'Unpaid'
+            assert results[2]['delinquent'] is True
 
     def test_scrape_batch_closes_driver_on_error(self, mock_chrome_paths):
         """Test scrape_batch closes driver even when error occurs."""
         from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
-        with patch.object(TaxCollectorScraper, 'setup_driver'):
-            with patch.object(TaxCollectorScraper, 'close_driver') as mock_close:
-                with patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape:
-                    mock_scrape.side_effect = Exception("Unexpected error")
+        with (
+            patch.object(TaxCollectorScraper, 'setup_driver'),
+            patch.object(TaxCollectorScraper, 'close_driver') as mock_close,
+            patch.object(TaxCollectorScraper, 'scrape_tax_info') as mock_scrape,
+        ):
+            mock_scrape.side_effect = Exception('Unexpected error')
 
-                    scraper = TaxCollectorScraper()
+            scraper = TaxCollectorScraper()
 
-                    with pytest.raises(Exception, match="Unexpected error"):
-                        scraper.scrape_batch(['p1'])
+            with pytest.raises(Exception, match='Unexpected error'):
+                scraper.scrape_batch(['p1'])
 
-                    mock_close.assert_called_once()
+            mock_close.assert_called_once()
 
 
 class TestScrapingPipelineIntegration:
@@ -618,7 +624,6 @@ class TestScrapingPipelineIntegration:
 
     def test_pcpao_scraper_creates_property_listing(self, mock_chrome_paths):
         """Test that scraped data can be saved to PropertyListing model."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         # Simulate scraped property data
         property_data = {
@@ -649,7 +654,7 @@ class TestScrapingPipelineIntegration:
                 'market_value': property_data.get('market_value'),
                 'assessed_value': property_data.get('assessed_value'),
                 'appraiser_url': property_data.get('appraiser_url'),
-            }
+            },
         )
 
         assert created is True
@@ -780,8 +785,8 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_pcpao_handles_missing_detail_url(self, mock_chrome_paths):
         """Test PCPAO scraper handles missing detail URL gracefully."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         import apps.WebScraper.tasks.pcpao_scraper as scraper_module
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -806,8 +811,8 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_tax_collector_handles_empty_amount(self, mock_chrome_paths):
         """Test Tax Collector handles empty tax amount gracefully."""
-        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
         import apps.WebScraper.tasks.tax_collector_scraper as scraper_module
+        from apps.WebScraper.tasks.tax_collector_scraper import TaxCollectorScraper
 
         html = """
         <html><body>
@@ -836,9 +841,10 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_pcpao_handles_timeout_exception(self, mock_chrome_paths):
         """Test PCPAO scraper handles timeout exceptions."""
-        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
         from selenium.common.exceptions import TimeoutException
+
         import apps.WebScraper.tasks.pcpao_scraper as scraper_module
+        from apps.WebScraper.tasks.pcpao_scraper import PCPAOScraper
 
         with patch.object(scraper_module, 'webdriver') as mock_wd:
             mock_driver = MagicMock()
@@ -898,7 +904,7 @@ class TestParcelIDValidation:
         ]
 
         for parcel_id in valid_ids:
-            assert parcel_pattern.match(parcel_id), f"Should match: {parcel_id}"
+            assert parcel_pattern.match(parcel_id), f'Should match: {parcel_id}'
 
     def test_invalid_parcel_id_formats(self, mock_chrome_paths):
         """Test that invalid parcel ID formats are rejected."""
@@ -907,15 +913,15 @@ class TestParcelIDValidation:
         parcel_pattern = re.compile(r'^\d{2}-\d{2}-\d{2}-\d{5}-\d{3}-\d{4}$')
 
         invalid_ids = [
-            '14-31-15-9196-004-0110',    # Section too short
+            '14-31-15-9196-004-0110',  # Section too short
             '14-31-15-919610-004-0110',  # Section too long
-            '14-31-15-91961-04-0110',    # Subsection too short
-            '1-31-15-91961-004-0110',    # Township too short
-            'AB-31-15-91961-004-0110',   # Contains letters
-            '14311591961-004-0110',      # Missing dashes
-            '',                           # Empty string
-            '14-31-15-91961-004-011',    # Last section too short
+            '14-31-15-91961-04-0110',  # Subsection too short
+            '1-31-15-91961-004-0110',  # Township too short
+            'AB-31-15-91961-004-0110',  # Contains letters
+            '14311591961-004-0110',  # Missing dashes
+            '',  # Empty string
+            '14-31-15-91961-004-011',  # Last section too short
         ]
 
         for parcel_id in invalid_ids:
-            assert not parcel_pattern.match(parcel_id), f"Should not match: {parcel_id}"
+            assert not parcel_pattern.match(parcel_id), f'Should not match: {parcel_id}'

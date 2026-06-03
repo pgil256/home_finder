@@ -1,5 +1,5 @@
 /**
- * Pinellas Property Finder - Common Utilities
+ * Pinellas Market Lens - Common Utilities
  * Toast notifications, skeleton loaders, and UI interactions
  */
 
@@ -269,7 +269,7 @@ function initScrollAnimations() {
 function initFormEnhancements() {
   // Add loading state to forms with data-loading-form attribute
   document.querySelectorAll('form[data-loading-form]').forEach(form => {
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function() {
       const submitBtn = form.querySelector('[type="submit"]');
       if (submitBtn) {
         LoadingButton.start(submitBtn);

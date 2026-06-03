@@ -1,7 +1,9 @@
-import factory
 from decimal import Decimal
-from apps.WebScraper.models import PropertyListing
+
+import factory
+
 from apps.KeywordSelection.models import Keyword
+from apps.WebScraper.models import PropertyListing
 
 
 class PropertyListingFactory(factory.django.DjangoModelFactory):

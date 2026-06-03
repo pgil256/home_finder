@@ -4,39 +4,42 @@ Pinellas County Property Appraiser (PCPAO) Selenium Scraper
 Uses Selenium for navigation and form interaction, BeautifulSoup for data extraction.
 """
 
+import contextlib
 import logging
+import os
 import re
 import time
-from typing import List, Dict, Optional, Any
-from datetime import datetime
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
 
-import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait, Select
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 from apps.WebScraper.services.street_view import get_street_view_url
 
 # Chrome for Testing paths
 # Priority: 1. Environment variables (production), 2. Local dev paths, 3. webdriver-manager fallback
-CHROME_BINARY = os.environ.get('CHROME_BIN') or os.path.expanduser("~/.chrome-for-testing/chrome-linux64/chrome")
-CHROMEDRIVER_BINARY = os.environ.get('CHROMEDRIVER_PATH') or os.path.expanduser("~/.chrome-for-testing/chromedriver-linux64/chromedriver")
+CHROME_BINARY = os.environ.get('CHROME_BIN') or os.path.expanduser('~/.chrome-for-testing/chrome-linux64/chrome')
+CHROMEDRIVER_BINARY = os.environ.get('CHROMEDRIVER_PATH') or os.path.expanduser(
+    '~/.chrome-for-testing/chromedriver-linux64/chromedriver'
+)
 
 logger = logging.getLogger(__name__)
 
 
 class PCPAOScraper:
-    BASE_URL = "https://www.pcpao.gov/"
-    SEARCH_URL = "https://www.pcpao.gov/quick-search"
-    DETAIL_URL = "https://www.pcpao.gov/property-details"
+    BASE_URL = 'https://www.pcpao.gov/'
+    SEARCH_URL = 'https://www.pcpao.gov/quick-search'
+    DETAIL_URL = 'https://www.pcpao.gov/property-details'
 
     # Municipality codes used by PCPAO for each city
     CITY_TO_MUNI = {
@@ -97,16 +100,16 @@ class PCPAOScraper:
         if os.path.exists(CHROME_BINARY):
             options.binary_location = CHROME_BINARY
         if self.headless:
-            options.add_argument("--headless=new")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--disable-extensions")
-        options.add_argument("--disable-plugins")
-        options.add_argument("--single-process")
-        options.add_argument("--memory-pressure-off")
+            options.add_argument('--headless=new')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_argument('--window-size=1920,1080')
+        options.add_argument('--disable-extensions')
+        options.add_argument('--disable-plugins')
+        options.add_argument('--single-process')
+        options.add_argument('--memory-pressure-off')
 
         if os.path.exists(CHROMEDRIVER_BINARY):
             service = Service(CHROMEDRIVER_BINARY)
@@ -114,14 +117,14 @@ class PCPAOScraper:
             service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service, options=options)
         self.wait = WebDriverWait(self.driver, 20)
-        logger.info("Chrome driver initialized for PCPAO scraper")
+        logger.info('Chrome driver initialized for PCPAO scraper')
 
     def close_driver(self):
         if self.driver:
             self.driver.quit()
-            logger.info("Driver closed")
+            logger.info('Driver closed')
 
-    def _extract_parcels_from_page(self, existing_ids: set) -> List[Dict[str, str]]:
+    def _extract_parcels_from_page(self, existing_ids: set) -> list[dict[str, str]]:
         """Extract parcel info from current page using BeautifulSoup.
 
         The search results contain both the parcel ID and a strap ID (used in detail URLs).
@@ -145,14 +148,16 @@ class PCPAOScraper:
 
             if parcel_pattern.match(text) and text not in existing_ids:
                 existing_ids.add(text)
-                found.append({
-                    'parcel_id': text,
-                    'detail_url': href if href.startswith('http') else f"{self.BASE_URL}{href.lstrip('/')}"
-                })
+                found.append(
+                    {
+                        'parcel_id': text,
+                        'detail_url': href if href.startswith('http') else f'{self.BASE_URL}{href.lstrip("/")}',
+                    }
+                )
 
         return found
 
-    def _extract_parcel_ids_from_page(self, existing_ids: set) -> List[str]:
+    def _extract_parcel_ids_from_page(self, existing_ids: set) -> list[str]:
         """Extract parcel IDs from current page (legacy compatibility).
 
         Args:
@@ -164,7 +169,7 @@ class PCPAOScraper:
         parcels = self._extract_parcels_from_page(existing_ids)
         return [p['parcel_id'] for p in parcels]
 
-    def search_properties_with_urls(self, search_criteria: Dict[str, Any]) -> List[Dict[str, str]]:
+    def search_properties_with_urls(self, search_criteria: dict[str, Any]) -> list[dict[str, str]]:
         """Search for properties using PCPAO Quick Search.
 
         Returns list of dicts with parcel_id and detail_url for each property.
@@ -173,14 +178,12 @@ class PCPAOScraper:
         seen_ids = set()
 
         try:
-            logger.info(f"Navigating to {self.SEARCH_URL}")
+            logger.info(f'Navigating to {self.SEARCH_URL}')
             self.driver.get(self.SEARCH_URL)
 
             # Wait for search input to be ready
-            search_input = self.wait.until(
-                EC.presence_of_element_located((By.ID, "txtKeyWord"))
-            )
-            logger.info(f"Page loaded, title: {self.driver.title}")
+            search_input = self.wait.until(EC.presence_of_element_located((By.ID, 'txtKeyWord')))
+            logger.info(f'Page loaded, title: {self.driver.title}')
 
             # Build search query from criteria
             search_terms = []
@@ -194,22 +197,20 @@ class PCPAOScraper:
                 search_terms.append(search_criteria['owner_name'])
 
             search_query = ' '.join(search_terms) if search_terms else 'Clearwater'
-            logger.info(f"Searching for: {search_query}")
+            logger.info(f'Searching for: {search_query}')
 
             # Submit search
             search_input.clear()
             search_input.send_keys(search_query)
             search_input.send_keys(Keys.RETURN)
-            logger.info("Search submitted, waiting for results...")
+            logger.info('Search submitted, waiting for results...')
 
             # Wait for results table to load (AJAX content)
             # The page has multiple tables; we need to wait for the DataTable with
             # property-details links to be populated, not just any table row.
             try:
                 # First wait for any table structure
-                self.wait.until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
-                )
+                self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody tr')))
 
                 # Now poll for property-details links (the actual AJAX-loaded data)
                 # The DataTable loads asynchronously and may take longer in production
@@ -220,12 +221,10 @@ class PCPAOScraper:
 
                 while waited < max_wait_seconds:
                     try:
-                        links = self.driver.find_elements(
-                            By.CSS_SELECTOR, "a[href*='property-details']"
-                        )
+                        links = self.driver.find_elements(By.CSS_SELECTOR, "a[href*='property-details']")
                         if links:
                             links_found = True
-                            logger.info(f"Found {len(links)} property-details links after {waited:.1f}s")
+                            logger.info(f'Found {len(links)} property-details links after {waited:.1f}s')
                             break
                     except Exception:
                         pass
@@ -233,20 +232,22 @@ class PCPAOScraper:
                     waited += poll_interval
 
                 if not links_found:
-                    logger.warning(f"No property-details links found after {max_wait_seconds}s - search may have returned no results")
+                    logger.warning(
+                        f'No property-details links found after {max_wait_seconds}s - search may have returned no results'
+                    )
                     return parcels
 
                 # Brief extra wait for any final rendering (reduced from 1s)
                 time.sleep(0.5)
 
             except TimeoutException:
-                logger.warning("No results table found - search may have returned no results")
+                logger.warning('No results table found - search may have returned no results')
                 return parcels
 
             # Extract from first page using BeautifulSoup
             first_page_parcels = self._extract_parcels_from_page(seen_ids)
             parcels.extend(first_page_parcels)
-            logger.info(f"Page 1: Found {len(first_page_parcels)} parcels")
+            logger.info(f'Page 1: Found {len(first_page_parcels)} parcels')
 
             # Handle pagination - Selenium for clicking, BeautifulSoup for extraction
             page_num = 1
@@ -255,15 +256,7 @@ class PCPAOScraper:
 
             while page_num < MAX_PAGES:
                 try:
-                    next_button = self.driver.find_element(
-                        By.CSS_SELECTOR, "a.paginate_button.next:not(.disabled)"
-                    )
-
-                    # Get current links count before clicking
-                    current_links = self.driver.find_elements(
-                        By.CSS_SELECTOR, "a[href*='property-details']"
-                    )
-                    current_link_count = len(current_links)
+                    next_button = self.driver.find_element(By.CSS_SELECTOR, 'a.paginate_button.next:not(.disabled)')
 
                     next_button.click()
                     page_num += 1
@@ -275,9 +268,7 @@ class PCPAOScraper:
                         time.sleep(0.5)
                         waited += 0.5
                         try:
-                            new_links = self.driver.find_elements(
-                                By.CSS_SELECTOR, "a[href*='property-details']"
-                            )
+                            new_links = self.driver.find_elements(By.CSS_SELECTOR, "a[href*='property-details']")
                             # Page has transitioned when we have links
                             # (they may be same count but different content)
                             if new_links:
@@ -292,39 +283,39 @@ class PCPAOScraper:
                     # Extract with BeautifulSoup
                     page_parcels = self._extract_parcels_from_page(seen_ids)
                     parcels.extend(page_parcels)
-                    logger.info(f"Page {page_num}: Found {len(page_parcels)} new parcels (total: {len(parcels)})")
+                    logger.info(f'Page {page_num}: Found {len(page_parcels)} new parcels (total: {len(parcels)})')
 
                     if not page_parcels:
                         consecutive_empty_pages += 1
                         if consecutive_empty_pages >= 1:
-                            logger.info("Empty page reached, stopping pagination")
+                            logger.info('Empty page reached, stopping pagination')
                             break
                     else:
                         consecutive_empty_pages = 0
 
                 except NoSuchElementException:
-                    logger.info("No more pages (next button disabled or not found)")
+                    logger.info('No more pages (next button disabled or not found)')
                     break
                 except StaleElementReferenceException:
-                    logger.warning(f"Stale element on page {page_num}, retrying...")
+                    logger.warning(f'Stale element on page {page_num}, retrying...')
                     time.sleep(1)
                     continue
 
             if page_num >= MAX_PAGES:
-                logger.warning(f"Hit max page limit ({MAX_PAGES}), stopping pagination")
+                logger.warning(f'Hit max page limit ({MAX_PAGES}), stopping pagination')
 
         except Exception as e:
-            logger.error(f"Error searching properties: {e}", exc_info=True)
+            logger.error(f'Error searching properties: {e}', exc_info=True)
             try:
-                logger.error(f"Current URL: {self.driver.current_url}")
-                logger.error(f"Page title: {self.driver.title}")
-            except:
+                logger.error(f'Current URL: {self.driver.current_url}')
+                logger.error(f'Page title: {self.driver.title}')
+            except Exception:
                 pass
 
-        logger.info(f"Found {len(parcels)} parcels")
+        logger.info(f'Found {len(parcels)} parcels')
         return parcels
 
-    def search_properties(self, search_criteria: Dict[str, Any]) -> List[str]:
+    def search_properties(self, search_criteria: dict[str, Any]) -> list[str]:
         """Search for properties using PCPAO Quick Search (legacy compatibility).
 
         Returns list of parcel IDs only. Use search_properties_with_urls for
@@ -333,7 +324,7 @@ class PCPAOScraper:
         parcels = self.search_properties_with_urls(search_criteria)
         return [p['parcel_id'] for p in parcels]
 
-    def _get_h2_value(self, soup: BeautifulSoup, label: str) -> Optional[str]:
+    def _get_h2_value(self, soup: BeautifulSoup, label: str) -> str | None:
         """Extract value from h2 element where label is in the parent.
 
         PCPAO uses a pattern where the label text and h2 value are both in a parent div.
@@ -353,7 +344,7 @@ class PCPAOScraper:
                     return h2.get_text(strip=True)
         return None
 
-    def _get_sibling_value(self, soup: BeautifulSoup, label: str) -> Optional[str]:
+    def _get_sibling_value(self, soup: BeautifulSoup, label: str) -> str | None:
         """Extract value from sibling element after a label.
 
         PCPAO uses a pattern where label text is followed by value in next sibling.
@@ -374,7 +365,7 @@ class PCPAOScraper:
                     return sibling.get_text(strip=True)
         return None
 
-    def _get_address_parts(self, soup: BeautifulSoup) -> Dict[str, str]:
+    def _get_address_parts(self, soup: BeautifulSoup) -> dict[str, str]:
         """Extract address, city, and zip from Site Address section.
 
         The Site Address label is followed by a sibling element containing
@@ -413,7 +404,7 @@ class PCPAOScraper:
                             result['zip_code'] = city_match.group(2)
         return result
 
-    def _get_parcel_from_page(self, soup: BeautifulSoup) -> Optional[str]:
+    def _get_parcel_from_page(self, soup: BeautifulSoup) -> str | None:
         """Extract parcel ID from the detail page.
 
         Args:
@@ -429,7 +420,7 @@ class PCPAOScraper:
                 return text
         return None
 
-    def _get_valuation_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
+    def _get_valuation_data(self, soup: BeautifulSoup) -> dict[str, Any]:
         """Extract valuation data from the current year's valuation table.
 
         Args:
@@ -460,7 +451,7 @@ class PCPAOScraper:
                 break
         return data
 
-    def _extract_property_data_from_soup(self, soup: BeautifulSoup, parcel_id: str) -> Dict[str, Any]:
+    def _extract_property_data_from_soup(self, soup: BeautifulSoup, parcel_id: str) -> dict[str, Any]:
         """Extract all property data fields from a parsed detail page.
 
         Consolidates the shared HTML extraction logic used by both the
@@ -546,14 +537,14 @@ class PCPAOScraper:
             street_view_url = get_street_view_url(
                 address=property_data.get('address'),
                 city=property_data.get('city'),
-                zip_code=property_data.get('zip_code')
+                zip_code=property_data.get('zip_code'),
             )
             if street_view_url:
                 property_data['image_url'] = street_view_url
 
         return property_data
 
-    def _get_tax_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
+    def _get_tax_data(self, soup: BeautifulSoup) -> dict[str, Any]:
         """Extract tax information from the PCPAO detail page.
 
         Looks for the Tax Information section which contains millage rate
@@ -608,15 +599,11 @@ class PCPAOScraper:
                     cells = [td.get_text(strip=True) for td in rows[0].find_all('td')]
                     # Structure: Year, Just/Market, Assessed, County Taxable, School Taxable, Municipal Taxable
                     if len(cells) >= 4:
-                        try:
+                        with contextlib.suppress(ValueError, IndexError):
                             county_taxable = float(cells[3].replace('$', '').replace(',', ''))
-                        except (ValueError, IndexError):
-                            pass
                         # Also grab the tax year
-                        try:
+                        with contextlib.suppress(ValueError, IndexError):
                             data['tax_year'] = int(cells[0])
-                        except (ValueError, IndexError):
-                            pass
                 break
 
         # Estimate tax amount from millage rate and taxable value
@@ -628,7 +615,7 @@ class PCPAOScraper:
 
         return data
 
-    def _extract_property_image(self, soup: BeautifulSoup) -> Optional[str]:
+    def _extract_property_image(self, soup: BeautifulSoup) -> str | None:
         """Extract property image URL from detail page.
 
         PCPAO may have property photos in various locations. This method
@@ -661,9 +648,9 @@ class PCPAOScraper:
                 src = img['src']
                 # Handle relative URLs
                 if src.startswith('//'):
-                    return f"https:{src}"
+                    return f'https:{src}'
                 elif src.startswith('/'):
-                    return f"{self.BASE_URL.rstrip('/')}{src}"
+                    return f'{self.BASE_URL.rstrip("/")}{src}'
                 elif src.startswith('http'):
                     return src
 
@@ -680,7 +667,7 @@ class PCPAOScraper:
                 try:
                     if int(width) >= 200 and int(height) >= 150:
                         if src.startswith('/'):
-                            return f"{self.BASE_URL.rstrip('/')}{src}"
+                            return f'{self.BASE_URL.rstrip("/")}{src}'
                         elif src.startswith('http'):
                             return src
                 except ValueError:
@@ -688,7 +675,7 @@ class PCPAOScraper:
 
         return None
 
-    def scrape_property_details(self, parcel_id: str, detail_url: Optional[str] = None) -> Dict[str, Any]:
+    def scrape_property_details(self, parcel_id: str, detail_url: str | None = None) -> dict[str, Any]:
         """Scrape property details using BeautifulSoup for extraction.
 
         Args:
@@ -708,10 +695,8 @@ class PCPAOScraper:
                 # Search for the parcel to get the detail URL
                 self.driver.get(self.SEARCH_URL)
                 # Wait for search input instead of fixed sleep
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "txtKeyWord"))
-                )
-                search_input = self.driver.find_element(By.ID, "txtKeyWord")
+                WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, 'txtKeyWord')))
+                search_input = self.driver.find_element(By.ID, 'txtKeyWord')
                 search_input.clear()
                 search_input.send_keys(parcel_id)
                 search_input.send_keys(Keys.RETURN)
@@ -724,21 +709,19 @@ class PCPAOScraper:
                     time.sleep(1)  # Fallback short wait
 
                 soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-                link = soup.select_one(f'a[href*="property-details"]')
+                link = soup.select_one('a[href*="property-details"]')
                 if link:
                     detail_url = link.get('href')
                     if not detail_url.startswith('http'):
-                        detail_url = f"{self.BASE_URL}{detail_url.lstrip('/')}"
+                        detail_url = f'{self.BASE_URL}{detail_url.lstrip("/")}'
                     self.driver.get(detail_url)
                 else:
-                    logger.warning(f"No detail link found for parcel {parcel_id}")
+                    logger.warning(f'No detail link found for parcel {parcel_id}')
                     return property_data
 
             # Wait for page to load (reduced from 3s fixed sleep)
             try:
-                WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.TAG_NAME, "h2"))
-                )
+                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.TAG_NAME, 'h2')))
             except TimeoutException:
                 time.sleep(1)  # Fallback short wait
             property_data['appraiser_url'] = self.driver.current_url
@@ -749,17 +732,19 @@ class PCPAOScraper:
             property_data.update(extracted)
 
         except Exception as e:
-            logger.error(f"Error scraping property {parcel_id}: {e}")
+            logger.error(f'Error scraping property {parcel_id}: {e}')
 
         # Log extracted data for debugging
-        logger.info(f"Scraped property {parcel_id}: address={property_data.get('address')}, "
-                    f"city={property_data.get('city')}, market_value={property_data.get('market_value')}, "
-                    f"owner={property_data.get('owner_name')}, sqft={property_data.get('building_sqft')}, "
-                    f"image={'found' if property_data.get('image_url') else 'not found'}")
+        logger.info(
+            f'Scraped property {parcel_id}: address={property_data.get("address")}, '
+            f'city={property_data.get("city")}, market_value={property_data.get("market_value")}, '
+            f'owner={property_data.get("owner_name")}, sqft={property_data.get("building_sqft")}, '
+            f'image={"found" if property_data.get("image_url") else "not found"}'
+        )
 
         return property_data
 
-    def _scrape_worker(self, parcels_chunk: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    def _scrape_worker(self, parcels_chunk: list[dict[str, str]]) -> list[dict[str, Any]]:
         """Worker function for parallel scraping. Each worker gets its own browser instance.
 
         Args:
@@ -780,18 +765,15 @@ class PCPAOScraper:
                     results.append((parcel_info['_index'], property_data))
                     time.sleep(0.3)  # Brief delay between requests
                 except Exception as e:
-                    logger.error(f"Worker error scraping {parcel_id}: {e}")
+                    logger.error(f'Worker error scraping {parcel_id}: {e}')
                     results.append((parcel_info['_index'], {'parcel_id': parcel_id}))
         finally:
             worker_scraper.close_driver()
         return results
 
     def scrape_properties_parallel(
-        self,
-        parcels: List[Dict[str, str]],
-        max_workers: int = 3,
-        progress_callback: Optional[callable] = None
-    ) -> List[Dict[str, Any]]:
+        self, parcels: list[dict[str, str]], max_workers: int = 3, progress_callback: Callable | None = None
+    ) -> list[dict[str, Any]]:
         """Scrape property details using multiple browser instances in parallel.
 
         Args:
@@ -806,9 +788,7 @@ class PCPAOScraper:
             return []
 
         # Add index to each parcel for maintaining order
-        indexed_parcels = [
-            {**p, '_index': i} for i, p in enumerate(parcels)
-        ]
+        indexed_parcels = [{**p, '_index': i} for i, p in enumerate(parcels)]
 
         # Distribute parcels across workers (round-robin)
         chunks = [[] for _ in range(max_workers)]
@@ -819,17 +799,14 @@ class PCPAOScraper:
         chunks = [c for c in chunks if c]
         actual_workers = len(chunks)
 
-        logger.info(f"Parallel scraping {len(parcels)} properties with {actual_workers} workers")
+        logger.info(f'Parallel scraping {len(parcels)} properties with {actual_workers} workers')
 
         # Results array to maintain order
         results = [None] * len(parcels)
         completed = 0
 
         with ThreadPoolExecutor(max_workers=actual_workers) as executor:
-            futures = {
-                executor.submit(self._scrape_worker, chunk): chunk
-                for chunk in chunks
-            }
+            futures = {executor.submit(self._scrape_worker, chunk): chunk for chunk in chunks}
 
             for future in as_completed(futures):
                 try:
@@ -840,7 +817,7 @@ class PCPAOScraper:
                         if progress_callback:
                             progress_callback(completed, len(parcels))
                 except Exception as e:
-                    logger.error(f"Worker failed: {e}")
+                    logger.error(f'Worker failed: {e}')
 
         # Filter out any None results (shouldn't happen but defensive)
         return [r for r in results if r is not None]
@@ -863,11 +840,47 @@ class PCPAOScraper:
             'mobile home': {'02'},
             'vacant land': {'00', '10', '11', '12', '13', '14', '15', '16'},
             'commercial': {
-                '03', '05', '06', '07', '09',
-                '17', '18', '19', '20', '21', '22', '23', '24', '25',
-                '26', '27', '28', '29', '30', '31', '32', '33', '34',
-                '35', '36', '37', '38', '39', '40', '41', '42', '43',
-                '44', '45', '46', '47', '48', '49', '50', '51', '52',
+                '03',
+                '05',
+                '06',
+                '07',
+                '09',
+                '17',
+                '18',
+                '19',
+                '20',
+                '21',
+                '22',
+                '23',
+                '24',
+                '25',
+                '26',
+                '27',
+                '28',
+                '29',
+                '30',
+                '31',
+                '32',
+                '33',
+                '34',
+                '35',
+                '36',
+                '37',
+                '38',
+                '39',
+                '40',
+                '41',
+                '42',
+                '43',
+                '44',
+                '45',
+                '46',
+                '47',
+                '48',
+                '49',
+                '50',
+                '51',
+                '52',
             },
         }
         prefixes = set()
@@ -877,7 +890,7 @@ class PCPAOScraper:
                 prefixes.update(mapping[key])
         return prefixes
 
-    def _search_via_api(self, search_criteria: Dict[str, Any], limit: Optional[int] = None) -> List[Dict[str, str]]:
+    def _search_via_api(self, search_criteria: dict[str, Any], limit: int | None = None) -> list[dict[str, str]]:
         """Search for properties via the PCPAO DataTables API (no Selenium needed).
 
         Args:
@@ -906,8 +919,9 @@ class PCPAOScraper:
             search_input = self.CITY_SEARCH_TERMS.get(city, city)
             muni_filter = self.CITY_TO_MUNI.get(city, set())
             if muni_filter:
-                logger.info(f"City '{city}': using search term '{search_input}', "
-                            f"filtering by municipality codes {muni_filter}")
+                logger.info(
+                    f"City '{city}': using search term '{search_input}', filtering by municipality codes {muni_filter}"
+                )
         else:
             logger.warning("No search criteria provided, defaulting to 'Clearwater'")
             search_input = 'Clearwater'
@@ -930,13 +944,15 @@ class PCPAOScraper:
 
         # Create session and establish cookies
         session = req.Session()
-        session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'X-Requested-With': 'XMLHttpRequest',
-        })
+        session.headers.update(
+            {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        )
 
         # GET a page first to establish session cookies
-        logger.info(f"Establishing session with {self.SEARCH_URL}")
+        logger.info(f'Establishing session with {self.SEARCH_URL}')
         init_resp = session.get(self.SEARCH_URL, timeout=15)
         init_resp.raise_for_status()
 
@@ -952,7 +968,7 @@ class PCPAOScraper:
             while True:
                 page_count += 1
                 if page_count > self.MAX_API_PAGES:
-                    logger.warning(f"Hit max API page limit ({self.MAX_API_PAGES}), stopping pagination")
+                    logger.warning(f'Hit max API page limit ({self.MAX_API_PAGES}), stopping pagination')
                     break
 
                 data = {
@@ -984,7 +1000,7 @@ class PCPAOScraper:
                 records_filtered = json_data.get('recordsFiltered', 0)
                 rows = json_data.get('data', [])
 
-                logger.info(f"API response: {records_total} total, {records_filtered} filtered, {len(rows)} in page")
+                logger.info(f'API response: {records_total} total, {records_filtered} filtered, {len(rows)} in page')
 
                 if not rows:
                     break
@@ -1003,7 +1019,7 @@ class PCPAOScraper:
                         detail_url = ''
                         if link_tag and link_tag.get('href'):
                             href = link_tag['href']
-                            detail_url = href if href.startswith('http') else f"{self.BASE_URL}{href.lstrip('/')}"
+                            detail_url = href if href.startswith('http') else f'{self.BASE_URL}{href.lstrip("/")}'
 
                         # Extract use code prefix (first 2 digits)
                         use_code_prefix = use_code_text[:2] if len(use_code_text) >= 2 else ''
@@ -1016,18 +1032,20 @@ class PCPAOScraper:
                         if muni_filter and municipality not in muni_filter:
                             continue
 
-                        results.append({
-                            'parcel_id': parcel_id,
-                            'detail_url': detail_url,
-                            'use_code': use_code_text,
-                            'address': address,
-                            'municipality': municipality,
-                        })
+                        results.append(
+                            {
+                                'parcel_id': parcel_id,
+                                'detail_url': detail_url,
+                                'use_code': use_code_text,
+                                'address': address,
+                                'municipality': municipality,
+                            }
+                        )
 
                         if limit and len(results) >= limit:
                             break
                     except (IndexError, Exception) as e:
-                        logger.warning(f"Error parsing API row: {e}")
+                        logger.warning(f'Error parsing API row: {e}')
                         continue
 
                 if limit and len(results) >= limit:
@@ -1040,13 +1058,13 @@ class PCPAOScraper:
                     break
 
         except (req.exceptions.RequestException, ValueError) as e:
-            logger.error(f"API search failed: {e}")
-            logger.info(f"Returning {len(results)} parcels collected before failure")
+            logger.error(f'API search failed: {e}')
+            logger.info(f'Returning {len(results)} parcels collected before failure')
 
-        logger.info(f"API search returned {len(results)} results")
+        logger.info(f'API search returned {len(results)} results')
         return results
 
-    def _scrape_detail_via_requests(self, parcel_id: str, detail_url: str, session=None) -> Dict[str, Any]:
+    def _scrape_detail_via_requests(self, parcel_id: str, detail_url: str, session=None) -> dict[str, Any]:
         """Scrape property detail page using requests + BeautifulSoup (no Selenium).
 
         Args:
@@ -1064,9 +1082,11 @@ class PCPAOScraper:
         try:
             if session is None:
                 session = req.Session()
-                session.headers.update({
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                })
+                session.headers.update(
+                    {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    }
+                )
 
             resp = session.get(detail_url, timeout=30)
             resp.raise_for_status()
@@ -1077,16 +1097,20 @@ class PCPAOScraper:
             property_data.update(extracted)
 
         except Exception as e:
-            logger.error(f"Error scraping property {parcel_id} via requests: {e}")
+            logger.error(f'Error scraping property {parcel_id} via requests: {e}')
 
-        logger.info(f"Scraped property {parcel_id}: address={property_data.get('address')}, "
-                    f"city={property_data.get('city')}, market_value={property_data.get('market_value')}, "
-                    f"owner={property_data.get('owner_name')}, sqft={property_data.get('building_sqft')}, "
-                    f"image={'found' if property_data.get('image_url') else 'not found'}")
+        logger.info(
+            f'Scraped property {parcel_id}: address={property_data.get("address")}, '
+            f'city={property_data.get("city")}, market_value={property_data.get("market_value")}, '
+            f'owner={property_data.get("owner_name")}, sqft={property_data.get("building_sqft")}, '
+            f'image={"found" if property_data.get("image_url") else "not found"}'
+        )
 
         return property_data
 
-    def scrape_by_criteria(self, search_criteria: Dict[str, Any], limit: Optional[int] = None, max_workers: int = 3) -> List[Dict[str, Any]]:
+    def scrape_by_criteria(
+        self, search_criteria: dict[str, Any], limit: int | None = None, max_workers: int = 3
+    ) -> list[dict[str, Any]]:
         """Search for properties and scrape their details using API + requests.
 
         Uses the PCPAO DataTables API for search and requests for detail pages,
@@ -1107,20 +1131,22 @@ class PCPAOScraper:
         if not parcels:
             return []
 
-        logger.info(f"Scraping details for {len(parcels)} properties via requests")
+        logger.info(f'Scraping details for {len(parcels)} properties via requests')
 
         # Create a shared session for detail scraping
         session = req.Session()
-        session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        })
+        session.headers.update(
+            {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+        )
 
         results = []
         for i, parcel_info in enumerate(parcels):
             parcel_id = parcel_info['parcel_id']
             detail_url = parcel_info.get('detail_url')
             if not detail_url:
-                logger.warning(f"No detail URL for parcel {parcel_id}, skipping")
+                logger.warning(f'No detail URL for parcel {parcel_id}, skipping')
                 results.append({'parcel_id': parcel_id})
                 continue
 

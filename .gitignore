@@ -33,6 +33,7 @@ htmlcov/
 # Browser automation traces
 .playwright-mcp/
 screenshots/
+manual-e2e-screenshots/
 
 # Cookie jars / scratch files from curl-based testing
 cookies.txt

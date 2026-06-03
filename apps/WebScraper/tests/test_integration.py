@@ -1,6 +1,7 @@
 # apps/WebScraper/tests/test_integration.py
-import pytest
 from decimal import Decimal
+
+import pytest
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.integration]
 
@@ -43,6 +44,7 @@ class TestKeywordOrderingWorkflow:
     def test_keyword_reorder_persists(self, client, db):
         """Test keyword reordering persists to database."""
         import json
+
         from apps.KeywordSelection.models import Keyword
 
         # Create keywords

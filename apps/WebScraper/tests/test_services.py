@@ -1,14 +1,16 @@
-import pytest
 from decimal import Decimal
-from unittest.mock import patch, MagicMock
+
+import pytest
+from django.core.management import call_command
+
+from apps.WebScraper.models import PropertyListing
 from apps.WebScraper.services.pcpao_importer import (
-    map_csv_row_to_property,
     bulk_upsert_properties,
+    map_csv_row_to_property,
     safe_decimal,
     safe_int,
-    FIELD_MAPPING,
 )
-from apps.WebScraper.services.property_types import dor_code_to_description, DOR_USE_CODES
+from apps.WebScraper.services.property_types import DOR_USE_CODES, dor_code_to_description
 
 pytestmark = pytest.mark.django_db
 
@@ -82,7 +84,7 @@ class TestMapCsvRowToProperty:
 
         assert result['parcel_id'] == '15-29-16-12345-000-0010'
         assert result['address'] == '123 MAIN ST'
-        assert result['city'] == 'Clearwater'   # normalized from uppercase
+        assert result['city'] == 'Clearwater'  # normalized from uppercase
         assert result['zip_code'] == '33755'
         assert result['owner_name'] == 'DOE, JOHN'
         assert result['market_value'] == Decimal('245000')
@@ -176,8 +178,20 @@ class TestBulkUpsertProperties:
         from apps.WebScraper.models import PropertyListing
 
         properties_data = [
-            {'parcel_id': 'new-001', 'address': 'Test 1', 'city': 'Test', 'zip_code': '33755', 'property_type': 'Single Family'},
-            {'parcel_id': 'new-002', 'address': 'Test 2', 'city': 'Test', 'zip_code': '33755', 'property_type': 'Single Family'},
+            {
+                'parcel_id': 'new-001',
+                'address': 'Test 1',
+                'city': 'Test',
+                'zip_code': '33755',
+                'property_type': 'Single Family',
+            },
+            {
+                'parcel_id': 'new-002',
+                'address': 'Test 2',
+                'city': 'Test',
+                'zip_code': '33755',
+                'property_type': 'Single Family',
+            },
         ]
 
         result = bulk_upsert_properties(properties_data)
@@ -188,15 +202,16 @@ class TestBulkUpsertProperties:
 
     def test_updates_existing_properties(self, sample_property):
         """Test bulk upsert updates existing properties."""
-        from apps.WebScraper.models import PropertyListing
 
-        properties_data = [{
-            'parcel_id': sample_property.parcel_id,
-            'address': 'Updated Address',
-            'city': sample_property.city,
-            'zip_code': sample_property.zip_code,
-            'property_type': sample_property.property_type,
-        }]
+        properties_data = [
+            {
+                'parcel_id': sample_property.parcel_id,
+                'address': 'Updated Address',
+                'city': sample_property.city,
+                'zip_code': sample_property.zip_code,
+                'property_type': sample_property.property_type,
+            }
+        ]
 
         result = bulk_upsert_properties(properties_data)
 
@@ -210,8 +225,20 @@ class TestBulkUpsertProperties:
         from apps.WebScraper.models import PropertyListing
 
         properties_data = [
-            {'parcel_id': 'valid-001', 'address': 'Test 1', 'city': 'Test', 'zip_code': '33755', 'property_type': 'Single Family'},
-            {'parcel_id': '', 'address': 'No ID', 'city': 'Test', 'zip_code': '33755', 'property_type': 'Single Family'},
+            {
+                'parcel_id': 'valid-001',
+                'address': 'Test 1',
+                'city': 'Test',
+                'zip_code': '33755',
+                'property_type': 'Single Family',
+            },
+            {
+                'parcel_id': '',
+                'address': 'No ID',
+                'city': 'Test',
+                'zip_code': '33755',
+                'property_type': 'Single Family',
+            },
             {'address': 'Missing ID', 'city': 'Test', 'zip_code': '33755', 'property_type': 'Single Family'},
         ]
 
@@ -219,6 +246,26 @@ class TestBulkUpsertProperties:
 
         assert result['created'] == 1
         assert PropertyListing.objects.count() == 1
+
+
+class TestImportPcpaoDataCommand:
+    def test_skips_rows_missing_zip_code(self, tmp_path, db):
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        csv_path.write_text(
+            '\n'.join(
+                [
+                    'PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,PROPERTY_USE',
+                    'missing-zip,1 AUDIT ST,CLEARWATER,,0110 Single Family Home',
+                    'valid-zip,2 AUDIT ST,CLEARWATER,33755,0110 Single Family Home',
+                ]
+            ),
+            encoding='utf-8',
+        )
+
+        call_command('import_pcpao_data', file=str(csv_path), quiet=True)
+
+        assert not PropertyListing.objects.filter(parcel_id='missing-zip').exists()
+        assert PropertyListing.objects.filter(parcel_id='valid-zip').exists()
 
 
 class TestPropertyTypeConversion:

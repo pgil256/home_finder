@@ -9,28 +9,30 @@ search but may return limited data. Consider using the PCPAO bulk data import fo
 information when available.
 """
 
+import contextlib
 import logging
+import os
 import re
 import time
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any
 
-import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementNotInteractableException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Chrome for Testing paths
 # Priority: 1. Environment variables (production), 2. Local dev paths, 3. webdriver-manager fallback
-CHROME_BINARY = os.environ.get('CHROME_BIN') or os.path.expanduser("~/.chrome-for-testing/chrome-linux64/chrome")
-CHROMEDRIVER_BINARY = os.environ.get('CHROMEDRIVER_PATH') or os.path.expanduser("~/.chrome-for-testing/chromedriver-linux64/chromedriver")
+CHROME_BINARY = os.environ.get('CHROME_BIN') or os.path.expanduser('~/.chrome-for-testing/chrome-linux64/chrome')
+CHROMEDRIVER_BINARY = os.environ.get('CHROMEDRIVER_PATH') or os.path.expanduser(
+    '~/.chrome-for-testing/chromedriver-linux64/chromedriver'
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +44,8 @@ class TaxCollectorScraper:
     primary tax payment site. This scraper returns basic information when available.
     """
 
-    BASE_URL = "https://pinellastaxcollector.gov/"
-    SEARCH_URL = "https://pinellastaxcollector.gov/search-results/"
+    BASE_URL = 'https://pinellastaxcollector.gov/'
+    SEARCH_URL = 'https://pinellastaxcollector.gov/search-results/'
 
     def __init__(self, headless: bool = True):
         self.headless = headless
@@ -55,15 +57,15 @@ class TaxCollectorScraper:
         if os.path.exists(CHROME_BINARY):
             options.binary_location = CHROME_BINARY
         if self.headless:
-            options.add_argument("--headless=new")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--disable-extensions")
-        options.add_argument("--disable-plugins")
-        options.add_argument("--single-process")
-        options.add_argument("--memory-pressure-off")
+            options.add_argument('--headless=new')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--window-size=1920,1080')
+        options.add_argument('--disable-extensions')
+        options.add_argument('--disable-plugins')
+        options.add_argument('--single-process')
+        options.add_argument('--memory-pressure-off')
 
         if os.path.exists(CHROMEDRIVER_BINARY):
             service = Service(CHROMEDRIVER_BINARY)
@@ -71,13 +73,13 @@ class TaxCollectorScraper:
             service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service, options=options)
         self.wait = WebDriverWait(self.driver, 20)
-        logger.info("Chrome driver initialized for Tax Collector scraper")
+        logger.info('Chrome driver initialized for Tax Collector scraper')
 
     def close_driver(self):
         if self.driver:
             self.driver.quit()
 
-    def _get_table_value(self, soup: BeautifulSoup, label: str) -> Optional[str]:
+    def _get_table_value(self, soup: BeautifulSoup, label: str) -> str | None:
         """Find a table cell value by its label text.
 
         Args:
@@ -94,7 +96,7 @@ class TaxCollectorScraper:
                 return sibling.get_text(strip=True)
         return None
 
-    def scrape_tax_info(self, parcel_id: str) -> Dict[str, Any]:
+    def scrape_tax_info(self, parcel_id: str) -> dict[str, Any]:
         """Scrape tax information using BeautifulSoup for extraction.
 
         Note: Due to Cloudflare protection on the primary tax site, this method
@@ -116,13 +118,11 @@ class TaxCollectorScraper:
 
         try:
             # Use direct URL with parcel ID search parameter
-            search_url = f"{self.SEARCH_URL}?search={parcel_id}"
+            search_url = f'{self.SEARCH_URL}?search={parcel_id}'
             self.driver.get(search_url)
             # Wait for page load (reduced from 4s fixed sleep)
             try:
-                WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.TAG_NAME, "body"))
-                )
+                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
                 time.sleep(0.5)  # Brief stabilization wait
             except TimeoutException:
                 pass
@@ -135,13 +135,13 @@ class TaxCollectorScraper:
             # Check if we got a "no results" message
             page_text = soup.get_text().lower()
             if 'no search results' in page_text or 'no results' in page_text:
-                logger.warning(f"No tax results found for parcel {parcel_id}")
+                logger.warning(f'No tax results found for parcel {parcel_id}')
                 tax_data['tax_status'] = 'Not Found'
                 return tax_data
 
             # Try to extract any available tax information
             # Look for tables with tax data
-            for table in soup.find_all('table'):
+            for _table in soup.find_all('table'):
                 # Extract tax amount
                 tax_amount = self._get_table_value(soup, 'Total Tax')
                 if not tax_amount:
@@ -150,20 +150,16 @@ class TaxCollectorScraper:
                     tax_amount = self._get_table_value(soup, 'Tax Amount')
 
                 if tax_amount:
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         tax_data['tax_amount'] = float(re.sub(r'[^\d.]', '', tax_amount))
-                    except (ValueError, TypeError):
-                        pass
 
                 # Extract tax year
                 tax_year = self._get_table_value(soup, 'Tax Year')
                 if not tax_year:
                     tax_year = self._get_table_value(soup, 'Year')
                 if tax_year:
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         tax_data['tax_year'] = int(re.sub(r'[^\d]', '', tax_year))
-                    except (ValueError, TypeError):
-                        pass
 
                 # Extract payment status
                 status_text = self._get_table_value(soup, 'Status')
@@ -190,12 +186,12 @@ class TaxCollectorScraper:
 
             # If no data found, note the limitation
             if 'tax_amount' not in tax_data:
-                logger.info(f"Limited tax data available for parcel {parcel_id} - site may be protected")
+                logger.info(f'Limited tax data available for parcel {parcel_id} - site may be protected')
 
         except TimeoutException:
-            logger.error(f"Timeout while searching for parcel {parcel_id}")
+            logger.error(f'Timeout while searching for parcel {parcel_id}')
         except Exception as e:
-            logger.error(f"Error scraping tax info for parcel {parcel_id}: {e}")
+            logger.error(f'Error scraping tax info for parcel {parcel_id}: {e}')
 
         return tax_data
 
@@ -205,7 +201,7 @@ class TaxCollectorScraper:
             self.setup_driver()
 
             for i, parcel_id in enumerate(parcel_ids, 1):
-                logger.info(f"Scraping tax info {i}/{len(parcel_ids)}: {parcel_id}")
+                logger.info(f'Scraping tax info {i}/{len(parcel_ids)}: {parcel_id}')
                 tax_data = self.scrape_tax_info(parcel_id)
                 tax_data_list.append(tax_data)
                 time.sleep(0.3)  # Reduced from 1s

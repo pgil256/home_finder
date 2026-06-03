@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 def home(request):
-    return render(request, 'Pages/home.html')
+    from apps.WebScraper.views import insights_dashboard
+
+    return insights_dashboard(request)
 
 
 def about(request):
@@ -35,9 +37,10 @@ def health_check(request):
         status['checks']['database'] = 'error'
         status['status'] = 'degraded'
 
-    # Redis/cache check
+    # Database-cache check
     try:
         from django.core.cache import cache
+
         cache.set('_health_check', '1', timeout=10)
         if cache.get('_health_check') == '1':
             status['checks']['cache'] = 'ok'
@@ -60,9 +63,9 @@ def api_status(request):
     total = PropertyListing.objects.count()
     latest = PropertyListing.objects.order_by('-last_scraped').values_list('last_scraped', flat=True).first()
 
-    return JsonResponse({
-        'total_properties': total,
-        'last_updated': latest.isoformat() if latest else None,
-    })
-
-
+    return JsonResponse(
+        {
+            'total_properties': total,
+            'last_updated': latest.isoformat() if latest else None,
+        }
+    )

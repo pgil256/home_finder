@@ -1,5 +1,5 @@
 /**
- * Pinellas Property Finder - Mobile Enhancements
+ * Pinellas Market Lens - Mobile Enhancements
  * Bottom sheets, swipe gestures, touch interactions
  */
 

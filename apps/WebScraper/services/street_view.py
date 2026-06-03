@@ -2,7 +2,6 @@
 
 import logging
 import urllib.parse
-from typing import Optional
 
 import requests
 from django.conf import settings
@@ -13,12 +12,7 @@ logger = logging.getLogger(__name__)
 _api_key_warning_logged = False
 
 
-def get_street_view_url(
-    address: str,
-    city: str = None,
-    zip_code: str = None,
-    size: str = None
-) -> Optional[str]:
+def get_street_view_url(address: str, city: str = None, zip_code: str = None, size: str = None) -> str | None:
     """Build Google Street View Static API URL for a property.
 
     Checks metadata endpoint first to verify imagery exists.
@@ -37,7 +31,7 @@ def get_street_view_url(
     api_key = getattr(settings, 'GOOGLE_STREET_VIEW_API_KEY', None)
     if not api_key:
         if not _api_key_warning_logged:
-            logger.warning("GOOGLE_STREET_VIEW_API_KEY not configured - images disabled")
+            logger.warning('GOOGLE_STREET_VIEW_API_KEY not configured - images disabled')
             _api_key_warning_logged = True
         return None
 
@@ -48,15 +42,15 @@ def get_street_view_url(
     location_parts = [address]
     if city:
         location_parts.append(city)
-    location_parts.append("FL")  # State is always Florida for this app
+    location_parts.append('FL')  # State is always Florida for this app
     if zip_code:
         location_parts.append(zip_code)
 
-    location = ", ".join(location_parts)
+    location = ', '.join(location_parts)
 
     # Check if Street View imagery exists (free API call)
     if not _has_street_view_imagery(location, api_key):
-        logger.debug(f"No Street View imagery for: {location}")
+        logger.debug(f'No Street View imagery for: {location}')
         return None
 
     # Build image URL
@@ -68,8 +62,8 @@ def get_street_view_url(
         'key': api_key,
     }
 
-    url = f"https://maps.googleapis.com/maps/api/streetview?{urllib.parse.urlencode(params)}"
-    logger.debug(f"Street View URL generated for: {location}")
+    url = f'https://maps.googleapis.com/maps/api/streetview?{urllib.parse.urlencode(params)}'
+    logger.debug(f'Street View URL generated for: {location}')
     return url
 
 
@@ -86,7 +80,7 @@ def _has_street_view_imagery(location: str, api_key: str) -> bool:
     Returns:
         True if imagery exists, False otherwise.
     """
-    metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
+    metadata_url = 'https://maps.googleapis.com/maps/api/streetview/metadata'
 
     params = {
         'location': location,
@@ -99,5 +93,5 @@ def _has_street_view_imagery(location: str, api_key: str) -> bool:
         data = response.json()
         return data.get('status') == 'OK'
     except requests.RequestException as e:
-        logger.warning(f"Street View metadata check failed for {location}: {e}")
+        logger.warning(f'Street View metadata check failed for {location}: {e}')
         return False

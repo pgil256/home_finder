@@ -23,7 +23,7 @@ function fetchKeywords(availableKeywords, sortableList, numberingList) {
 
 function populateKeywords(keywords, availableKeywords, sortableList, numberingList) {
     keywords.forEach(keyword => {
-        let item = createKeywordElement(keyword);
+        const item = createKeywordElement(keyword);
         item.onclick = () => moveKeywordToSortable(item, sortableList, numberingList);
         availableKeywords.appendChild(item);
     });

@@ -1,5 +1,7 @@
-import pytest
 from decimal import Decimal
+
+import pytest
+
 from apps.WebScraper.models import PropertyListing
 
 
@@ -53,7 +55,7 @@ def multiple_properties(db):
     for i in range(5):
         prop = PropertyListing.objects.create(
             parcel_id=f'15-29-16-12345-000-{i:04d}',
-            address=f'{100+i} Test St',
+            address=f'{100 + i} Test St',
             city='Clearwater' if i % 2 == 0 else 'St Petersburg',
             zip_code='33755' if i % 2 == 0 else '33701',
             owner_name=f'Owner {i}',

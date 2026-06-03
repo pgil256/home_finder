@@ -1,0 +1,43 @@
+{% load property_filters %}
+
+<div class="overflow-hidden rounded-lg border border-charcoal-100">
+    <div class="border-b border-charcoal-100 bg-charcoal-50 px-4 py-3">
+        <h3 class="font-display text-sm font-semibold text-charcoal-800">{{ title }}</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-charcoal-100 text-sm">
+            <thead class="text-left text-xs uppercase tracking-wide text-charcoal-500">
+                <tr>
+                    <th class="px-3 py-2">Parcel</th>
+                    <th class="px-3 py-2 text-right">Metric</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-charcoal-100">
+                {% for row in rows %}
+                <tr>
+                    <td class="px-3 py-3">
+                        <a href="{{ row.detail_url }}" class="font-medium text-primary-700 hover:text-primary-800">
+                            {{ row.address }}
+                        </a>
+                        <p class="mt-1 text-xs text-charcoal-500">{{ row.city }} {{ row.zip_code }} · {{ row.property_type }}</p>
+                    </td>
+                    <td class="px-3 py-3 text-right">
+                        <p class="font-semibold text-charcoal-800">
+                            {% if row.metric_label == 'Tax rate' or row.metric_label == 'Assessed gap' %}
+                                {{ row.metric_value|floatformat:2 }}%
+                            {% else %}
+                                {{ row.metric_value|format_price }}
+                            {% endif %}
+                        </p>
+                        <p class="mt-1 text-xs text-charcoal-500">{{ row.market_value|format_price }}</p>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="px-3 py-5 text-center text-sm text-charcoal-500">No outliers for this scope.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

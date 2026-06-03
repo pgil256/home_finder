@@ -1,9 +1,6 @@
 # apps/WebScraper/tests/test_admin.py
 import pytest
-from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
-from apps.WebScraper.admin import PropertyListingAdmin
-from apps.WebScraper.models import PropertyListing
 
 pytestmark = pytest.mark.django_db
 
@@ -76,9 +73,7 @@ class TestPropertyListingAdmin:
 
     def test_admin_change_page_loads(self, admin_client, sample_property):
         """Test admin change property page loads."""
-        response = admin_client.get(
-            f'/admin/WebScraper/propertylisting/{sample_property.pk}/change/'
-        )
+        response = admin_client.get(f'/admin/WebScraper/propertylisting/{sample_property.pk}/change/')
         assert response.status_code == 200
 
     def test_admin_displays_list_columns(self, admin_client, sample_property):
@@ -93,9 +88,7 @@ class TestPropertyListingAdmin:
 
     def test_admin_readonly_fields(self, admin_client, sample_property):
         """Test that readonly fields are displayed correctly."""
-        response = admin_client.get(
-            f'/admin/WebScraper/propertylisting/{sample_property.pk}/change/'
-        )
+        response = admin_client.get(f'/admin/WebScraper/propertylisting/{sample_property.pk}/change/')
         content = response.content.decode()
 
         # last_scraped and created_at should be readonly

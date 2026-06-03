@@ -1,5 +1,6 @@
 import re
 import urllib.parse
+
 from django import template
 from django.conf import settings
 
@@ -7,7 +8,7 @@ register = template.Library()
 
 
 @register.simple_tag
-def street_view_url(address, city, zip_code, size="640x360"):
+def street_view_url(address, city, zip_code, size='640x360'):
     """Build a Google Street View Static API URL for a property.
 
     Returns '' (empty string) if GOOGLE_STREET_VIEW_API_KEY isn't configured —
@@ -18,21 +19,21 @@ def street_view_url(address, city, zip_code, size="640x360"):
 
     Cost reminder: image loads bill at ~$7 / 1000 to whoever owns the API key.
     """
-    api_key = getattr(settings, "GOOGLE_STREET_VIEW_API_KEY", "")
+    api_key = getattr(settings, 'GOOGLE_STREET_VIEW_API_KEY', '')
     if not api_key or not address:
-        return ""
+        return ''
     parts = [address]
     if city:
         parts.append(city)
-    parts.append("FL")
+    parts.append('FL')
     if zip_code:
         parts.append(zip_code)
     params = {
-        "size": size,
-        "location": ", ".join(parts),
-        "key": api_key,
+        'size': size,
+        'location': ', '.join(parts),
+        'key': api_key,
     }
-    return f"https://maps.googleapis.com/maps/api/streetview?{urllib.parse.urlencode(params)}"
+    return f'https://maps.googleapis.com/maps/api/streetview?{urllib.parse.urlencode(params)}'
 
 
 @register.filter

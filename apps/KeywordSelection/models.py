@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models import JSONField  
+from django.db.models import JSONField
+
 
 class Keyword(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -11,4 +12,4 @@ class Keyword(models.Model):
     listing_field = models.CharField(max_length=255, blank=True, null=True)  # Corresponding field in PropertyListing
 
     def __str__(self):
-        return f"{self.name} ({self.priority})"
+        return f'{self.name} ({self.priority})'

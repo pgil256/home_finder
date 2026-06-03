@@ -125,12 +125,14 @@ def run_scrape(search_criteria, limit=10):
     Returns a list of parcel_ids that ended up in the result set
     (cached + freshly scraped, capped at `limit`).
     """
-    from .pcpao_scraper import PCPAOScraper
-    import requests as req
     import time as _time
 
+    import requests as req
+
+    from .pcpao_scraper import PCPAOScraper
+
     scraper = PCPAOScraper(headless=True)
-    logger.info("Starting PCPAO scrape: criteria=%s limit=%s", search_criteria, limit)
+    logger.info('Starting PCPAO scrape: criteria=%s limit=%s', search_criteria, limit)
 
     parcels = scraper._search_via_api(search_criteria, limit=limit)
     if not parcels:
@@ -145,31 +147,36 @@ def run_scrape(search_criteria, limit=10):
         ).values_list('parcel_id', flat=True)
     )
     parcels_to_scrape = [p for p in parcels if p['parcel_id'] not in cached_parcels]
-    logger.info("Cache: %d hits, %d to scrape", len(cached_parcels), len(parcels_to_scrape))
+    logger.info('Cache: %d hits, %d to scrape', len(cached_parcels), len(parcels_to_scrape))
 
     property_ids = []
 
     if cached_parcels:
         cached_listings = PropertyListing.objects.filter(parcel_id__in=cached_parcels)
-        cached_properties = [{
-            'parcel_id': l.parcel_id,
-            'property_type': l.property_type,
-            'market_value': l.market_value,
-            'bedrooms': l.bedrooms,
-            'bathrooms': l.bathrooms,
-            'year_built': l.year_built,
-            'building_sqft': l.building_sqft,
-            'tax_status': l.tax_status,
-        } for l in cached_listings]
+        cached_properties = [
+            {
+                'parcel_id': listing.parcel_id,
+                'property_type': listing.property_type,
+                'market_value': listing.market_value,
+                'bedrooms': listing.bedrooms,
+                'bathrooms': listing.bathrooms,
+                'year_built': listing.year_built,
+                'building_sqft': listing.building_sqft,
+                'tax_status': listing.tax_status,
+            }
+            for listing in cached_listings
+        ]
         filtered_cached = filter_properties_by_criteria(cached_properties, search_criteria)
         property_ids.extend([p['parcel_id'] for p in filtered_cached])
 
     if parcels_to_scrape:
         session = req.Session()
-        session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        })
+        session.headers.update(
+            {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+        )
 
         properties = []
         for i, parcel_info in enumerate(parcels_to_scrape):
@@ -183,25 +190,36 @@ def run_scrape(search_criteria, limit=10):
                         break
                     except (req.exceptions.RequestException, req.exceptions.Timeout) as e:
                         wait = RETRY_BACKOFF_BASE ** (attempt + 1)
-                        logger.warning("Retry %d/%d for %s: %s (waiting %ds)",
-                                       attempt + 1, MAX_RETRIES, p_id, e, wait)
+                        logger.warning('Retry %d/%d for %s: %s (waiting %ds)', attempt + 1, MAX_RETRIES, p_id, e, wait)
                         _time.sleep(wait)
                 else:
-                    logger.error("Failed to scrape %s after %d retries", p_id, MAX_RETRIES)
+                    logger.error('Failed to scrape %s after %d retries', p_id, MAX_RETRIES)
             if len(prop_data) > 1:
                 properties.append(prop_data)
             if i < len(parcels_to_scrape) - 1:
                 _time.sleep(0.3)
 
         properties = filter_properties_by_criteria(properties, search_criteria)
-        logger.info("Saving %d properties to database", len(properties))
+        logger.info('Saving %d properties to database', len(properties))
 
         optional_fields = (
-            'address', 'city', 'zip_code', 'owner_name',
-            'market_value', 'assessed_value', 'building_sqft',
-            'year_built', 'bedrooms', 'bathrooms', 'land_size',
-            'lot_sqft', 'appraiser_url', 'image_url',
-            'tax_collector_url', 'tax_amount', 'tax_year',
+            'address',
+            'city',
+            'zip_code',
+            'owner_name',
+            'market_value',
+            'assessed_value',
+            'building_sqft',
+            'year_built',
+            'bedrooms',
+            'bathrooms',
+            'land_size',
+            'lot_sqft',
+            'appraiser_url',
+            'image_url',
+            'tax_collector_url',
+            'tax_amount',
+            'tax_year',
         )
         for property_data in properties:
             parcel_id = property_data.get('parcel_id')
@@ -221,7 +239,7 @@ def run_scrape(search_criteria, limit=10):
     if limit and len(property_ids) > limit:
         property_ids = property_ids[:limit]
 
-    logger.info("Scrape complete: %d properties", len(property_ids))
+    logger.info('Scrape complete: %d properties', len(property_ids))
     return property_ids
 
 
@@ -230,11 +248,23 @@ def run_scrape(search_criteria, limit=10):
 # model. We only overwrite when the new value is not None so a partial
 # response doesn't wipe data populated by the bulk import.
 _REFRESH_OPTIONAL_FIELDS = (
-    'address', 'city', 'zip_code', 'owner_name',
-    'market_value', 'assessed_value', 'building_sqft',
-    'year_built', 'bedrooms', 'bathrooms', 'land_size',
-    'lot_sqft', 'appraiser_url', 'image_url',
-    'tax_collector_url', 'tax_amount', 'tax_year',
+    'address',
+    'city',
+    'zip_code',
+    'owner_name',
+    'market_value',
+    'assessed_value',
+    'building_sqft',
+    'year_built',
+    'bedrooms',
+    'bathrooms',
+    'land_size',
+    'lot_sqft',
+    'appraiser_url',
+    'image_url',
+    'tax_collector_url',
+    'tax_amount',
+    'tax_year',
 )
 
 
@@ -242,7 +272,7 @@ class ParcelNotFoundError(Exception):
     """PCPAO returned no results for the parcel ID."""
 
 
-def refresh_one_parcel(parcel_id: str) -> "PropertyListing":
+def refresh_one_parcel(parcel_id: str) -> 'PropertyListing':
     """Fetch fresh data for a single parcel from PCPAO and upsert it.
 
     Used by the per-property "Refresh" button on the detail page.
@@ -251,8 +281,9 @@ def refresh_one_parcel(parcel_id: str) -> "PropertyListing":
     Raises `ParcelNotFoundError` if PCPAO has no record for this parcel,
     or `requests.RequestException` if the upstream scrape fails.
     """
-    from .pcpao_scraper import PCPAOScraper
     import requests as req
+
+    from .pcpao_scraper import PCPAOScraper
 
     scraper = PCPAOScraper(headless=True)
 
@@ -263,37 +294,40 @@ def refresh_one_parcel(parcel_id: str) -> "PropertyListing":
     parcels = scraper._search_via_api({'parcel_id': parcel_id}, limit=5)
     match = next((p for p in parcels if p['parcel_id'] == parcel_id), None)
     if not match or not match.get('detail_url'):
-        raise ParcelNotFoundError(f"PCPAO returned no detail URL for {parcel_id}")
+        raise ParcelNotFoundError(f'PCPAO returned no detail URL for {parcel_id}')
 
     session = req.Session()
-    session.headers.update({
-        'User-Agent': (
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-            '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        ),
-    })
+    session.headers.update(
+        {
+            'User-Agent': (
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ),
+        }
+    )
 
     last_error: Exception | None = None
     prop_data: dict | None = None
     for attempt in range(MAX_RETRIES):
         try:
-            prop_data = scraper._scrape_detail_via_requests(
-                parcel_id, match['detail_url'], session=session
-            )
+            prop_data = scraper._scrape_detail_via_requests(parcel_id, match['detail_url'], session=session)
             break
         except (req.exceptions.RequestException, req.exceptions.Timeout) as e:
             last_error = e
             wait = RETRY_BACKOFF_BASE ** (attempt + 1)
             logger.warning(
-                "Refresh retry %d/%d for %s: %s (waiting %ds)",
-                attempt + 1, MAX_RETRIES, parcel_id, e, wait,
+                'Refresh retry %d/%d for %s: %s (waiting %ds)',
+                attempt + 1,
+                MAX_RETRIES,
+                parcel_id,
+                e,
+                wait,
             )
             import time as _time
+
             _time.sleep(wait)
     if prop_data is None:
-        raise last_error or RuntimeError(
-            f"Failed to refresh parcel {parcel_id} after {MAX_RETRIES} retries"
-        )
+        raise last_error or RuntimeError(f'Failed to refresh parcel {parcel_id} after {MAX_RETRIES} retries')
 
     defaults: dict = {}
     if prop_data.get('property_type'):
@@ -307,7 +341,8 @@ def refresh_one_parcel(parcel_id: str) -> "PropertyListing":
         defaults['tax_status'] = tax_status
 
     listing, _created = PropertyListing.objects.update_or_create(
-        parcel_id=parcel_id, defaults=defaults,
+        parcel_id=parcel_id,
+        defaults=defaults,
     )
-    logger.info("Refreshed parcel %s (pk=%s)", parcel_id, listing.pk)
+    logger.info('Refreshed parcel %s (pk=%s)', parcel_id, listing.pk)
     return listing

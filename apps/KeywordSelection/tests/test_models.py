@@ -1,4 +1,5 @@
 import pytest
+
 from apps.KeywordSelection.models import Keyword
 
 pytestmark = pytest.mark.django_db

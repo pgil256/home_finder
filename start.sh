@@ -20,10 +20,10 @@ echo "=== Migrations complete! ===" >&2
 echo "=== Creating media directories ===" >&2
 mkdir -p media/reports
 
-echo "=== Starting Celery worker in background ===" >&2
-celery -A home_finder worker --loglevel=info &
-CELERY_PID=$!
-echo "Celery worker started with PID: $CELERY_PID" >&2
+echo "=== Collecting static files ===" >&2
+python manage.py collectstatic --noinput --clear
+
+echo "=== Static files ready ===" >&2
 
 echo "=== Starting gunicorn on port ${PORT:-8000} ===" >&2
 

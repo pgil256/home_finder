@@ -4,6 +4,7 @@ import logging
 import time
 
 from django.core.management.base import BaseCommand
+
 from apps.WebScraper.models import PropertyListing
 from apps.WebScraper.services.street_view import get_street_view_url
 
@@ -15,15 +16,20 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--limit', type=int, default=0,
+            '--limit',
+            type=int,
+            default=0,
             help='Max properties to process (0 = all)',
         )
         parser.add_argument(
-            '--delay', type=float, default=0.2,
+            '--delay',
+            type=float,
+            default=0.2,
             help='Delay between API calls in seconds (default: 0.2)',
         )
         parser.add_argument(
-            '--dry-run', action='store_true',
+            '--dry-run',
+            action='store_true',
             help='Show what would be updated without saving',
         )
 
@@ -44,7 +50,7 @@ class Command(BaseCommand):
         else:
             count = total
 
-        self.stdout.write(f"Found {total} properties without images, processing {count}...")
+        self.stdout.write(f'Found {total} properties without images, processing {count}...')
 
         updated = 0
         skipped = 0
@@ -58,7 +64,7 @@ class Command(BaseCommand):
 
             if url:
                 if dry_run:
-                    self.stdout.write(f"  [{i}/{count}] Would set image for {prop.parcel_id}: {prop.address}")
+                    self.stdout.write(f'  [{i}/{count}] Would set image for {prop.parcel_id}: {prop.address}')
                 else:
                     prop.image_url = url
                     prop.save(update_fields=['image_url'])
@@ -67,12 +73,12 @@ class Command(BaseCommand):
                 skipped += 1
 
             if i % 50 == 0:
-                self.stdout.write(f"  Progress: {i}/{count} ({updated} found, {skipped} no imagery)")
+                self.stdout.write(f'  Progress: {i}/{count} ({updated} found, {skipped} no imagery)')
 
             if delay and i < count:
                 time.sleep(delay)
 
-        action = "Would update" if dry_run else "Updated"
-        self.stdout.write(self.style.SUCCESS(
-            f"{action} {updated} properties with images ({skipped} had no Street View imagery)"
-        ))
+        action = 'Would update' if dry_run else 'Updated'
+        self.stdout.write(
+            self.style.SUCCESS(f'{action} {updated} properties with images ({skipped} had no Street View imagery)')
+        )

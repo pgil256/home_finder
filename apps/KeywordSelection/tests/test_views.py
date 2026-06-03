@@ -1,6 +1,7 @@
-import pytest
 import json
-from django.test import Client
+
+import pytest
+
 from apps.KeywordSelection.models import Keyword
 
 pytestmark = pytest.mark.django_db
