@@ -2,24 +2,44 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from io import BytesIO
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from django.http import HttpResponse
+from django.contrib import messages
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from openpyxl.styles import Alignment, Font, PatternFill
 
 from .market_insights import build_market_insights
+from .palette import BORDER, BORDER_LIGHT, MUTED, PRIMARY, WHITE, openpyxl_rgb
+
+if TYPE_CHECKING:
+    from openpyxl.workbook import Workbook
+    from openpyxl.worksheet.worksheet import Worksheet
+
+logger = logging.getLogger(__name__)
 
 
-def generate_excel_response(request=None) -> HttpResponse:
+def generate_excel_response(request: HttpRequest | None = None) -> HttpResponse:
+    """Build the analysis workbook, or a friendly error if generation fails."""
+    try:
+        return _build_excel_response(request)
+    except Exception:
+        logger.exception('Excel export generation failed')
+        return _export_error_response(request, 'Excel workbook')
+
+
+def _build_excel_response(request: HttpRequest | None) -> HttpResponse:
     import openpyxl
     from openpyxl.utils import get_column_letter
 
     insights = build_market_insights(request)
     wb = openpyxl.Workbook()
-    header_font = Font(bold=True, color='FFFFFF')
-    header_fill = PatternFill('solid', fgColor='0D7377')
+    header_font = Font(bold=True, color=openpyxl_rgb(WHITE))
+    header_fill = PatternFill('solid', fgColor=openpyxl_rgb(PRIMARY))
     title_font = Font(bold=True, size=14)
 
     ws = wb.active
@@ -27,7 +47,7 @@ def generate_excel_response(request=None) -> HttpResponse:
     ws['A1'] = 'Pinellas Market Lens'
     ws['A1'].font = title_font
     ws['A2'] = f'Generated {datetime.now(UTC):%Y-%m-%d %H:%M UTC}'
-    ws['A2'].font = Font(italic=True, color='6C757D')
+    ws['A2'].font = Font(italic=True, color=openpyxl_rgb(MUTED))
 
     row = 4
     row = _write_label_value_section(ws, row, 'Filters', insights['filters'])
@@ -70,7 +90,16 @@ def generate_excel_response(request=None) -> HttpResponse:
     return response
 
 
-def generate_pdf_response(request=None) -> HttpResponse:
+def generate_pdf_response(request: HttpRequest | None = None) -> HttpResponse:
+    """Build the PDF insight brief, or a friendly error if generation fails."""
+    try:
+        return _build_pdf_response(request)
+    except Exception:
+        logger.exception('PDF export generation failed')
+        return _export_error_response(request, 'PDF brief')
+
+
+def _build_pdf_response(request: HttpRequest | None) -> HttpResponse:
     from reportlab.lib import colors as rl_colors
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     from reportlab.lib.pagesizes import letter
@@ -160,7 +189,17 @@ def generate_pdf_response(request=None) -> HttpResponse:
     return response
 
 
-def _write_label_value_section(ws, start_row: int, title: str, rows: list[tuple[str, str]]) -> int:
+def _export_error_response(request: HttpRequest | None, kind: str) -> HttpResponse:
+    """Fail gracefully: flash a message and return to the dashboard when we can,
+    otherwise return a plain friendly error instead of a raw 500 traceback."""
+    message = f"We couldn't generate the {kind} right now. Please adjust your filters and try again."
+    if request is not None:
+        messages.error(request, message)
+        return redirect(reverse('insights'))
+    return HttpResponse(message, status=500, content_type='text/plain; charset=utf-8')
+
+
+def _write_label_value_section(ws: Worksheet, start_row: int, title: str, rows: list[tuple[str, str]]) -> int:
     row = start_row
     ws.cell(row, 1, title).font = Font(bold=True)
     row += 1
@@ -171,7 +210,9 @@ def _write_label_value_section(ws, start_row: int, title: str, rows: list[tuple[
     return row
 
 
-def _write_segment_sheet(wb, title: str, rows: list[dict[str, Any]], header_font, header_fill) -> None:
+def _write_segment_sheet(
+    wb: Workbook, title: str, rows: list[dict[str, Any]], header_font: Font, header_fill: PatternFill
+) -> None:
     ws = wb.create_sheet(title)
     headers = ['Name', 'Count', 'Median Value', 'Mean Value', 'Median $/Sqft', 'Median Tax Rate', 'Mean Assessed Gap %']
     _write_header(ws, headers, header_font, header_fill)
@@ -187,7 +228,9 @@ def _write_segment_sheet(wb, title: str, rows: list[dict[str, Any]], header_font
     _format_percent_columns(ws, [6, 7])
 
 
-def _write_outlier_sheet(wb, outliers: dict[str, list[dict[str, Any]]], header_font, header_fill) -> None:
+def _write_outlier_sheet(
+    wb: Workbook, outliers: dict[str, list[dict[str, Any]]], header_font: Font, header_fill: PatternFill
+) -> None:
     ws = wb.create_sheet('Outliers')
     headers = ['Signal', 'Parcel ID', 'Address', 'City', 'Type', 'Market Value', 'Metric Label', 'Metric Value']
     _write_header(ws, headers, header_font, header_fill)
@@ -206,7 +249,9 @@ def _write_outlier_sheet(wb, outliers: dict[str, list[dict[str, Any]]], header_f
     _format_currency_columns(ws, [6])
 
 
-def _write_sample_sheet(wb, rows: list[dict[str, Any]], header_font, header_fill) -> None:
+def _write_sample_sheet(
+    wb: Workbook, rows: list[dict[str, Any]], header_font: Font, header_fill: PatternFill
+) -> None:
     ws = wb.create_sheet('Sample Parcels')
     headers = ['Parcel ID', 'Address', 'City', 'ZIP', 'Type', 'Market Value', 'Assessed Value', '$/Sqft', 'Tax Rate']
     _write_header(ws, headers, header_font, header_fill)
@@ -224,7 +269,7 @@ def _write_sample_sheet(wb, rows: list[dict[str, Any]], header_font, header_fill
     _format_percent_columns(ws, [9])
 
 
-def _write_methodology_sheet(wb, notes: list[str]) -> None:
+def _write_methodology_sheet(wb: Workbook, notes: list[str]) -> None:
     ws = wb.create_sheet('Methodology')
     ws['A1'] = 'Methodology'
     ws['A1'].font = Font(bold=True, size=14)
@@ -232,7 +277,7 @@ def _write_methodology_sheet(wb, notes: list[str]) -> None:
         ws.cell(idx, 1, note)
 
 
-def _write_header(ws, headers: list[str], header_font, header_fill) -> None:
+def _write_header(ws: Worksheet, headers: list[str], header_font: Font, header_fill: PatternFill) -> None:
     for col_idx, header in enumerate(headers, 1):
         cell = ws.cell(1, col_idx, header)
         cell.font = header_font
@@ -241,14 +286,14 @@ def _write_header(ws, headers: list[str], header_font, header_fill) -> None:
     ws.freeze_panes = 'A2'
 
 
-def _format_currency_columns(ws, columns: list[int]) -> None:
+def _format_currency_columns(ws: Worksheet, columns: list[int]) -> None:
     for col in columns:
         for cell in ws.iter_cols(min_col=col, max_col=col, min_row=2):
             for item in cell:
                 item.number_format = '"$"#,##0'
 
 
-def _format_percent_columns(ws, columns: list[int]) -> None:
+def _format_percent_columns(ws: Worksheet, columns: list[int]) -> None:
     for col in columns:
         for cell in ws.iter_cols(min_col=col, max_col=col, min_row=2):
             for item in cell:
@@ -261,8 +306,8 @@ def _pdf_table(rows: list[tuple[Any, ...]], col_widths: list[float], header: boo
 
     table = Table(rows, colWidths=col_widths, repeatRows=1 if header else 0)
     style = [
-        ('BOX', (0, 0), (-1, -1), 0.5, rl_colors.HexColor('#CBD5E1')),
-        ('INNERGRID', (0, 0), (-1, -1), 0.25, rl_colors.HexColor('#E2E8F0')),
+        ('BOX', (0, 0), (-1, -1), 0.5, rl_colors.HexColor(BORDER)),
+        ('INNERGRID', (0, 0), (-1, -1), 0.25, rl_colors.HexColor(BORDER_LIGHT)),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('FONTSIZE', (0, 0), (-1, -1), 8),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
@@ -273,7 +318,7 @@ def _pdf_table(rows: list[tuple[Any, ...]], col_widths: list[float], header: boo
     if header:
         style.extend(
             [
-                ('BACKGROUND', (0, 0), (-1, 0), rl_colors.HexColor('#0D7377')),
+                ('BACKGROUND', (0, 0), (-1, 0), rl_colors.HexColor(PRIMARY)),
                 ('TEXTCOLOR', (0, 0), (-1, 0), rl_colors.white),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ]

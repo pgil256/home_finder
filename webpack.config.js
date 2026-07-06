@@ -21,10 +21,8 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
+          // Presets come from babel.config.js (shared with Jest).
           loader: "babel-loader",
-          options: {
-            presets: ["@babel/preset-env"],
-          },
         },
       },
     ],

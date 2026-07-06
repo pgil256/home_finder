@@ -12,6 +12,14 @@ from django.urls import reverse
 
 from ..models import PropertyListing
 from .filtering import apply_filters
+from .palette import (
+    ACCENT,
+    ACCENT_DARK,
+    PRIMARY,
+    PRIMARY_DARK,
+    PRIMARY_FILL_MEDIUM,
+    PRIMARY_FILL_SOFT,
+)
 
 MAX_ANALYSIS_ROWS = 50_000
 MAX_OUTLIERS = 12
@@ -299,8 +307,8 @@ def _histogram_payload(series: pd.Series, label: str, sample_size: int, currency
             {
                 'label': label,
                 'data': [int(v) for v in counts],
-                'backgroundColor': '#0D7377',
-                'borderColor': '#084547',
+                'backgroundColor': PRIMARY,
+                'borderColor': PRIMARY_DARK,
             }
         ],
         'meta': {
@@ -321,14 +329,14 @@ def _segment_chart_payload(rows: list[dict[str, Any]], label: str) -> dict[str, 
             {
                 'label': label,
                 'data': [_clean_number(r['median_value']) for r in rows],
-                'backgroundColor': '#0D7377',
-                'borderColor': '#084547',
+                'backgroundColor': PRIMARY,
+                'borderColor': PRIMARY_DARK,
             },
             {
                 'label': 'Parcel count',
                 'data': [r['count'] for r in rows],
-                'backgroundColor': '#FF6B6B',
-                'borderColor': '#CC5656',
+                'backgroundColor': ACCENT,
+                'borderColor': ACCENT_DARK,
             },
         ],
         'meta': {'sample_size': sum(r['count'] for r in rows), 'omitted_nulls': 0, 'note': None},
@@ -364,8 +372,8 @@ def _year_trend_payload(df: pd.DataFrame) -> dict[str, Any]:
             {
                 'label': 'Median market value',
                 'data': [_clean_number(r.median_value) for r in grouped.itertuples()],
-                'borderColor': '#0D7377',
-                'backgroundColor': 'rgba(13, 115, 119, 0.16)',
+                'borderColor': PRIMARY,
+                'backgroundColor': PRIMARY_FILL_SOFT,
                 'tension': 0.25,
             }
         ],
@@ -392,8 +400,8 @@ def _value_gap_scatter_payload(df: pd.DataFrame) -> dict[str, Any]:
             {
                 'label': 'Parcel values',
                 'data': points,
-                'backgroundColor': 'rgba(13, 115, 119, 0.55)',
-                'borderColor': '#084547',
+                'backgroundColor': PRIMARY_FILL_MEDIUM,
+                'borderColor': PRIMARY_DARK,
             }
         ],
         'meta': {
