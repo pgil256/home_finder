@@ -39,7 +39,7 @@ def known_parcel_id(base_url: str) -> str:
     """
     resp = requests.get(f'{base_url}/insights/', timeout=DEFAULT_TIMEOUT)
     resp.raise_for_status()
-    match = re.search(r'/scraper/property/([0-9-]{20,})/', resp.text)
+    match = re.search(r'/analytics/property/([0-9-]{20,})/', resp.text)
     if not match:
         pytest.skip('Insights dashboard has no parcel drilldowns to use for detail-page tests')
     return match.group(1)
@@ -56,10 +56,10 @@ def use_simple_staticfiles_storage():
 
 
 def _fetch_csrf(session: requests.Session, base_url: str) -> str:
-    r = session.get(f'{base_url}/scraper/', timeout=DEFAULT_TIMEOUT)
+    r = session.get(f'{base_url}/analytics/', timeout=DEFAULT_TIMEOUT)
     r.raise_for_status()
     match = CSRF_RE.search(r.text)
-    assert match, 'CSRF token not found on /scraper/ page'
+    assert match, 'CSRF token not found on /analytics/ page'
     return match.group(1)
 
 
@@ -70,7 +70,7 @@ def csrf_session(base_url):
     session.headers.update(
         {
             'User-Agent': 'homefinder-e2e/1.0',
-            'Referer': f'{base_url}/scraper/',
+            'Referer': f'{base_url}/analytics/',
         }
     )
     csrf = _fetch_csrf(session, base_url)

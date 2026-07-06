@@ -18,14 +18,22 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 
-from apps.WebScraper import views as scraper_views
+from apps.analytics import views as analytics_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('insights/', scraper_views.insights_dashboard, name='insights'),
-    path('scraper/', include('apps.WebScraper.urls')),
+    path('insights/', analytics_views.insights_dashboard, name='insights'),
+    path('analytics/', include('apps.analytics.urls')),
+    # The app was renamed from "WebScraper" to "analytics"; keep the old
+    # /scraper/ prefix working as a redirect so existing links and the
+    # live-site smoke tests still resolve (sub-path and query string preserved).
+    re_path(
+        r'^scraper/(?P<rest>.*)$',
+        RedirectView.as_view(url='/analytics/%(rest)s', query_string=True),
+    ),
     path('', include('apps.Pages.urls')),
 ]
 

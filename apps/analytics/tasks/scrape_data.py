@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from apps.WebScraper.models import PropertyListing
+from apps.analytics.models import PropertyListing
 
 logger = logging.getLogger(__name__)
 

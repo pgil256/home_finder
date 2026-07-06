@@ -3,14 +3,14 @@ from decimal import Decimal
 import pytest
 from django.core.management import call_command
 
-from apps.WebScraper.models import PropertyListing
-from apps.WebScraper.services.pcpao_importer import (
+from apps.analytics.models import PropertyListing
+from apps.analytics.services.pcpao_importer import (
     bulk_upsert_properties,
     map_csv_row_to_property,
     safe_decimal,
     safe_int,
 )
-from apps.WebScraper.services.property_types import DOR_USE_CODES, dor_code_to_description
+from apps.analytics.services.property_types import DOR_USE_CODES, dor_code_to_description
 
 pytestmark = pytest.mark.django_db
 
@@ -175,7 +175,7 @@ class TestMapCsvRowToProperty:
 class TestBulkUpsertProperties:
     def test_creates_new_properties(self, db):
         """Test bulk upsert creates new properties."""
-        from apps.WebScraper.models import PropertyListing
+        from apps.analytics.models import PropertyListing
 
         properties_data = [
             {
@@ -222,7 +222,7 @@ class TestBulkUpsertProperties:
 
     def test_skips_records_without_parcel_id(self, db):
         """Test bulk upsert skips records without parcel_id."""
-        from apps.WebScraper.models import PropertyListing
+        from apps.analytics.models import PropertyListing
 
         properties_data = [
             {

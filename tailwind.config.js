@@ -2,11 +2,6 @@
 module.exports = {
   content: [
     "./templates/**/*.html",
-    "./templates/DataProcessor/**/*.html",
-    "./templates/DocumentProcessor/**/*.html",
-    "./templates/WebScraper/**/*.html",
-    "./templates/KeywordSelection/**/*.html",
-    "./templates/Pages/**/*.html",
     "./static/js/**/*.js",
   ],
   safelist: [

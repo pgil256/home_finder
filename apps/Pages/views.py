@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def home(request):
-    from apps.WebScraper.views import insights_dashboard
+    from apps.analytics.views import insights_dashboard
 
     return insights_dashboard(request)
 
@@ -58,7 +58,7 @@ def health_check(request):
 
 def api_status(request):
     """Public status endpoint showing basic system stats."""
-    from apps.WebScraper.models import PropertyListing
+    from apps.analytics.models import PropertyListing
 
     total = PropertyListing.objects.count()
     latest = PropertyListing.objects.order_by('-last_scraped').values_list('last_scraped', flat=True).first()

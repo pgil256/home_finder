@@ -313,9 +313,9 @@
                     <span class="text-xs text-charcoal-400">Exploratory signals, not recommendations</span>
                 </div>
                 <div class="grid gap-4 xl:grid-cols-3">
-                    {% include 'WebScraper/partials/outlier-table.html' with title='High-Value IQR Outliers' rows=insights.outliers.market_value %}
-                    {% include 'WebScraper/partials/outlier-table.html' with title='Largest Assessed Gaps' rows=insights.outliers.assessed_gap %}
-                    {% include 'WebScraper/partials/outlier-table.html' with title='Highest Tax Burden' rows=insights.outliers.tax_rate %}
+                    {% include 'analytics/partials/outlier-table.html' with title='High-Value IQR Outliers' rows=insights.outliers.market_value %}
+                    {% include 'analytics/partials/outlier-table.html' with title='Largest Assessed Gaps' rows=insights.outliers.assessed_gap %}
+                    {% include 'analytics/partials/outlier-table.html' with title='Highest Tax Burden' rows=insights.outliers.tax_rate %}
                 </div>
             </section>
 

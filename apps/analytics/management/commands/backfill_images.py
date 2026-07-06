@@ -5,8 +5,8 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from apps.WebScraper.models import PropertyListing
-from apps.WebScraper.services.street_view import get_street_view_url
+from apps.analytics.models import PropertyListing
+from apps.analytics.services.street_view import get_street_view_url
 
 logger = logging.getLogger(__name__)
 

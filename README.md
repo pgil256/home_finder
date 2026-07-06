@@ -15,11 +15,11 @@ Pinellas Market Lens is a data-science dashboard for exploring Pinellas County, 
 | Route | Purpose |
 |---|---|
 | `/` and `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
-| `/scraper/` | Compatibility filter-builder form that redirects into `/insights/` |
-| `/scraper/dashboard/` | Legacy URL alias that renders the same insights dashboard |
-| `/scraper/property/<parcel_id>/` | Parcel drilldown used to audit sample parcels and outlier rows |
-| `/scraper/download/excel/` | Analysis workbook: Overview, City Segments, Property Type Segments, Outliers, Sample Parcels, Methodology |
-| `/scraper/download/pdf/` | PDF insight brief with filters, exact KPIs, takeaways, segments, outliers, and methodology |
+| `/analytics/` | Filter-builder form that redirects into `/insights/` |
+| `/analytics/dashboard/` | Legacy URL alias that renders the same insights dashboard |
+| `/analytics/property/<parcel_id>/` | Parcel drilldown used to audit sample parcels and outlier rows |
+| `/analytics/download/excel/` | Analysis workbook: Overview, City Segments, Property Type Segments, Outliers, Sample Parcels, Methodology |
+| `/analytics/download/pdf/` | PDF insight brief with filters, exact KPIs, takeaways, segments, outliers, and methodology |
 
 ## Data + Analysis Flow
 

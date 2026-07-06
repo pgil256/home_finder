@@ -9,7 +9,7 @@ SCRAPE_NAV_TIMEOUT_MS = 60_000
 
 def test_B1_form_submit_navigates_to_insights(page: Page, base_url):
     """Filling and submitting the filter builder ends up on the insights dashboard."""
-    page.goto(f'{base_url}/scraper/')
+    page.goto(f'{base_url}/analytics/')
     page.locator('select[name="city"]').select_option('Clearwater')
 
     submit = page.locator('button[type="submit"], input[type="submit"]').first
@@ -23,7 +23,7 @@ def test_B1_form_submit_navigates_to_insights(page: Page, base_url):
 
 def test_B2_form_is_wired_for_loading_state(page: Page, base_url):
     """The compatibility form still has the data-loading-form spinner hook."""
-    page.goto(f'{base_url}/scraper/')
+    page.goto(f'{base_url}/analytics/')
     expect(page.locator('form#search-form')).to_have_attribute('data-loading-form', '')
 
 
@@ -31,16 +31,16 @@ def test_B3_sample_parcel_click_navigates_to_detail(page: Page, base_url):
     """Clicking a sample parcel drilldown navigates to the parcel detail page."""
     page.goto(f'{base_url}/insights/')
 
-    detail_link = page.locator('a[href*="/scraper/property/"]').first
+    detail_link = page.locator('a[href*="/analytics/property/"]').first
     expect(detail_link).to_be_visible(timeout=5_000)
 
     href = detail_link.get_attribute('href')
-    assert href and '/scraper/property/' in href, f'unexpected href: {href}'
+    assert href and '/analytics/property/' in href, f'unexpected href: {href}'
 
     with page.expect_navigation():
         detail_link.click()
 
-    assert re.search(r'/scraper/property/[^/]+/?$', page.url), f'unexpected URL after drilldown click: {page.url}'
+    assert re.search(r'/analytics/property/[^/]+/?$', page.url), f'unexpected URL after drilldown click: {page.url}'
 
 
 def test_B4_insights_renders_in_mobile_viewport(browser, base_url):

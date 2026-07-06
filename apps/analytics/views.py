@@ -190,7 +190,7 @@ def web_scraper_view(request):
     search_values = _initial_search_values(request)
     return render(
         request,
-        'WebScraper/search.html',
+        'analytics/search.html',
         {
             'cities': sorted(PINELLAS_CITIES),
             'property_types': PROPERTY_TYPES,
@@ -231,7 +231,7 @@ def insights_dashboard(request):
 
     return render(
         request,
-        'WebScraper/market-insights.html',
+        'analytics/market-insights.html',
         {
             'insights': insights,
             'charts': insights['charts'],
@@ -273,7 +273,7 @@ def property_detail(request, parcel_id: str):
 
     return render(
         request,
-        'WebScraper/property-detail.html',
+        'analytics/property-detail.html',
         {
             'property': property_obj,
             'similar_properties': similar_properties,

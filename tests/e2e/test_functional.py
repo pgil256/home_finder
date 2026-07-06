@@ -6,7 +6,7 @@ from .conftest import CSRF_RE, DEFAULT_TIMEOUT
 
 
 def _fresh_csrf(session: requests.Session, base_url: str) -> str:
-    r = session.get(f'{base_url}/scraper/', timeout=DEFAULT_TIMEOUT)
+    r = session.get(f'{base_url}/analytics/', timeout=DEFAULT_TIMEOUT)
     r.raise_for_status()
     return CSRF_RE.search(r.text).group(1)
 
@@ -15,7 +15,7 @@ def test_F1_search_redirects_with_filters_in_query(csrf_session, base_url):
     """POST with city + value range 302s to insights with those params in the URL."""
     session, csrf = csrf_session
     r = session.post(
-        f'{base_url}/scraper/',
+        f'{base_url}/analytics/',
         data={
             'csrfmiddlewaretoken': csrf,
             'city': 'Clearwater',
@@ -37,7 +37,7 @@ def test_F2_search_with_property_type_passes_through(csrf_session, base_url):
     """Multi-value property_type fields are preserved in the redirect URL."""
     session, csrf = csrf_session
     r = session.post(
-        f'{base_url}/scraper/',
+        f'{base_url}/analytics/',
         data=[
             ('csrfmiddlewaretoken', csrf),
             ('city', 'St. Petersburg'),
@@ -56,7 +56,7 @@ def test_F3_search_with_no_filters_redirects_to_insights(csrf_session, base_url)
     """Empty form still redirects to the unfiltered insights dashboard."""
     session, csrf = csrf_session
     r = session.post(
-        f'{base_url}/scraper/',
+        f'{base_url}/analytics/',
         data={'csrfmiddlewaretoken': csrf},
         timeout=DEFAULT_TIMEOUT,
         allow_redirects=False,
@@ -69,7 +69,7 @@ def test_F4_search_with_bogus_city_does_not_500(csrf_session, base_url):
     """A city that isn't in the dropdown still 302s; insights handles 0 results."""
     session, csrf = csrf_session
     r = session.post(
-        f'{base_url}/scraper/',
+        f'{base_url}/analytics/',
         data={'csrfmiddlewaretoken': csrf, 'city': 'NotARealCity12345'},
         timeout=DEFAULT_TIMEOUT,
         allow_redirects=False,
@@ -90,7 +90,7 @@ def test_F5_insights_filters_chain_via_query_string(client, base_url):
 
 def test_F6_legacy_dashboard_alias_does_not_500(client, base_url):
     """Legacy dashboard URL still returns 200 for compatibility."""
-    r = client.get(f'{base_url}/scraper/dashboard/', timeout=DEFAULT_TIMEOUT)
+    r = client.get(f'{base_url}/analytics/dashboard/', timeout=DEFAULT_TIMEOUT)
     assert r.status_code == 200
     assert 'Pinellas Market Lens' in r.text
 

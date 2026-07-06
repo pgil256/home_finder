@@ -23,7 +23,7 @@ class TestPagesViews:
     def test_home_uses_insights_template(self, client):
         """Test home page opens on the analytics dashboard."""
         response = client.get('/')
-        assert 'WebScraper/market-insights.html' in [t.name for t in response.templates]
+        assert 'analytics/market-insights.html' in [t.name for t in response.templates]
 
     def test_about_uses_correct_template(self, client):
         """Test about page uses the correct template."""

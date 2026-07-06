@@ -5,21 +5,21 @@ from urllib.parse import parse_qs, urlparse
 import openpyxl
 import pytest
 
-from apps.WebScraper.models import PropertyListing
+from apps.analytics.models import PropertyListing
 
 pytestmark = pytest.mark.django_db
 
 
 class TestFilterBuilder:
     def test_get_renders_filter_builder(self, client):
-        response = client.get('/scraper/')
+        response = client.get('/analytics/')
         assert response.status_code == 200
-        assert 'WebScraper/search.html' in [t.name for t in response.templates]
+        assert 'analytics/search.html' in [t.name for t in response.templates]
         assert b'Build a Market Analysis' in response.content
 
     def test_get_prefills_form_from_query_params(self, client):
         response = client.get(
-            '/scraper/',
+            '/analytics/',
             {
                 'q': 'Main',
                 'city': 'Clearwater',
@@ -54,7 +54,7 @@ class TestFilterBuilder:
 
     def test_post_redirects_to_insights_with_filter_params(self, client):
         response = client.post(
-            '/scraper/',
+            '/analytics/',
             {
                 'city': 'Clearwater',
                 'min_price': '100000',
@@ -71,7 +71,7 @@ class TestFilterBuilder:
 
     def test_post_preserves_multi_value_property_types(self, client):
         response = client.post(
-            '/scraper/',
+            '/analytics/',
             {
                 'city': 'St. Petersburg',
                 'property_type': ['Single Family', 'Condo'],
@@ -83,7 +83,7 @@ class TestFilterBuilder:
 
     def test_post_drops_removed_filter_params(self, client):
         response = client.post(
-            '/scraper/',
+            '/analytics/',
             {
                 'q': 'Main',
                 'min_assessed_value': '90000',
@@ -101,7 +101,7 @@ class TestFilterBuilder:
         assert 'tax_status' not in params
 
     def test_post_with_no_fields_still_redirects(self, client):
-        response = client.post('/scraper/', {})
+        response = client.post('/analytics/', {})
         assert response.status_code == 302
         assert urlparse(response.url).path == '/insights/'
 
@@ -110,7 +110,7 @@ class TestInsightsDashboard:
     def test_root_renders_insights_dashboard(self, client, sample_property):
         response = client.get('/')
         assert response.status_code == 200
-        assert 'WebScraper/market-insights.html' in [t.name for t in response.templates]
+        assert 'analytics/market-insights.html' in [t.name for t in response.templates]
         assert b'Pinellas Market Lens' in response.content
 
     def test_insights_route_renders_dashboard(self, client, sample_property):
@@ -122,9 +122,9 @@ class TestInsightsDashboard:
         assert b'market-insights-charts' in response.content
 
     def test_legacy_dashboard_alias_renders_insights(self, client, sample_property):
-        response = client.get('/scraper/dashboard/')
+        response = client.get('/analytics/dashboard/')
         assert response.status_code == 200
-        assert 'WebScraper/market-insights.html' in [t.name for t in response.templates]
+        assert 'analytics/market-insights.html' in [t.name for t in response.templates]
         assert b'Auditable Outliers' in response.content
 
     def test_invalid_numeric_filters_do_not_500(self, client, sample_property):
@@ -210,12 +210,12 @@ class TestInsightsDashboard:
 
         response = client.get('/insights/')
         assert response.status_code == 200
-        assert '/scraper/property/outlier-004/' in response.content.decode()
+        assert '/analytics/property/outlier-004/' in response.content.decode()
 
 
 class TestExports:
     def test_excel_download_is_analysis_workbook(self, client, sample_property):
-        response = client.get('/scraper/download/excel/')
+        response = client.get('/analytics/download/excel/')
         assert response.status_code == 200
         assert 'spreadsheetml' in response['Content-Type']
         assert 'PinellasMarketLens_' in response['Content-Disposition']
@@ -232,7 +232,7 @@ class TestExports:
         assert workbook['Overview']['A1'].value == 'Pinellas Market Lens'
 
     def test_pdf_download_is_insight_brief(self, client, sample_property):
-        response = client.get('/scraper/download/pdf/')
+        response = client.get('/analytics/download/pdf/')
         assert response.status_code == 200
         assert response['Content-Type'] == 'application/pdf'
         assert 'PinellasMarketLens_' in response['Content-Disposition']
@@ -241,8 +241,8 @@ class TestExports:
     @pytest.mark.parametrize(
         ('url', 'content_type'),
         [
-            ('/scraper/download/excel/', 'spreadsheetml'),
-            ('/scraper/download/pdf/', 'application/pdf'),
+            ('/analytics/download/excel/', 'spreadsheetml'),
+            ('/analytics/download/pdf/', 'application/pdf'),
         ],
     )
     def test_download_ignores_invalid_numeric_filter_params(self, client, sample_property, url, content_type):
@@ -258,3 +258,19 @@ class TestExports:
 
         assert response.status_code == 200
         assert content_type in response['Content-Type']
+
+
+class TestLegacyScraperRedirect:
+    """The app was renamed WebScraper -> analytics; /scraper/ must still resolve."""
+
+    def test_scraper_root_redirects_to_analytics(self, client):
+        response = client.get('/scraper/')
+        assert response.status_code == 302
+        assert urlparse(response.url).path == '/analytics/'
+
+    def test_scraper_subpath_and_query_preserved(self, client):
+        response = client.get('/scraper/download/excel/?city=Clearwater')
+        assert response.status_code == 302
+        parsed = urlparse(response.url)
+        assert parsed.path == '/analytics/download/excel/'
+        assert parse_qs(parsed.query)['city'] == ['Clearwater']

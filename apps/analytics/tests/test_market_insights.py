@@ -2,8 +2,8 @@ from decimal import Decimal
 
 import pytest
 
-from apps.WebScraper.models import PropertyListing
-from apps.WebScraper.services.market_insights import build_market_insights
+from apps.analytics.models import PropertyListing
+from apps.analytics.services.market_insights import build_market_insights
 
 pytestmark = pytest.mark.django_db
 
@@ -78,7 +78,7 @@ def test_high_value_outlier_links_to_drilldown():
 
     assert rows
     assert rows[0]['parcel_id'] == 'insight-005'
-    assert rows[0]['detail_url'] == '/scraper/property/insight-005/'
+    assert rows[0]['detail_url'] == '/analytics/property/insight-005/'
 
 
 def test_missing_sqft_and_tax_do_not_break_derived_metrics():

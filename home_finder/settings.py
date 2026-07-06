@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps.Pages.apps.PagesConfig',
-    'apps.WebScraper.apps.WebScraperConfig',
+    'apps.analytics.apps.AnalyticsConfig',
     'rest_framework',
 ]
 
@@ -233,27 +233,27 @@ LOGGING = {
             'level': LOG_LEVEL,
             'propagate': False,
         },
-        'apps.WebScraper': {
+        'apps.analytics': {
             'handlers': ['console'],
             'level': LOG_LEVEL,
             'propagate': False,
         },
-        'apps.WebScraper.tasks': {
+        'apps.analytics.tasks': {
             'handlers': ['console'],
             'level': LOG_LEVEL,
             'propagate': False,
         },
-        'apps.WebScraper.tasks.pcpao_scraper': {
+        'apps.analytics.tasks.pcpao_scraper': {
             'handlers': ['console'],
             'level': LOG_LEVEL,
             'propagate': False,
         },
-        'apps.WebScraper.tasks.scrape_data': {
+        'apps.analytics.tasks.scrape_data': {
             'handlers': ['console'],
             'level': LOG_LEVEL,
             'propagate': False,
         },
-        'apps.WebScraper.tasks.tax_collector_scraper': {
+        'apps.analytics.tasks.tax_collector_scraper': {
             'handlers': ['console'],
             'level': LOG_LEVEL,
             'propagate': False,

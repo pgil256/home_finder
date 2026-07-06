@@ -18,7 +18,7 @@ def test_S1_home_loads(client, base_url):
 
 def test_S2_scraper_form_loads(client, base_url):
     """Filter builder renders with city + property type fields."""
-    r = client.get(f'{base_url}/scraper/', timeout=TIMEOUT)
+    r = client.get(f'{base_url}/analytics/', timeout=TIMEOUT)
     assert r.status_code == 200
     assert 'name="city"' in r.text
     assert 'name="property_type"' in r.text
@@ -36,20 +36,20 @@ def test_S3_insights_dashboard_renders(client, base_url):
 
 def test_S4_property_detail_loads(client, base_url, known_parcel_id):
     """Detail page for a real parcel returns 200 and shows the parcel ID."""
-    r = client.get(f'{base_url}/scraper/property/{known_parcel_id}/', timeout=TIMEOUT)
+    r = client.get(f'{base_url}/analytics/property/{known_parcel_id}/', timeout=TIMEOUT)
     assert r.status_code == 200
     assert known_parcel_id in r.text
 
 
 def test_S5_invalid_parcel_returns_404(client, base_url):
     """Detail page for a nonexistent parcel returns 404."""
-    r = client.get(f'{base_url}/scraper/property/00-00-00-00000-000-0000/', timeout=TIMEOUT)
+    r = client.get(f'{base_url}/analytics/property/00-00-00-00000-000-0000/', timeout=TIMEOUT)
     assert r.status_code == 404
 
 
 def test_S6_excel_download(client, base_url):
     """Excel download returns a valid .xlsx file."""
-    r = client.get(f'{base_url}/scraper/download/excel/', timeout=DOWNLOAD_TIMEOUT)
+    r = client.get(f'{base_url}/analytics/download/excel/', timeout=DOWNLOAD_TIMEOUT)
     assert r.status_code == 200
     assert 'spreadsheetml' in r.headers.get('Content-Type', '')
     # xlsx is a zip; check magic bytes
@@ -58,7 +58,7 @@ def test_S6_excel_download(client, base_url):
 
 def test_S7_pdf_download(client, base_url):
     """PDF download returns a valid PDF file."""
-    r = client.get(f'{base_url}/scraper/download/pdf/', timeout=DOWNLOAD_TIMEOUT)
+    r = client.get(f'{base_url}/analytics/download/pdf/', timeout=DOWNLOAD_TIMEOUT)
     assert r.status_code == 200
     assert r.headers.get('Content-Type', '').startswith('application/pdf')
     assert r.content[:5] == b'%PDF-'
