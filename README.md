@@ -12,6 +12,20 @@ Pinellas Market Lens is a data-science dashboard for exploring Pinellas County, 
 
 > The repository is still named `home_finder` from its original property-search incarnation; it was rebuilt around the analytics workflow described below.
 
+## Screenshots
+
+The market-insights dashboard — exact KPIs over 400k+ parcels, with pandas/numpy distributions, city/type segments, and auditable outliers:
+
+![Pinellas Market Lens market-insights dashboard](docs/img/dashboard.png)
+
+A parcel drilldown (here a high-value outlier surfaced by the dashboard) and the responsive mobile layout:
+
+<p align="center">
+  <img src="docs/img/property-detail.png" alt="Parcel drilldown with valuation, tax, and outlier context" width="62%">
+  &nbsp;
+  <img src="docs/img/mobile.png" alt="Responsive mobile dashboard" width="30%">
+</p>
+
 ## What It Shows
 
 | Route | Purpose |
