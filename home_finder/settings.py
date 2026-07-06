@@ -196,7 +196,7 @@ GOOGLE_STREET_VIEW_API_KEY = config('GOOGLE_STREET_VIEW_API_KEY', default='')
 STREET_VIEW_IMAGE_SIZE = '640x480'
 
 # Logging configuration for production visibility
-# All logs go to stdout for Railway/container environments
+# All logs go to stdout for the serverless/container runtime to capture
 LOG_LEVEL = config('LOG_LEVEL', default='INFO')
 
 LOGGING = {

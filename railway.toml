@@ -1,9 +1,0 @@
-[build]
-builder = "dockerfile"
-
-[deploy]
-startCommand = "bash /app/start.sh"
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 10
-healthcheckTimeout = 300
-numReplicas = 1
