@@ -10,6 +10,8 @@
 
 Pinellas Market Lens is a data-science dashboard for exploring Pinellas County, Florida parcel records. It pivots the original property-search app into an analytics-first portfolio project: official public records are ingested, cleaned, indexed, filtered, and analyzed with pandas/numpy to expose market KPIs, distributions, segment comparisons, tax burden, assessed-value gaps, and auditable outliers.
 
+> The repository is still named `home_finder` from its original property-search incarnation; it was rebuilt around the analytics workflow described below.
+
 ## What It Shows
 
 | Route | Purpose |
@@ -45,6 +47,7 @@ The production architecture keeps the app cheap and understandable: Vercel serve
 - Auditable outliers: high-value IQR outliers, largest assessed gaps, and highest tax-burden parcels link back to parcel drilldowns.
 - Honest methodology: v1 does not claim predictive valuation because the public dataset lacks MLS sale prices and reliable bedrooms/bathrooms coverage.
 - Production constraints: interactive EDA is capped for responsiveness, while headline KPIs remain exact database aggregates.
+- On-demand freshness: the full dataset refreshes monthly via GitHub Actions, and any single parcel can be re-pulled from the County Property Appraiser on demand — rate-limited to one refresh per parcel per minute via the database cache.
 
 ## Tech Stack
 
