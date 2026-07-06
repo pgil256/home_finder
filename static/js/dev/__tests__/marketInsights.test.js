@@ -76,3 +76,72 @@ describe('marketInsights chart adapter', () => {
     expect(document.getElementById('chart-pricePerSqftDistribution').getAttribute('aria-hidden')).toBe('true');
   });
 });
+
+describe('marketInsights data transformations', () => {
+  test('hasPlottableData handles missing/partial datasets', () => {
+    expect(hasPlottableData({})).toBe(false);
+    expect(hasPlottableData({ datasets: 'nope' })).toBe(false);
+    expect(hasPlottableData({ datasets: [{ data: [] }, { data: [3] }] })).toBe(true);
+  });
+
+  test('buildChartConfig shows legend and bar axes for segment charts', () => {
+    const config = buildChartConfig('citySegments', {
+      labels: ['Clearwater'],
+      datasets: [{ label: 'Median market value', data: [250000] }],
+    });
+
+    expect(config.type).toBe('bar');
+    expect(config.options.plugins.legend.display).toBe(true);
+    expect(config.options.scales.y.beginAtZero).toBe(true);
+    expect(config.options.scales.x.title).toBeUndefined();
+  });
+
+  test('buildChartConfig hides legend for plain distribution bars', () => {
+    const config = buildChartConfig('valueDistribution', {
+      labels: ['A'],
+      datasets: [{ label: 'Values', data: [1] }],
+    });
+
+    expect(config.options.plugins.legend.display).toBe(false);
+  });
+
+  test('scatter tooltip formats assessed and market dollars', () => {
+    const config = buildChartConfig('valueGapScatter', { labels: [], datasets: [] });
+    const label = config.options.plugins.tooltip.callbacks.label({ raw: { x: 12, y: 34 } });
+
+    expect(label).toBe('Assessed $12 · Market $34');
+  });
+
+  test('bar tooltip rounds and labels the parsed value', () => {
+    const config = buildChartConfig('valueDistribution', { labels: ['A'], datasets: [] });
+    const label = config.options.plugins.tooltip.callbacks.label({
+      parsed: { y: 12.6 },
+      dataset: { label: 'Median market value' },
+    });
+
+    expect(label).toBe('Median market value: 13');
+  });
+
+  test('setChartNote joins sample size, omitted rows, and note', () => {
+    document.body.innerHTML = '<p data-chart-note="valueDistribution"></p>';
+
+    setChartNote(
+      document,
+      'valueDistribution',
+      { meta: { chart_sample_size: 12, omitted_nulls: 3, note: 'Top 1% trimmed.' } },
+      true
+    );
+
+    expect(document.querySelector('[data-chart-note]').textContent).toBe('n=12 · 3 rows omitted · Top 1% trimmed.');
+  });
+
+  test('readChartPayloads returns empty object when element missing or invalid', () => {
+    document.body.innerHTML = '';
+    expect(readChartPayloads(document)).toEqual({});
+
+    document.body.innerHTML = '<script id="market-insights-charts" type="application/json">{ not json }</script>';
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    expect(readChartPayloads(document)).toEqual({});
+    spy.mockRestore();
+  });
+});

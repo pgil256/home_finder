@@ -1,9 +1,13 @@
 from decimal import Decimal
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from apps.analytics.models import PropertyListing
+from apps.analytics.services import market_insights as mi
 from apps.analytics.services.market_insights import build_market_insights
+from apps.analytics.services.palette import PRIMARY
 
 pytestmark = pytest.mark.django_db
 
@@ -99,3 +103,92 @@ def test_missing_sqft_and_tax_do_not_break_derived_metrics():
     assert insights['exact']['median_price_per_sqft'] is None
     assert insights['exact']['median_tax_rate'] is None
     assert insights['sample_parcels'][0]['price_per_sqft'] is None
+
+
+# --- Direct unit tests of the pandas/numpy internals (no database needed) ---
+
+
+class TestNaNCleaning:
+    def test_none_if_nan_maps_nan_and_none_to_none(self):
+        assert mi._none_if_nan(np.nan) is None
+        assert mi._none_if_nan(None) is None
+        assert mi._none_if_nan(float('nan')) is None
+
+    def test_none_if_nan_passes_through_numbers_and_nonnumeric(self):
+        assert mi._none_if_nan(5) == 5
+        assert mi._none_if_nan(Decimal('12.5')) == Decimal('12.5')
+        assert mi._none_if_nan('n/a') == 'n/a'
+
+    def test_clean_number_coerces_to_float_or_none(self):
+        assert mi._clean_number(np.nan) is None
+        assert mi._clean_number(Decimal('7')) == 7.0
+        assert isinstance(mi._clean_number(3), float)
+
+
+class TestEmptyFrame:
+    def test_empty_frame_has_expected_columns(self):
+        cols = set(mi._empty_frame().columns)
+        assert {'parcel_id', 'market_value', 'price_per_sqft', 'assessed_gap_pct', 'tax_rate'} <= cols
+
+    def test_segments_percentiles_outliers_handle_empty_frame(self):
+        empty = mi._empty_frame()
+        assert mi._segments(empty, 'city', 12) == []
+        assert mi._percentiles(empty) == {'market_value': [], 'price_per_sqft': []}
+        assert mi._outliers(empty) == {'market_value': [], 'assessed_gap': [], 'tax_rate': []}
+
+
+class TestPercentileRows:
+    def test_empty_series_returns_no_rows(self):
+        assert mi._percentile_rows(pd.Series(dtype='float64')) == []
+
+    def test_nonpositive_values_are_dropped(self):
+        assert mi._percentile_rows(pd.Series([0, -5, -1])) == []
+
+    def test_returns_five_labelled_percentiles(self):
+        rows = mi._percentile_rows(pd.Series([100, 200, 300, 400, 500]))
+        assert [r['label'] for r in rows] == ['P10', 'P25', 'P50', 'P75', 'P90']
+        assert rows[2]['value'] == 300  # P50 == median
+
+
+class TestHistogramPayload:
+    def test_too_few_values_returns_empty_chart_with_note(self):
+        payload = mi._histogram_payload(pd.Series([100.0]), 'Values', sample_size=1, currency=True)
+        assert payload['datasets'][0]['data'] == []
+        assert 'at least two numeric values' in payload['meta']['note']
+
+    def test_shape_and_brand_color(self):
+        series = pd.Series([float(v) for v in range(100, 2000, 50)])
+        payload = mi._histogram_payload(series, 'Values', sample_size=len(series), currency=False)
+        assert set(payload) == {'labels', 'datasets', 'meta'}
+        assert payload['datasets'][0]['backgroundColor'] == PRIMARY
+        assert len(payload['labels']) == len(payload['datasets'][0]['data'])
+        assert payload['meta']['sample_size'] == len(series)
+
+
+class TestIqrOutliers:
+    @staticmethod
+    def _frame(market_values):
+        n = len(market_values)
+        return pd.DataFrame(
+            {
+                'parcel_id': [f'p{i}' for i in range(n)],
+                'address': [f'{i} Main St' for i in range(n)],
+                'city': ['Clearwater'] * n,
+                'zip_code': ['33755'] * n,
+                'property_type': ['Single Family'] * n,
+                'market_value': [float(v) for v in market_values],
+                'assessed_value': [float(v) * 0.9 for v in market_values],
+                'price_per_sqft': [100.0] * n,
+                'tax_rate': [1.0] * n,
+                'assessed_gap_pct': [10.0] * n,
+            }
+        )
+
+    def test_flags_value_above_iqr_threshold(self):
+        rows = mi._iqr_outlier_rows(self._frame([100000, 110000, 120000, 130000, 900000]), 'market_value')
+        assert len(rows) == 1
+        assert rows[0]['parcel_id'] == 'p4'
+        assert rows[0]['metric_value'] == 900000
+
+    def test_needs_at_least_four_rows(self):
+        assert mi._iqr_outlier_rows(self._frame([100000, 200000, 300000]), 'market_value') == []

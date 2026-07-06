@@ -28,6 +28,7 @@ media/reports/
 .coverage
 .coverage.*
 htmlcov/
+coverage/
 .pytest_cache/
 
 # Browser automation traces
