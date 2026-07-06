@@ -40,6 +40,14 @@ flowchart LR
 
 The production architecture keeps the app cheap and understandable: Vercel serves Django, Neon stores the indexed parcel table, and GitHub Actions refreshes the public-record data. The interesting data-science layer is now visible in the product instead of hidden inside a download.
 
+### Design decisions
+
+- **Exact DB aggregates + capped pandas frames.** Headline KPIs (counts, medians, sums, tax rates) are exact database aggregates over the full filtered queryset, so the numbers are always right. The pandas/numpy layer that powers distributions, segments, and scatter plots reads a capped analysis frame (≤50k rows) — enough for representative EDA without pulling ~400k rows into a serverless function on every request.
+- **Monthly bulk CSV import over live scraping.** The original app scraped PCPAO per search (Selenium, ~15 rows, 15–30s, often zero results). Importing the county's public bulk CSV once a month turns every search into a sub-second indexed query over complete data and removes Chrome/Selenium from the request path. The old per-parcel scrape survives only as an on-demand refresh.
+- **Vercel serverless + Neon Postgres.** Vercel runs Django with no servers to manage; Neon is a serverless Postgres that idles to zero between requests. The full dataset (~150 MB / ~400k parcels) fits under Neon's free storage, so the project is effectively free to run.
+- **DatabaseCache over Redis.** The only thing needing a cache is the per-parcel refresh rate limit. A database-backed cache table needs no extra service, survives serverless cold starts, and fails open — not worth standing up Redis for one rate-limit key.
+- **GitHub Actions for the data refresh.** The import runs 10–20 minutes, well past Vercel's function timeout, so a monthly GitHub Actions cron runs it against Neon instead — free, no extra infrastructure, and duration doesn't matter for a one-shot batch.
+
 ## Interesting Bits
 
 - Exact database KPIs: parcel count, median/mean market value, median price per square foot, total market value, median tax rate, and assessed-vs-market gap.
