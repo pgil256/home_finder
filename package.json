@@ -20,8 +20,7 @@
   "dependencies": {
     "chart.js": "^4.5.1",
     "nouislider": "^15.7.1",
-    "postcss-cli": "^11.0.0",
-    "sortablejs": "^1.15.2"
+    "postcss-cli": "^11.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.4",

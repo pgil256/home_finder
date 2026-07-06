@@ -25,7 +25,6 @@ from apps.WebScraper import views as scraper_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('insights/', scraper_views.insights_dashboard, name='insights'),
-    path('keyword/', include('apps.KeywordSelection.urls')),
     path('scraper/', include('apps.WebScraper.urls')),
     path('', include('apps.Pages.urls')),
 ]

@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.KeywordSelection.apps.KeywordSelectionConfig',
     'apps.Pages.apps.PagesConfig',
     'apps.WebScraper.apps.WebScraperConfig',
     'rest_framework',

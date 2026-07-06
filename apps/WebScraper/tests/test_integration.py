@@ -38,61 +38,6 @@ class TestPropertySearchWorkflow:
         assert response.status_code == 200
 
 
-class TestKeywordOrderingWorkflow:
-    """Integration tests for keyword priority ordering."""
-
-    def test_keyword_reorder_persists(self, client, db):
-        """Test keyword reordering persists to database."""
-        import json
-
-        from apps.KeywordSelection.models import Keyword
-
-        # Create keywords
-        k1 = Keyword.objects.create(name='First', priority=1)
-        k2 = Keyword.objects.create(name='Second', priority=2)
-
-        # Reorder using actual API format (ordered_keywords with name/priority)
-        new_order = [
-            {'name': 'Second', 'priority': 1},
-            {'name': 'First', 'priority': 2},
-        ]
-
-        response = client.post(
-            '/keyword/submit-keyword-order/',
-            data=json.dumps({'ordered_keywords': new_order}),
-            content_type='application/json',
-        )
-
-        assert response.status_code == 200
-
-        k1.refresh_from_db()
-        k2.refresh_from_db()
-        assert k2.priority < k1.priority
-
-    def test_get_keywords_returns_json(self, client, db):
-        """Test get_keywords endpoint returns JSON with keywords."""
-        from apps.KeywordSelection.models import Keyword
-
-        # Create test keywords
-        Keyword.objects.create(name='City', priority=1, is_active=True)
-        Keyword.objects.create(name='Price', priority=2, is_active=True)
-
-        response = client.get('/keyword/get-keywords/')
-
-        assert response.status_code == 200
-        assert response['Content-Type'] == 'application/json'
-
-        data = response.json()
-        assert 'keywords' in data
-        assert 'City' in data['keywords']
-        assert 'Price' in data['keywords']
-
-    def test_keyword_selection_page_loads(self, client):
-        """Test keyword selection page renders."""
-        response = client.get('/keyword/keyword-selection')
-        assert response.status_code == 200
-
-
 class TestDataImportWorkflow:
     """Integration tests for bulk data import."""
 

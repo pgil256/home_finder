@@ -8,7 +8,6 @@ module.exports = {
   entry: {
     common: "./static/js/dev/common.js",
     mobile: "./static/js/dev/mobile.js",
-    keywordSelection: "./static/js/dev/keywordSelection.js",
     marketInsights: "./static/js/dev/marketInsights.js",
   },
   output: {

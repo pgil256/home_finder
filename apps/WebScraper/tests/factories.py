@@ -2,7 +2,6 @@ from decimal import Decimal
 
 import factory
 
-from apps.KeywordSelection.models import Keyword
 from apps.WebScraper.models import PropertyListing
 
 
@@ -23,14 +22,3 @@ class PropertyListingFactory(factory.django.DjangoModelFactory):
     bedrooms = factory.Faker('random_int', min=1, max=5)
     bathrooms = factory.LazyFunction(lambda: Decimal('2.0'))
     land_size = factory.LazyFunction(lambda: Decimal('0.25'))
-
-
-class KeywordFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Keyword
-
-    name = factory.Sequence(lambda n: f'Keyword {n}')
-    data_type = 'text'
-    help_text = factory.Faker('sentence')
-    priority = factory.Sequence(lambda n: n)
-    is_active = True

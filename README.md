@@ -70,7 +70,7 @@ pip install -r requirements.txt
 
 copy .env.example .env
 python manage.py migrate
-python manage.py load_pinellas_data
+python manage.py import_pcpao_data --file apps/WebScraper/fixtures/sample_pcpao_data.csv
 
 npm install
 npm run build
