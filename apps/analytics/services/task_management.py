@@ -36,16 +36,18 @@ def get_client_ip(request) -> str:
     return request.META.get('REMOTE_ADDR', '')
 
 
-def check_rate_limit(client_ip: str) -> int | None:
+def check_rate_limit(client_ip: str, *, bucket: str = 'scrape_rate', window_seconds: int = SCRAPE_RATE_LIMIT_SECONDS) -> int | None:
     """Return seconds to wait if rate-limited, else None.
 
+    `bucket` namespaces the cache key so unrelated rate limits (e.g. search
+    submissions vs. export downloads) don't share — or contend for — the same key.
     Cache failures fail open (request allowed) so a cache-table issue doesn't 500 the page.
     """
-    rate_key = f'scrape_rate:{client_ip}'
+    rate_key = f'{bucket}:{client_ip}'
     last_submission = _safe_cache_get(rate_key)
     if last_submission:
-        wait_seconds = SCRAPE_RATE_LIMIT_SECONDS - (time.time() - last_submission)
+        wait_seconds = window_seconds - (time.time() - last_submission)
         if wait_seconds > 0:
             return int(wait_seconds)
-    _safe_cache_set(rate_key, time.time(), timeout=SCRAPE_RATE_LIMIT_SECONDS)
+    _safe_cache_set(rate_key, time.time(), timeout=window_seconds)
     return None

@@ -260,6 +260,29 @@ class TestExports:
         assert content_type in response['Content-Type']
 
 
+class TestExportRateLimit:
+    """Exports are unauthenticated and build a workbook/PDF over up to 50k
+    rows per hit, so repeat downloads are capped per client IP per format."""
+
+    def test_second_download_within_the_window_is_rate_limited(self, client, sample_property):
+        first = client.get('/analytics/download/excel/')
+        assert first.status_code == 200
+
+        second = client.get('/analytics/download/excel/')
+
+        assert second.status_code == 302
+        assert urlparse(second.url).path == '/insights/'
+
+    def test_rate_limit_is_scoped_per_format(self, client, sample_property):
+        excel = client.get('/analytics/download/excel/')
+        assert excel.status_code == 200
+
+        # A PDF request right after an Excel download uses a separate bucket.
+        pdf = client.get('/analytics/download/pdf/')
+
+        assert pdf.status_code == 200
+
+
 class TestLegacyScraperRedirect:
     """The app was renamed WebScraper -> analytics; /scraper/ must still resolve."""
 

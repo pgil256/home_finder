@@ -4,12 +4,15 @@ from io import BytesIO
 
 import openpyxl
 import pytest
+from django.test import RequestFactory
 
 from apps.analytics.models import PropertyListing
 from apps.analytics.services import exports
 from apps.analytics.services.exports import generate_excel_response, generate_pdf_response
 
 pytestmark = pytest.mark.django_db
+
+rf = RequestFactory()
 
 
 def _boom(*args, **kwargs):
@@ -73,4 +76,21 @@ class TestPdfExport:
         response = generate_pdf_response()
 
         assert response.status_code == 500
+        assert b"couldn't generate" in response.content
+
+
+@pytest.mark.parametrize('generate', [generate_excel_response, generate_pdf_response])
+class TestExportFailureDoesNotRedirectIntoDashboard:
+    """build_market_insights is shared with insights_dashboard, which has no
+    try/except of its own — redirecting a failed export back to /insights/
+    would just trigger the same crash there, unhandled. The error response
+    must stand alone (no redirect) even when a real request is provided."""
+
+    def test_with_a_real_request_the_response_is_a_standalone_error_not_a_redirect(self, monkeypatch, generate):
+        monkeypatch.setattr(exports, 'build_market_insights', _boom)
+
+        response = generate(rf.get('/analytics/download/excel/'))
+
+        assert response.status_code == 500
+        assert response.get('Location') is None
         assert b"couldn't generate" in response.content

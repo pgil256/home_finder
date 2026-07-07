@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import QueryDict
+from django.http import HttpRequest, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -20,11 +21,16 @@ from .services.filtering import (
     apply_sorting,
 )
 from .services.market_insights import build_market_insights
+from .services.task_management import check_rate_limit, get_client_ip
 
 # Per-parcel refresh rate limit: 60s between refreshes for the same parcel,
 # regardless of who's asking. Prevents one user (or bot) from hammering
 # PCPAO for any single property.
 REFRESH_RATE_LIMIT_SECONDS = 60
+
+# Export rate limit: exports are unauthenticated and build a workbook/PDF over
+# up to 50k rows on every hit, so cap repeat downloads per IP per format.
+EXPORT_RATE_LIMIT_SECONDS = 10
 
 logger = logging.getLogger(__name__)
 
@@ -336,11 +342,22 @@ def property_refresh(request, parcel_id: str):
     return redirect(detail_url)
 
 
+def _rate_limited_export(
+    request: HttpRequest, *, bucket: str, label: str, generate: Callable[[HttpRequest], HttpResponse]
+) -> HttpResponse:
+    client_ip = get_client_ip(request)
+    wait = check_rate_limit(client_ip, bucket=bucket, window_seconds=EXPORT_RATE_LIMIT_SECONDS)
+    if wait is not None:
+        messages.warning(request, f'Please wait {wait} seconds before downloading another {label}.')
+        return redirect(reverse('insights'))
+    return generate(request)
+
+
 def download_excel(request):
     """Generate and serve an Excel file of properties matching the dashboard filters."""
-    return generate_excel_response(request)
+    return _rate_limited_export(request, bucket='export_excel', label='Excel workbook', generate=generate_excel_response)
 
 
 def download_pdf(request):
     """Generate PDF report of properties matching the dashboard filters."""
-    return generate_pdf_response(request)
+    return _rate_limited_export(request, bucket='export_pdf', label='PDF brief', generate=generate_pdf_response)

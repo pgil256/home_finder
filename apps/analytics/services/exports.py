@@ -7,9 +7,7 @@ from datetime import UTC, datetime
 from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
-from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect
 from django.urls import reverse
 from openpyxl.styles import Alignment, Font, PatternFill
 
@@ -29,7 +27,7 @@ def generate_excel_response(request: HttpRequest | None = None) -> HttpResponse:
         return _build_excel_response(request)
     except Exception:
         logger.exception('Excel export generation failed')
-        return _export_error_response(request, 'Excel workbook')
+        return _export_error_response('Excel workbook')
 
 
 def _build_excel_response(request: HttpRequest | None) -> HttpResponse:
@@ -96,7 +94,7 @@ def generate_pdf_response(request: HttpRequest | None = None) -> HttpResponse:
         return _build_pdf_response(request)
     except Exception:
         logger.exception('PDF export generation failed')
-        return _export_error_response(request, 'PDF brief')
+        return _export_error_response('PDF brief')
 
 
 def _build_pdf_response(request: HttpRequest | None) -> HttpResponse:
@@ -189,14 +187,24 @@ def _build_pdf_response(request: HttpRequest | None) -> HttpResponse:
     return response
 
 
-def _export_error_response(request: HttpRequest | None, kind: str) -> HttpResponse:
-    """Fail gracefully: flash a message and return to the dashboard when we can,
-    otherwise return a plain friendly error instead of a raw 500 traceback."""
+def _export_error_response(kind: str) -> HttpResponse:
+    """Fail gracefully with a small, dependency-free error page.
+
+    Deliberately does not redirect back into the dashboard: build_market_insights
+    is shared with insights_dashboard, so if that's what failed, a redirect would
+    just re-run the same crash there (unhandled) instead of showing this message.
+    """
     message = f"We couldn't generate the {kind} right now. Please adjust your filters and try again."
-    if request is not None:
-        messages.error(request, message)
-        return redirect(reverse('insights'))
-    return HttpResponse(message, status=500, content_type='text/plain; charset=utf-8')
+    html = f"""<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Export unavailable · Pinellas Market Lens</title></head>
+<body style="font-family: system-ui, sans-serif; max-width: 32rem; margin: 4rem auto; padding: 0 1.5rem; color: #1f2933;">
+<h1 style="color: {PRIMARY};">Export unavailable</h1>
+<p>{message}</p>
+<p><a href="{reverse('insights')}" style="color: {PRIMARY};">Back to the dashboard</a></p>
+</body>
+</html>"""
+    return HttpResponse(html, status=500, content_type='text/html; charset=utf-8')
 
 
 def _write_label_value_section(ws: Worksheet, start_row: int, title: str, rows: list[tuple[str, str]]) -> int:
