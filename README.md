@@ -14,14 +14,14 @@ Pinellas Market Lens is a data-science dashboard for exploring Pinellas County, 
 
 ## Screenshots
 
-The market-insights dashboard — exact KPIs over 400k+ parcels, with pandas/numpy distributions, city/type segments, and auditable outliers:
+The market-insights dashboard — exact KPIs over 437,000+ parcels, with pandas/numpy distributions, city/type segments, and auditable outliers:
 
 ![Pinellas Market Lens market-insights dashboard](docs/img/dashboard.png)
 
-A parcel drilldown (here a high-value outlier surfaced by the dashboard) and the responsive mobile layout:
+A parcel drilldown and the responsive mobile layout:
 
 <p align="center">
-  <img src="docs/img/property-detail.png" alt="Parcel drilldown with valuation, tax, and outlier context" width="62%">
+  <img src="docs/img/property-detail.png" alt="Parcel drilldown with valuation, tax, and similar-property context" width="62%">
   &nbsp;
   <img src="docs/img/mobile.png" alt="Responsive mobile dashboard" width="30%">
 </p>
@@ -56,10 +56,10 @@ The production architecture keeps the app cheap and understandable: Vercel serve
 
 ### Design decisions
 
-- **Exact DB aggregates + capped pandas frames.** Headline KPIs (counts, medians, sums, tax rates) are exact database aggregates over the full filtered queryset, so the numbers are always right. The pandas/numpy layer that powers distributions, segments, and scatter plots reads a capped analysis frame (≤50k rows) — enough for representative EDA without pulling ~400k rows into a serverless function on every request.
+- **Exact DB aggregates + capped pandas frames.** Headline KPIs (counts, medians, sums, tax rates) are exact database aggregates over the full filtered queryset, so the numbers are always right. The pandas/numpy layer that powers distributions, segments, and scatter plots reads a capped analysis frame (≤50k rows) — enough for representative EDA without pulling ~437k rows into a serverless function on every request.
 - **Monthly bulk CSV import over live scraping.** The original app scraped PCPAO per search (Selenium, ~15 rows, 15–30s, often zero results). Importing the county's public bulk CSV once a month turns every search into a sub-second indexed query over complete data and removes Chrome/Selenium from the request path. The old per-parcel scrape survives only as an on-demand refresh.
-- **Vercel serverless + Neon Postgres.** Vercel runs Django with no servers to manage; Neon is a serverless Postgres that idles to zero between requests. The full dataset (~150 MB / ~400k parcels) fits under Neon's free storage, so the project is effectively free to run.
-- **DatabaseCache over Redis.** The only thing needing a cache is the per-parcel refresh rate limit. A database-backed cache table needs no extra service, survives serverless cold starts, and fails open — not worth standing up Redis for one rate-limit key.
+- **Vercel serverless + Neon Postgres.** Vercel runs Django with no servers to manage; Neon is a serverless Postgres that idles to zero between requests. The full dataset (~150 MB / ~437k parcels) fits under Neon's free storage, so the project is effectively free to run.
+- **DatabaseCache over Redis.** The only things needing a cache are the per-parcel refresh and per-IP export rate limits. A database-backed cache table needs no extra service, survives serverless cold starts, and fails open — not worth standing up Redis for a couple of rate-limit keys.
 - **GitHub Actions for the data refresh.** The import runs 10–20 minutes, well past Vercel's function timeout, so a monthly GitHub Actions cron runs it against Neon instead — free, no extra infrastructure, and duration doesn't matter for a one-shot batch.
 
 ## Interesting Bits
