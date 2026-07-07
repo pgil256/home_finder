@@ -166,10 +166,14 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Cache: database-backed (works on Vercel without an external cache service).
 # Run `python manage.py createcachetable` once after deploy to create the table.
+# Holds small rate-limit keys plus proxied Street View image bytes; raise
+# MAX_ENTRIES above the default 300 so cached images don't evict the tiny
+# rate-limit keys (culling is size-blind).
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'cache_table',
+        'OPTIONS': {'MAX_ENTRIES': 1000},
     }
 }
 

@@ -67,6 +67,31 @@ def get_street_view_url(address: str, city: str = None, zip_code: str = None, si
     return url
 
 
+def fetch_street_view_image(
+    address: str, city: str | None = None, zip_code: str | None = None, size: str | None = None
+) -> tuple[bytes, str] | None:
+    """Fetch the Street View image bytes for a property, server-side.
+
+    The API key stays on the server — callers proxy these bytes to the browser
+    instead of emitting a `maps.googleapis.com/...&key=...` URL into the page.
+
+    Returns (image_bytes, content_type), or None if there's no API key, no
+    address, no imagery for the location, or the upstream request fails. The
+    free metadata check in get_street_view_url gates the billed image fetch, so
+    parcels without coverage never cost a billed call.
+    """
+    url = get_street_view_url(address, city, zip_code, size)
+    if not url:
+        return None
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        logger.warning(f'Street View image fetch failed for {address}: {e}')
+        return None
+    return response.content, response.headers.get('Content-Type', 'image/jpeg')
+
+
 def _has_street_view_imagery(location: str, api_key: str) -> bool:
     """Check if Street View imagery exists for a location.
 
