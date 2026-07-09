@@ -67,3 +67,13 @@ class TestSettingsHelpers:
     def test_bool_config_still_accepts_explicit_truthy_values(self, monkeypatch):
         monkeypatch.setenv('SECURE_SSL_REDIRECT', 'off')
         assert settings._config_bool('SECURE_SSL_REDIRECT', default=True) is False
+
+    def test_csv_config_drops_blank_values(self, monkeypatch):
+        monkeypatch.setenv('ALLOWED_HOSTS', 'localhost, 127.0.0.1, , example.com')
+        assert settings._config_csv('ALLOWED_HOSTS') == ['localhost', '127.0.0.1', 'example.com']
+
+    def test_append_unique_keeps_first_value(self):
+        values = ['localhost']
+        settings._append_unique(values, '.vercel.app')
+        settings._append_unique(values, '.vercel.app')
+        assert values == ['localhost', '.vercel.app']

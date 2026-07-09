@@ -38,6 +38,16 @@ def _config_bool(name: str, *, default: bool) -> bool:
         return False
     return default
 
+
+def _config_csv(name: str, *, default: str = '') -> list[str]:
+    return [item.strip() for item in config(name, default=default).split(',') if item.strip()]
+
+
+def _append_unique(values: list[str], value: str) -> None:
+    if value and value not in values:
+        values.append(value)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -47,12 +57,20 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _config_bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [h.strip() for h in v.split(',')])
+ALLOWED_HOSTS = _config_csv('ALLOWED_HOSTS', default='localhost,127.0.0.1')
 
 # CSRF trusted origins for proxied deployments (Django 4.0+)
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS', default='', cast=lambda v: [o.strip() for o in v.split(',') if o.strip()]
-)
+CSRF_TRUSTED_ORIGINS = _config_csv('CSRF_TRUSTED_ORIGINS')
+
+if os.environ.get('VERCEL'):
+    # Preview deployments use unique *.vercel.app hostnames per branch/commit.
+    _append_unique(ALLOWED_HOSTS, '.vercel.app')
+    _append_unique(CSRF_TRUSTED_ORIGINS, 'https://*.vercel.app')
+
+    vercel_url = os.environ.get('VERCEL_URL', '').strip()
+    if vercel_url:
+        _append_unique(ALLOWED_HOSTS, vercel_url)
+        _append_unique(CSRF_TRUSTED_ORIGINS, f'https://{vercel_url}')
 
 # Application definition
 
