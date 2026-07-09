@@ -532,8 +532,10 @@ def _takeaways(
     if exact['parcel_count'] == 0:
         return ['No parcels match the current filters. Broaden the scope to generate market signals.']
 
+    parcel_count = exact['parcel_count']
+    parcel_label = 'parcel' if parcel_count == 1 else 'parcels'
     takeaways = [
-        f'The current slice contains {_count(exact["parcel_count"])} parcels with a median market value of {_money(exact["median_market_value"])}.',
+        f'The current slice contains {_count(parcel_count)} {parcel_label} with a median market value of {_money(exact["median_market_value"])}.',
     ]
     market_percentiles = percentiles.get('market_value') or []
     p25 = _percentile_lookup(market_percentiles, 'P25')
@@ -542,8 +544,9 @@ def _takeaways(
         takeaways.append(f'The middle 50% of recorded market values spans {_money(p25)} to {_money(p75)}.')
     if city_segments:
         leader = city_segments[0]
+        leader_label = 'parcel' if leader['count'] == 1 else 'parcels'
         takeaways.append(
-            f'{leader["name"]} is the largest city segment in this slice with {_count(leader["count"])} parcels.'
+            f'{leader["name"]} is the largest city segment in this slice with {_count(leader["count"])} {leader_label}.'
         )
     if type_segments:
         leader = type_segments[0]

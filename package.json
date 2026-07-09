@@ -1,8 +1,7 @@
 {
   "name": "pinellas-market-lens",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Data-science dashboard for exploring Pinellas County parcel records.",
   "scripts": {
     "dev:css": "npx tailwindcss -i ./static/css/tailwind.src.css -o ./static/css/style.css --watch",
     "dev:js": "webpack --watch --config webpack.config.js",
@@ -14,9 +13,14 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "django",
+    "data-visualization",
+    "pandas",
+    "public-data"
+  ],
+  "author": "Patrick Gilhooley",
+  "license": "MIT",
   "dependencies": {
     "chart.js": "^4.5.1",
     "nouislider": "^15.7.1",
