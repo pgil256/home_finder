@@ -1,5 +1,7 @@
 import pytest
 
+from home_finder import settings
+
 pytestmark = pytest.mark.django_db
 
 
@@ -54,3 +56,14 @@ class TestHealthAndStatus:
         data = response.json()
         assert 'total_properties' in data
         assert 'last_updated' in data
+
+
+class TestSettingsHelpers:
+    def test_bool_config_falls_back_for_invalid_env_values(self, monkeypatch):
+        """Deployment discovery should not crash on generic DEBUG collisions."""
+        monkeypatch.setenv('DEBUG', 'production')
+        assert settings._config_bool('DEBUG', default=False) is False
+
+    def test_bool_config_still_accepts_explicit_truthy_values(self, monkeypatch):
+        monkeypatch.setenv('SECURE_SSL_REDIRECT', 'off')
+        assert settings._config_bool('SECURE_SSL_REDIRECT', default=True) is False
