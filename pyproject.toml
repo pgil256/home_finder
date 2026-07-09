@@ -1,7 +1,7 @@
 [project]
-name = "pinellas-property-finder"
+name = "pinellas-market-lens"
 version = "1.0.0"
-description = "Property data aggregation system for Pinellas County, Florida"
+description = "Data-science dashboard for exploring Pinellas County parcel records"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "Django==5.2.14",

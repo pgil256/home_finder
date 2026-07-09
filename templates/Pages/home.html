@@ -15,8 +15,16 @@
                 Explore Pinellas County parcel records as an analytics dashboard: filter a market slice, compare segments, inspect outliers, and export the results.
             </p>
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href="{% url 'insights' %}" class="btn btn-primary btn-lg">Open Insights</a>
-                <a href="{% url 'scraper' %}" class="btn btn-secondary btn-lg">Build a Scope</a>
+                <a href="{% url 'insights' %}" class="btn btn-primary btn-lg">Explore the Dashboard</a>
+                <a href="https://github.com/pgil256/home_finder"
+                   class="btn btn-secondary btn-lg"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    View Source
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 3h7m0 0v7m0-7L10 14M5 5h5m9 9v5a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2" />
+                    </svg>
+                </a>
             </div>
         </div>
     </div>
@@ -25,6 +33,34 @@
 
 {% block content %}
 <div class="space-y-12 md:space-y-16">
+    <section aria-labelledby="proof-heading">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-wide text-primary-600">Engineering proof at a glance</p>
+                <h2 id="proof-heading" class="mt-2 font-display text-2xl font-semibold text-charcoal-900 md:text-3xl">Built beyond the demo layer.</h2>
+            </div>
+            <a href="{% url 'about' %}" class="text-sm font-semibold text-primary-600 hover:text-primary-700">Read the architecture story <span aria-hidden="true">&rarr;</span></a>
+        </div>
+        <dl class="mt-6 grid overflow-hidden rounded-2xl border border-charcoal-100 bg-white shadow-soft-sm sm:grid-cols-2 lg:grid-cols-4">
+            <div class="border-b border-charcoal-100 p-5 sm:border-r lg:border-b-0">
+                <dt class="text-sm text-charcoal-500">Production scale</dt>
+                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">437K+ parcels</dd>
+            </div>
+            <div class="border-b border-charcoal-100 p-5 lg:border-b-0 lg:border-r">
+                <dt class="text-sm text-charcoal-500">Headline metrics</dt>
+                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">Exact DB KPIs</dd>
+            </div>
+            <div class="border-b border-charcoal-100 p-5 sm:border-b-0 sm:border-r">
+                <dt class="text-sm text-charcoal-500">Exploratory layer</dt>
+                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">pandas + numpy</dd>
+            </div>
+            <div class="p-5">
+                <dt class="text-sm text-charcoal-500">Deliverables</dt>
+                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">Excel + PDF</dd>
+            </div>
+        </dl>
+    </section>
+
     <section class="grid gap-5 md:grid-cols-3" aria-label="What the app does">
         <div class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
             <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600">

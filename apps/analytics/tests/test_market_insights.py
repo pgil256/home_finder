@@ -74,6 +74,15 @@ def test_low_sample_charts_return_explanatory_notes(sample_property):
     assert 'Need at least two numeric values' in payload['meta']['note']
 
 
+def test_single_parcel_takeaways_use_singular_nouns():
+    _parcel(1, market_value=325000, assessed_value=300000, sqft=1450, tax_amount=3250)
+
+    takeaways = build_market_insights()['takeaways']
+
+    assert takeaways[0].startswith('The current slice contains 1 parcel ')
+    assert 'Clearwater is the largest city segment in this slice with 1 parcel.' in takeaways
+
+
 def test_high_value_outlier_links_to_drilldown():
     for idx, value in enumerate([100000, 110000, 120000, 130000, 900000], start=1):
         _parcel(idx, market_value=value, assessed_value=90000, sqft=1000, tax_amount=2500)

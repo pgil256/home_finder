@@ -12,6 +12,13 @@ class TestPagesViews:
         assert response.status_code == 200
         assert b'Pinellas Market Lens' in response.content
 
+    def test_home_page_surfaces_portfolio_proof_and_source(self, client):
+        response = client.get('/')
+
+        assert b'Engineering proof at a glance' in response.content
+        assert b'437K+ parcels' in response.content
+        assert b'https://github.com/pgil256/home_finder' in response.content
+
     def test_about_page_renders(self, client):
         """Test about page returns 200."""
         response = client.get('/about/')
