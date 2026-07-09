@@ -1,17 +1,99 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Pinellas Market Lens - Property Market Insights{% endblock %}
+{% block title %}Pinellas Market Lens - Pinellas Property Market Analysis{% endblock %}
+{% block meta_description %}Pinellas Market Lens turns official county parcel records into filterable market KPIs, distributions, segment comparisons, outliers, and exportable analysis briefs.{% endblock %}
 
-{% block content %}
-<section class="mx-auto max-w-4xl py-12 text-center">
-    <p class="text-sm font-semibold uppercase tracking-wide text-primary-600">Pinellas Market Lens</p>
-    <h1 class="mt-4 font-display text-display-lg text-charcoal-900">Analyze the Pinellas property market.</h1>
-    <p class="mx-auto mt-4 max-w-2xl text-lg text-charcoal-600">
-        Explore official parcel records with KPIs, distributions, segment comparisons, and auditable outlier drilldowns.
-    </p>
-    <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-        <a href="{% url 'insights' %}" class="btn btn-primary btn-lg">Open Insights Dashboard</a>
-        <a href="{% url 'about' %}" class="btn btn-secondary btn-lg">Read Methodology</a>
+{% block hero-image-content %}
+<section class="relative isolate flex min-h-[62vh] items-center overflow-hidden bg-charcoal-900 text-white"
+         style="background-image: linear-gradient(90deg, rgba(26, 29, 30, 0.88), rgba(26, 29, 30, 0.62), rgba(26, 29, 30, 0.35)), url('{% static 'img/house.jpg' %}'); background-position: center; background-size: cover;">
+    <div class="container-app py-14 md:py-20">
+        <div class="max-w-3xl">
+            <p class="text-sm font-semibold uppercase tracking-wide text-primary-100">Public records market analysis</p>
+            <h1 class="mt-4 font-display text-display-lg text-white md:text-display-xl">Pinellas Market Lens</h1>
+            <p class="mt-5 max-w-2xl text-lg leading-8 text-charcoal-100 md:text-xl">
+                Explore Pinellas County parcel records as an analytics dashboard: filter a market slice, compare segments, inspect outliers, and export the results.
+            </p>
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a href="{% url 'insights' %}" class="btn btn-primary btn-lg">Open Insights</a>
+                <a href="{% url 'scraper' %}" class="btn btn-secondary btn-lg">Build a Scope</a>
+            </div>
+        </div>
     </div>
 </section>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-12 md:space-y-16">
+    <section class="grid gap-5 md:grid-cols-3" aria-label="What the app does">
+        <div class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M6 12h12M10 17h4" />
+                </svg>
+            </div>
+            <h2 class="font-display text-xl font-semibold text-charcoal-900">Filter the County</h2>
+            <p class="mt-2 text-sm leading-6 text-charcoal-600">Start broad or narrow by city, ZIP code, property class, market value, square footage, lot size, year built, and annual tax.</p>
+        </div>
+        <div class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-coral-50 text-coral-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5m0 14h16M8 16V9m4 7V7m4 9v-4" />
+                </svg>
+            </div>
+            <h2 class="font-display text-xl font-semibold text-charcoal-900">Read the Signals</h2>
+            <p class="mt-2 text-sm leading-6 text-charcoal-600">The dashboard computes KPIs, value distributions, city and type medians, assessed-value gaps, tax burden, and build-era patterns.</p>
+        </div>
+        <div class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-success-50 text-success-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <h2 class="font-display text-xl font-semibold text-charcoal-900">Audit and Export</h2>
+            <p class="mt-2 text-sm leading-6 text-charcoal-600">Outliers link back to parcel drilldowns, and filtered results can be downloaded as an Excel workbook or PDF insight brief.</p>
+        </div>
+    </section>
+
+    <section class="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center">
+        <div>
+            <p class="text-sm font-semibold uppercase tracking-wide text-primary-600">Built as an analytics portfolio piece</p>
+            <h2 class="mt-3 font-display text-display-sm text-charcoal-900 md:text-display-md">Not a listing search. A transparent market-analysis workflow.</h2>
+            <p class="mt-4 text-base leading-7 text-charcoal-600">
+                Pinellas Market Lens uses official public records to demonstrate the full data path: ingestion, normalization, database-backed filtering, pandas/numpy aggregation, Chart.js visualization, and export generation.
+            </p>
+            <p class="mt-3 text-base leading-7 text-charcoal-600">
+                It is exploratory analysis, not a valuation model or investment-advice engine. The goal is to make market structure visible and auditable.
+            </p>
+        </div>
+        <div class="overflow-hidden rounded-lg border border-charcoal-100 bg-white shadow-soft-sm">
+            <div class="border-b border-charcoal-100 px-5 py-4">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">Typical workflow</h3>
+            </div>
+            <ol class="divide-y divide-charcoal-100">
+                <li class="flex gap-4 px-5 py-4">
+                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 font-display font-semibold text-primary-700">1</span>
+                    <div>
+                        <p class="font-medium text-charcoal-900">Choose a scope</p>
+                        <p class="mt-1 text-sm text-charcoal-600">Use the scope builder or dashboard filter rail to define the slice.</p>
+                    </div>
+                </li>
+                <li class="flex gap-4 px-5 py-4">
+                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 font-display font-semibold text-primary-700">2</span>
+                    <div>
+                        <p class="font-medium text-charcoal-900">Compare patterns</p>
+                        <p class="mt-1 text-sm text-charcoal-600">Review KPIs, distributions, segments, percentiles, and outlier tables.</p>
+                    </div>
+                </li>
+                <li class="flex gap-4 px-5 py-4">
+                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 font-display font-semibold text-primary-700">3</span>
+                    <div>
+                        <p class="font-medium text-charcoal-900">Export the brief</p>
+                        <p class="mt-1 text-sm text-charcoal-600">Download a workbook or PDF that keeps the filters and methodology attached.</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </section>
+</div>
 {% endblock %}

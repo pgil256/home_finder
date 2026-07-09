@@ -108,11 +108,12 @@ class TestFilterBuilder:
 
 
 class TestInsightsDashboard:
-    def test_root_renders_insights_dashboard(self, client, sample_property):
+    def test_root_renders_product_intro(self, client, sample_property):
         response = client.get('/')
         assert response.status_code == 200
-        assert 'analytics/market-insights.html' in [t.name for t in response.templates]
+        assert 'Pages/home.html' in [t.name for t in response.templates]
         assert b'Pinellas Market Lens' in response.content
+        assert b'Exact Market KPIs' not in response.content
 
     def test_insights_route_renders_dashboard(self, client, sample_property):
         response = client.get('/insights/')
@@ -122,11 +123,12 @@ class TestInsightsDashboard:
         assert b'Exact Market KPIs' in response.content
         assert b'market-insights-charts' in response.content
 
-    def test_legacy_dashboard_alias_renders_insights(self, client, sample_property):
-        response = client.get('/analytics/dashboard/')
-        assert response.status_code == 200
-        assert 'analytics/market-insights.html' in [t.name for t in response.templates]
-        assert b'Auditable Outliers' in response.content
+    def test_legacy_dashboard_alias_redirects_to_insights(self, client, sample_property):
+        response = client.get('/analytics/dashboard/?city=Clearwater')
+        assert response.status_code == 302
+        parsed = urlparse(response.url)
+        assert parsed.path == '/insights/'
+        assert parse_qs(parsed.query)['city'] == ['Clearwater']
 
     def test_invalid_numeric_filters_do_not_500(self, client, sample_property):
         response = client.get(

@@ -10,9 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def home(request):
-    from apps.analytics.views import insights_dashboard
-
-    return insights_dashboard(request)
+    return render(request, 'Pages/home.html')
 
 
 def about(request):

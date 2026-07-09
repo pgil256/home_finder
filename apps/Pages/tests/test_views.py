@@ -20,10 +20,11 @@ class TestPagesViews:
         response = client.get('/help')
         assert response.status_code == 200
 
-    def test_home_uses_insights_template(self, client):
-        """Test home page opens on the analytics dashboard."""
+    def test_home_uses_home_template(self, client):
+        """Test home page opens on the product intro, not the analytics dashboard."""
         response = client.get('/')
-        assert 'analytics/market-insights.html' in [t.name for t in response.templates]
+        assert 'Pages/home.html' in [t.name for t in response.templates]
+        assert b'Exact Market KPIs' not in response.content
 
     def test_about_uses_correct_template(self, client):
         """Test about page uses the correct template."""

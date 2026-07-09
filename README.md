@@ -30,9 +30,10 @@ A parcel drilldown and the responsive mobile layout:
 
 | Route | Purpose |
 |---|---|
-| `/` and `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
+| `/` | Product intro explaining the public-records market-analysis workflow |
+| `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
 | `/analytics/` | Filter-builder form that redirects into `/insights/` |
-| `/analytics/dashboard/` | Legacy URL alias that renders the same insights dashboard |
+| `/analytics/dashboard/` | Legacy URL that redirects to `/insights/` |
 | `/analytics/property/<parcel_id>/` | Parcel drilldown used to audit sample parcels and outlier rows |
 | `/analytics/download/excel/` | Analysis workbook: Overview, City Segments, Property Type Segments, Outliers, Sample Parcels, Methodology |
 | `/analytics/download/pdf/` | PDF insight brief with filters, exact KPIs, takeaways, segments, outliers, and methodology |

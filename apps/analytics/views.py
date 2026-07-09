@@ -218,8 +218,12 @@ def web_scraper_view(request):
 
 
 def property_dashboard(request):
-    """Legacy dashboard URL; renders the market-insights experience."""
-    return insights_dashboard(request)
+    """Legacy dashboard URL; redirect to the canonical market-insights route."""
+    target = reverse('insights')
+    query_string = request.META.get('QUERY_STRING')
+    if query_string:
+        target = f'{target}?{query_string}'
+    return redirect(target)
 
 
 def insights_dashboard(request):

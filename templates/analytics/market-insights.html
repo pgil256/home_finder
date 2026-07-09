@@ -83,9 +83,9 @@
     </div>
     {% endif %}
 
-    <div class="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
+    <div class="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside aria-label="Market filters">
-            <form method="get" action="{% url 'insights' %}" class="card sticky top-24 overflow-hidden">
+            <form method="get" action="{% url 'insights' %}" class="card overflow-hidden lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
                 <div class="card-header">
                     <h2 class="font-display text-lg font-semibold text-charcoal-900">Analysis Scope</h2>
                     <p class="mt-1 text-sm text-charcoal-500">Filter the parcel universe before KPIs and EDA are computed.</p>
@@ -171,12 +171,12 @@
                     </div>
                     <p class="hidden text-xs text-charcoal-400 sm:block">Generated {{ insights.generated_at|date:"M j, Y H:i" }} UTC</p>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {% for kpi in insights.kpis %}
-                    <div class="rounded-lg border border-charcoal-100 bg-white p-4 shadow-soft-sm">
+                    <div class="min-w-0 rounded-lg border border-charcoal-100 bg-white p-4 shadow-soft-sm">
                         <p class="text-xs font-semibold uppercase tracking-wide text-charcoal-400">{{ kpi.label }}</p>
-                        <p class="mt-2 font-display text-2xl font-bold text-charcoal-900">{{ kpi.value }}</p>
-                        <p class="mt-1 text-xs text-charcoal-500">{{ kpi.note }}</p>
+                        <p class="mt-2 break-words font-display text-xl font-bold leading-tight text-charcoal-900 md:text-2xl">{{ kpi.value }}</p>
+                        <p class="mt-1 text-xs leading-5 text-charcoal-500">{{ kpi.note }}</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -231,9 +231,9 @@
                     <h2 class="font-display text-lg font-semibold text-charcoal-900">Value Percentiles</h2>
                     <div class="mt-4 grid grid-cols-2 gap-3">
                         {% for item in insights.percentiles.market_value %}
-                        <div class="rounded-md bg-charcoal-50 p-3">
+                        <div class="min-w-0 rounded-md bg-charcoal-50 p-3">
                             <p class="text-xs font-semibold text-charcoal-400">{{ item.label }}</p>
-                            <p class="font-display text-lg font-semibold text-charcoal-900">{{ item.value|format_price }}</p>
+                            <p class="break-words font-display text-base font-semibold text-charcoal-900 md:text-lg">{{ item.value|format_price }}</p>
                         </div>
                         {% empty %}
                         <p class="col-span-2 text-sm text-charcoal-500">No percentile values available for this scope.</p>

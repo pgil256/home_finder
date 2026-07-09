@@ -149,11 +149,11 @@
         {% block hero-image-content %}
         {% endblock %}
 
-        <div class="flex flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 bg-charcoal-50">
-            <div class="flex-1 card p-4 sm:p-6">
-                {% block content %}
-                <!-- Content overridden by child templates will appear here -->
-                {% endblock %}
+        <div class="flex flex-1 flex-col bg-charcoal-50">
+            <div class="{% block content_container_class %}container-app w-full flex-1 py-6{% endblock %}">
+            {% block content %}
+            <!-- Content overridden by child templates will appear here -->
+            {% endblock %}
             </div>
         </div>
     </main>
