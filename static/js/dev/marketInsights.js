@@ -9,6 +9,16 @@ const CHARTS = {
   valueGapScatter: 'scatter',
 };
 
+const TYPE_SEGMENT_LABEL_LIMIT = 24;
+
+function shortenChartLabel(label, maxLength = TYPE_SEGMENT_LABEL_LIMIT) {
+  const text = String(label || '');
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength - 1).trimEnd()}\u2026`;
+}
+
 function hasPlottableData(payload) {
   if (!payload || !Array.isArray(payload.datasets)) {
     return false;
@@ -20,6 +30,48 @@ function buildChartConfig(key, payload) {
   const type = CHARTS[key] || 'bar';
   const isScatter = type === 'scatter';
   const isSegment = key === 'citySegments' || key === 'typeSegments';
+  const isTypeSegment = key === 'typeSegments';
+
+  const scales = isScatter
+    ? {
+        x: {
+          title: { display: true, text: 'Assessed value' },
+          ticks: { callback: (value) => `$${Number(value).toLocaleString()}` },
+        },
+        y: {
+          title: { display: true, text: 'Market value' },
+          ticks: { callback: (value) => `$${Number(value).toLocaleString()}` },
+        },
+      }
+    : isTypeSegment
+      ? {
+          x: {
+            beginAtZero: true,
+            title: { display: true, text: 'Median market value' },
+            ticks: { callback: (value) => Number(value).toLocaleString() },
+          },
+          y: {
+            ticks: {
+              autoSkip: false,
+              callback(value) {
+                return shortenChartLabel(this.getLabelForValue(value));
+              },
+            },
+          },
+        }
+      : {
+          x: {
+            ticks: {
+              autoSkip: false,
+              maxRotation: 45,
+              minRotation: 0,
+            },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { callback: (value) => Number(value).toLocaleString() },
+          },
+        };
 
   return {
     type,
@@ -28,6 +80,7 @@ function buildChartConfig(key, payload) {
       datasets: payload.datasets || [],
     },
     options: {
+      indexAxis: isTypeSegment ? 'y' : 'x',
       responsive: true,
       maintainAspectRatio: false,
       interaction: {
@@ -46,7 +99,8 @@ function buildChartConfig(key, payload) {
                 const point = context.raw || {};
                 return `Assessed $${Math.round(point.x || 0).toLocaleString()} · Market $${Math.round(point.y || 0).toLocaleString()}`;
               }
-              const value = Number(context.parsed.y ?? context.parsed);
+              const parsedValue = isTypeSegment ? context.parsed.x : (context.parsed.y ?? context.parsed);
+              const value = Number(parsedValue);
               if (Number.isFinite(value)) {
                 return `${context.dataset.label}: ${Math.round(value).toLocaleString()}`;
               }
@@ -55,30 +109,7 @@ function buildChartConfig(key, payload) {
           },
         },
       },
-      scales: isScatter
-        ? {
-            x: {
-              title: { display: true, text: 'Assessed value' },
-              ticks: { callback: (value) => `$${Number(value).toLocaleString()}` },
-            },
-            y: {
-              title: { display: true, text: 'Market value' },
-              ticks: { callback: (value) => `$${Number(value).toLocaleString()}` },
-            },
-          }
-        : {
-            x: {
-              ticks: {
-                autoSkip: false,
-                maxRotation: 45,
-                minRotation: 0,
-              },
-            },
-            y: {
-              beginAtZero: true,
-              ticks: { callback: (value) => Number(value).toLocaleString() },
-            },
-          },
+      scales,
     },
   };
 }
@@ -155,5 +186,6 @@ if (typeof module !== 'undefined' && module.exports) {
     readChartPayloads,
     renderMarketInsightsCharts,
     setChartNote,
+    shortenChartLabel,
   };
 }

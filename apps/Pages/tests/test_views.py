@@ -77,3 +77,18 @@ class TestSettingsHelpers:
         settings._append_unique(values, '.vercel.app')
         settings._append_unique(values, '.vercel.app')
         assert values == ['localhost', '.vercel.app']
+
+    def test_vercel_custom_hosts_include_canonical_and_alias(self):
+        allowed_hosts = []
+        trusted_origins = []
+
+        settings._append_vercel_custom_hosts(allowed_hosts, trusted_origins)
+
+        assert allowed_hosts == [
+            'homefinder.patbuilds.dev',
+            'pinellasmarketlens.patbuilds.dev',
+        ]
+        assert trusted_origins == [
+            'https://homefinder.patbuilds.dev',
+            'https://pinellasmarketlens.patbuilds.dev',
+        ]

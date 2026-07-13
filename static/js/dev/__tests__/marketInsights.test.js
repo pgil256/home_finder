@@ -7,6 +7,7 @@ const {
   readChartPayloads,
   renderMarketInsightsCharts,
   setChartNote,
+  shortenChartLabel,
 } = require('../marketInsights.js');
 
 describe('marketInsights chart adapter', () => {
@@ -105,6 +106,26 @@ describe('marketInsights data transformations', () => {
     expect(config.options.plugins.legend.display).toBe(false);
   });
 
+  test('property type chart uses readable horizontal bars and shortened axis labels', () => {
+    const config = buildChartConfig('typeSegments', {
+      labels: ['Condo Conversion - Apartments to Platted Condo'],
+      datasets: [{ label: 'Median market value', data: [163092] }],
+    });
+    const tickContext = {
+      getLabelForValue: () => 'Condo Conversion - Apartments to Platted Condo',
+    };
+
+    expect(config.options.indexAxis).toBe('y');
+    expect(config.options.scales.x.beginAtZero).toBe(true);
+    expect(config.options.scales.x.title.text).toBe('Median market value');
+    expect(config.options.scales.y.ticks.callback.call(tickContext, 0)).toBe('Condo Conversion - Apar\u2026');
+  });
+
+  test('shortenChartLabel preserves short labels and truncates long labels', () => {
+    expect(shortenChartLabel('Condominium')).toBe('Condominium');
+    expect(shortenChartLabel('Manufactured Home (Co-Op or Share Owned)')).toBe('Manufactured Home (Co-O\u2026');
+  });
+
   test('scatter tooltip formats assessed and market dollars', () => {
     const config = buildChartConfig('valueGapScatter', { labels: [], datasets: [] });
     const label = config.options.plugins.tooltip.callbacks.label({ raw: { x: 12, y: 34 } });
@@ -120,6 +141,16 @@ describe('marketInsights data transformations', () => {
     });
 
     expect(label).toBe('Median market value: 13');
+  });
+
+  test('horizontal property type tooltip reads the numeric x value', () => {
+    const config = buildChartConfig('typeSegments', { labels: ['Condo'], datasets: [] });
+    const label = config.options.plugins.tooltip.callbacks.label({
+      parsed: { x: 163092, y: 'Condo' },
+      dataset: { label: 'Median market value' },
+    });
+
+    expect(label).toBe('Median market value: 163,092');
   });
 
   test('setChartNote joins sample size, omitted rows, and note', () => {
