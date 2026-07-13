@@ -122,6 +122,8 @@ class TestInsightsDashboard:
         assert response.context['total_count'] == 1
         assert b'Exact Market KPIs' in response.content
         assert b'market-insights-charts' in response.content
+        assert b'data-kpi-value="Total market value"' in response.content
+        assert b'whitespace-nowrap' in response.content
 
     def test_legacy_dashboard_alias_redirects_to_insights(self, client, sample_property):
         response = client.get('/analytics/dashboard/?city=Clearwater')

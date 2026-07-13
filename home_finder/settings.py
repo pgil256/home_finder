@@ -48,6 +48,18 @@ def _append_unique(values: list[str], value: str) -> None:
         values.append(value)
 
 
+VERCEL_CUSTOM_HOSTS = (
+    'homefinder.patbuilds.dev',
+    'pinellasmarketlens.patbuilds.dev',
+)
+
+
+def _append_vercel_custom_hosts(allowed_hosts: list[str], trusted_origins: list[str]) -> None:
+    for host in VERCEL_CUSTOM_HOSTS:
+        _append_unique(allowed_hosts, host)
+        _append_unique(trusted_origins, f'https://{host}')
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -66,6 +78,7 @@ if os.environ.get('VERCEL'):
     # Preview deployments use unique *.vercel.app hostnames per branch/commit.
     _append_unique(ALLOWED_HOSTS, '.vercel.app')
     _append_unique(CSRF_TRUSTED_ORIGINS, 'https://*.vercel.app')
+    _append_vercel_custom_hosts(ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS)
 
     vercel_url = os.environ.get('VERCEL_URL', '').strip()
     if vercel_url:
