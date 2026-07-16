@@ -5,7 +5,6 @@ from urllib.parse import parse_qs, urlparse
 import openpyxl
 import pytest
 
-from apps.analytics import views as analytics_views
 from apps.analytics.models import PropertyListing
 
 pytestmark = pytest.mark.django_db
@@ -288,90 +287,19 @@ class TestExportRateLimit:
         assert pdf.status_code == 200
 
 
-class TestStreetViewProxy:
-    """The Street View image is proxied server-side so the Google API key never
-    reaches the browser; images are cached to avoid re-billing Google."""
-
-    def test_serves_image_bytes_without_exposing_the_key(self, client, sample_property, monkeypatch):
-        monkeypatch.setattr(
-            analytics_views, 'fetch_street_view_image', lambda *a, **k: (b'\xff\xd8imagebytes', 'image/jpeg')
-        )
-
-        response = client.get(f'/analytics/property/{sample_property.parcel_id}/streetview/?size=1024x576')
-
-        assert response.status_code == 200
-        assert response['Content-Type'] == 'image/jpeg'
-        assert response.content == b'\xff\xd8imagebytes'
-        assert 'Cache-Control' in response
-        # The response is raw image bytes — no Google URL or key anywhere in it.
-        assert b'key=' not in response.content
-        assert b'googleapis' not in response.content
-
-    def test_returns_404_when_no_imagery(self, client, sample_property, monkeypatch):
-        monkeypatch.setattr(analytics_views, 'fetch_street_view_image', lambda *a, **k: None)
-
+class TestStreetViewRemoval:
+    def test_paid_street_view_endpoint_is_gone(self, client, sample_property):
         response = client.get(f'/analytics/property/{sample_property.parcel_id}/streetview/')
 
         assert response.status_code == 404
 
-    def test_unknown_parcel_is_404(self, client, db, monkeypatch):
-        monkeypatch.setattr(analytics_views, 'fetch_street_view_image', lambda *a, **k: (b'x', 'image/jpeg'))
-
-        response = client.get('/analytics/property/00-00-00-00000-000-9999/streetview/')
-
-        assert response.status_code == 404
-
-    def test_second_request_is_served_from_cache_without_refetching(self, client, sample_property, monkeypatch):
-        calls = {'n': 0}
-
-        def _fetch(*a, **k):
-            calls['n'] += 1
-            return (b'\xff\xd8bytes', 'image/jpeg')
-
-        monkeypatch.setattr(analytics_views, 'fetch_street_view_image', _fetch)
-        url = f'/analytics/property/{sample_property.parcel_id}/streetview/?size=320x240'
-
-        first = client.get(url)
-        second = client.get(url)
-
-        assert first.status_code == second.status_code == 200
-        assert calls['n'] == 1  # second hit came from cache
-
-    def test_no_imagery_result_is_cached_too(self, client, sample_property, monkeypatch):
-        calls = {'n': 0}
-
-        def _fetch(*a, **k):
-            calls['n'] += 1
-            return None
-
-        monkeypatch.setattr(analytics_views, 'fetch_street_view_image', _fetch)
-        url = f'/analytics/property/{sample_property.parcel_id}/streetview/'
-
-        assert client.get(url).status_code == 404
-        assert client.get(url).status_code == 404
-        assert calls['n'] == 1  # the "no imagery" verdict was cached, not re-fetched
-
-    def test_invalid_size_is_coerced_not_passed_through(self, client, sample_property, monkeypatch):
-        seen = {}
-
-        def _fetch(address, city, zip_code, size):
-            seen['size'] = size
-            return (b'x', 'image/jpeg')
-
-        monkeypatch.setattr(analytics_views, 'fetch_street_view_image', _fetch)
-
-        response = client.get(f'/analytics/property/{sample_property.parcel_id}/streetview/?size=99999x99999')
-
-        assert response.status_code == 200
-        assert seen['size'] == analytics_views.STREET_VIEW_DEFAULT_SIZE
-
-    def test_detail_page_uses_proxy_and_has_no_google_key(self, client, sample_property):
+    def test_detail_page_has_no_google_street_view_requests(self, client, sample_property):
         response = client.get(f'/analytics/property/{sample_property.parcel_id}/')
         html = response.content.decode('utf-8', 'ignore')
 
-        assert '/streetview/?size=1024x576' in html
+        assert '/streetview/' not in html
         assert 'maps.googleapis.com/maps/api/streetview' not in html
-        assert 'key=' not in html
+        assert 'GOOGLE_STREET_VIEW_API_KEY' not in html
 
 
 class TestLegacyScraperRedirect:

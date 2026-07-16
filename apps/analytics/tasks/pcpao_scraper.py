@@ -24,8 +24,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
-from apps.analytics.services.street_view import get_street_view_url
-
 # Chrome for Testing paths
 # Priority: 1. Environment variables (production), 2. Local dev paths, 3. webdriver-manager fallback
 CHROME_BINARY = os.environ.get('CHROME_BIN') or os.path.expanduser('~/.chrome-for-testing/chrome-linux64/chrome')
@@ -529,18 +527,11 @@ class PCPAOScraper:
         tax_data = self._get_tax_data(soup)
         property_data.update(tax_data)
 
-        # Get property image: try PCPAO page image first, then Street View
+        # Use only the image published by PCPAO. External paid image APIs are
+        # intentionally not used here.
         pcpao_image = self._extract_property_image(soup)
         if pcpao_image:
             property_data['image_url'] = pcpao_image
-        else:
-            street_view_url = get_street_view_url(
-                address=property_data.get('address'),
-                city=property_data.get('city'),
-                zip_code=property_data.get('zip_code'),
-            )
-            if street_view_url:
-                property_data['image_url'] = street_view_url
 
         return property_data
 

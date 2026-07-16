@@ -123,7 +123,6 @@ pytest tests/e2e/browser/
 - Bedrooms and bathrooms are not reliable in the bulk public dataset, so they are not used as core market signals.
 - The dashboard is exploratory analysis, not investment advice or a predictive appraisal model.
 - Interactive pandas/numpy charts are capped to keep serverless responses responsive; exact headline KPIs are computed against the full filtered queryset.
-- Street View support remains available for parcel drilldowns when a Google API key is configured, but imagery is not central to the analytics workflow.
 
 ## License
 

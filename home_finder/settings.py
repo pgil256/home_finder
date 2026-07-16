@@ -218,9 +218,6 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Cache: database-backed (works on Vercel without an external cache service).
 # Run `python manage.py createcachetable` once after deploy to create the table.
-# Holds small rate-limit keys plus proxied Street View image bytes; raise
-# MAX_ENTRIES above the default 300 so cached images don't evict the tiny
-# rate-limit keys (culling is size-blind).
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
@@ -238,10 +235,6 @@ PROXY_ADDRESS = config('PROXY_ADDRESS', default='')
 
 # API Key
 SCRAPING_API_KEY = config('SCRAPING_API_KEY', default='')
-
-# Google Street View API
-GOOGLE_STREET_VIEW_API_KEY = config('GOOGLE_STREET_VIEW_API_KEY', default='')
-STREET_VIEW_IMAGE_SIZE = '640x480'
 
 # Logging configuration for production visibility
 # All logs go to stdout for the serverless/container runtime to capture

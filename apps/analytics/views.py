@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import Http404, HttpRequest, HttpResponse, QueryDict
+from django.http import HttpRequest, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -21,7 +21,6 @@ from .services.filtering import (
     apply_sorting,
 )
 from .services.market_insights import build_market_insights
-from .services.street_view import fetch_street_view_image
 from .services.task_management import check_rate_limit, get_client_ip
 
 # Per-parcel refresh rate limit: 60s between refreshes for the same parcel,
@@ -32,17 +31,6 @@ REFRESH_RATE_LIMIT_SECONDS = 60
 # Export rate limit: exports are unauthenticated and build a workbook/PDF over
 # up to 50k rows on every hit, so cap repeat downloads per IP per format.
 EXPORT_RATE_LIMIT_SECONDS = 10
-
-# Street View images are proxied through the server so the Google API key never
-# reaches the browser. Only known parcels and these fixed sizes are served, so
-# it can't be used as an open image proxy. Fetched images are cached to avoid
-# re-billing Google for repeat views; "no imagery" is cached briefly so dead
-# parcels aren't re-checked on every page load.
-STREET_VIEW_SIZES = frozenset({'1024x576', '640x360', '320x240'})
-STREET_VIEW_DEFAULT_SIZE = '640x360'
-STREET_VIEW_CACHE_TTL = 60 * 60 * 24 * 7  # 7 days for a real image
-STREET_VIEW_MISS_CACHE_TTL = 60 * 60 * 24  # 1 day for "no imagery"
-STREET_VIEW_NO_IMAGE = 'NO_IMAGE'
 
 logger = logging.getLogger(__name__)
 
@@ -301,59 +289,6 @@ def property_detail(request, parcel_id: str):
             'similar_properties': similar_properties,
         },
     )
-
-
-def _safe_cache_get(key: str):
-    try:
-        return cache.get(key)
-    except Exception as e:
-        logger.warning('Cache GET failed for %s: %s', key, e)
-        return None
-
-
-def _safe_cache_set(key: str, value, timeout: int) -> None:
-    try:
-        cache.set(key, value, timeout=timeout)
-    except Exception as e:
-        logger.warning('Cache SET failed for %s: %s', key, e)
-
-
-def _street_view_response(content: bytes, content_type: str) -> HttpResponse:
-    response = HttpResponse(content, content_type=content_type)
-    # Let the browser and Vercel's edge cache hold it too, so repeat/CDN hits
-    # never reach the origin (or Google) again.
-    response['Cache-Control'] = f'public, max-age={STREET_VIEW_CACHE_TTL}'
-    return response
-
-
-def property_streetview(request, parcel_id: str):
-    """Proxy a parcel's Street View image, keeping the Google API key server-side.
-
-    Serves cached image bytes for a known parcel at an allowlisted size, or 404
-    (so the template's onerror fallback shows the placeholder) when there's no
-    imagery, no configured key, or the upstream fetch fails.
-    """
-    size = request.GET.get('size', STREET_VIEW_DEFAULT_SIZE)
-    if size not in STREET_VIEW_SIZES:
-        size = STREET_VIEW_DEFAULT_SIZE
-
-    property_obj = get_object_or_404(PropertyListing, parcel_id=parcel_id)
-    cache_key = f'street_view_img:{parcel_id}:{size}'
-
-    cached = _safe_cache_get(cache_key)
-    if cached == STREET_VIEW_NO_IMAGE:
-        raise Http404('No Street View imagery for this parcel.')
-    if isinstance(cached, dict):
-        return _street_view_response(cached['content'], cached['content_type'])
-
-    result = fetch_street_view_image(property_obj.address, property_obj.city, property_obj.zip_code, size)
-    if result is None:
-        _safe_cache_set(cache_key, STREET_VIEW_NO_IMAGE, STREET_VIEW_MISS_CACHE_TTL)
-        raise Http404('No Street View imagery for this parcel.')
-
-    content, content_type = result
-    _safe_cache_set(cache_key, {'content': content, 'content_type': content_type}, STREET_VIEW_CACHE_TTL)
-    return _street_view_response(content, content_type)
 
 
 @require_POST
