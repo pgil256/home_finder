@@ -45,7 +45,7 @@ jobs:
           IMPORT_LIMIT: ${{ github.event.inputs.limit }}
         run: |
           if [ -n "$IMPORT_LIMIT" ]; then
-            python manage.py import_pcpao_data --limit "$IMPORT_LIMIT"
+            python manage.py import_pcpao_data --vacuum-first --limit "$IMPORT_LIMIT"
           else
-            python manage.py import_pcpao_data
+            python manage.py import_pcpao_data --vacuum-first
           fi

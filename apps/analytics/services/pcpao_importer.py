@@ -17,7 +17,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 import requests
-from django.db import transaction
+from django.db import connection, transaction
 
 from apps.analytics.models import PropertyListing
 
@@ -266,11 +266,16 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             existing = existing_records.get(parcel_id)
 
             if existing:
-                # Update existing record in memory
+                # Avoid rewriting unchanged rows. PostgreSQL keeps the old row
+                # version for every UPDATE; rewriting the full county dataset
+                # each month can exhaust a size-limited database with dead rows.
+                changed = False
                 for field in update_fields:
-                    if field in prop:
+                    if field in prop and getattr(existing, field) != prop[field]:
                         setattr(existing, field, prop[field])
-                properties_to_update.append(existing)
+                        changed = True
+                if changed:
+                    properties_to_update.append(existing)
             else:
                 # Create new PropertyListing instance
                 new_properties.append(
@@ -288,3 +293,14 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             stats['updated'] = len(properties_to_update)
 
     return stats
+
+
+def vacuum_property_listing_table() -> bool:
+    """Make dead PostgreSQL row space reusable before a county refresh."""
+    if connection.vendor != 'postgresql':
+        return False
+
+    table_name = connection.ops.quote_name(PropertyListing._meta.db_table)
+    with connection.cursor() as cursor:
+        cursor.execute(f'VACUUM (ANALYZE) {table_name}')
+    return True

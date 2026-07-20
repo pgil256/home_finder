@@ -1,6 +1,7 @@
 import io
 import zipfile
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 import responses
@@ -271,6 +272,24 @@ class TestBulkUpsertProperties:
         sample_property.refresh_from_db()
         assert sample_property.address == 'Updated Address'
 
+    def test_does_not_rewrite_unchanged_properties(self, sample_property):
+        """Unchanged county rows do not create PostgreSQL table bloat."""
+        properties_data = [
+            {
+                'parcel_id': sample_property.parcel_id,
+                'address': sample_property.address,
+                'city': sample_property.city,
+                'zip_code': sample_property.zip_code,
+                'property_type': sample_property.property_type,
+            }
+        ]
+
+        with patch.object(PropertyListing.objects, 'bulk_update') as bulk_update:
+            result = bulk_upsert_properties(properties_data)
+
+        assert result == {'created': 0, 'updated': 0}
+        bulk_update.assert_not_called()
+
     def test_skips_records_without_parcel_id(self, db):
         """Test bulk upsert skips records without parcel_id."""
         from apps.analytics.models import PropertyListing
@@ -317,6 +336,22 @@ class TestImportPcpaoDataCommand:
 
         assert not PropertyListing.objects.filter(parcel_id='missing-zip').exists()
         assert PropertyListing.objects.filter(parcel_id='valid-zip').exists()
+
+    def test_vacuum_first_is_safe_outside_postgresql(self, tmp_path, db):
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        csv_path.write_text(
+            '\n'.join(
+                [
+                    'PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,PROPERTY_USE',
+                    'vacuum-test,1 CLEAN ST,CLEARWATER,33755,0110 Single Family Home',
+                ]
+            ),
+            encoding='utf-8',
+        )
+
+        call_command('import_pcpao_data', file=str(csv_path), quiet=True, vacuum_first=True)
+
+        assert PropertyListing.objects.filter(parcel_id='vacuum-test').exists()
 
 
 class TestPropertyTypeConversion:

@@ -18,6 +18,7 @@ from apps.analytics.services.pcpao_importer import (
     bulk_upsert_properties,
     download_pcpao_file,
     map_csv_row_to_property,
+    vacuum_property_listing_table,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,11 @@ class Command(BaseCommand):
             type=int,
             help='Limit number of records to import (for testing)',
         )
+        parser.add_argument(
+            '--vacuum-first',
+            action='store_true',
+            help='Reclaim reusable PostgreSQL row space before importing',
+        )
 
     def handle(self, *args, **options):
         quiet = options['quiet']
@@ -49,6 +55,11 @@ class Command(BaseCommand):
 
         if not quiet:
             self.stdout.write('Starting PCPAO data import...')
+
+        if options['vacuum_first']:
+            if not quiet:
+                self.stdout.write('Reclaiming reusable property-table space...')
+            vacuum_property_listing_table()
 
         # Get CSV file path
         if options['file']:
