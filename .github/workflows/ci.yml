@@ -47,7 +47,6 @@ jobs:
         env:
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
-          DATABASE_URL: ""
         run: python -m pytest --cov=apps --cov-report=term-missing
 
   test-js:
