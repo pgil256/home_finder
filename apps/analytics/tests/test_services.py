@@ -1,18 +1,71 @@
+import io
+import zipfile
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
+import responses
 from django.core.management import call_command
 
 from apps.analytics.models import PropertyListing
 from apps.analytics.services.pcpao_importer import (
+    PCPAO_DATABASE_FILES_PAGE,
+    PCPAO_DOWNLOAD_URL,
     bulk_upsert_properties,
+    download_pcpao_file,
     map_csv_row_to_property,
     safe_decimal,
     safe_int,
+    vacuum_property_listing_table,
 )
 from apps.analytics.services.property_types import DOR_USE_CODES, dor_code_to_description
 
 pytestmark = pytest.mark.django_db
+
+
+def _pcpao_zip_bytes() -> bytes:
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, 'w') as zip_file:
+        zip_file.writestr('RP_PROPERTY_INFO.csv', 'PARCEL_NUMBER,SITE_ADDRESS\nexample,1 TEST ST\n')
+    return archive.getvalue()
+
+
+class TestDownloadPcpaoFile:
+    @responses.activate
+    def test_uses_browser_headers_and_extracts_csv(self, tmp_path):
+        responses.add(
+            responses.POST,
+            PCPAO_DOWNLOAD_URL,
+            body=_pcpao_zip_bytes(),
+            status=200,
+            content_type='application/zip',
+        )
+
+        csv_path = download_pcpao_file('RP_PROPERTY_INFO', str(tmp_path))
+
+        assert (tmp_path / 'RP_PROPERTY_INFO.csv').read_text(encoding='utf-8').startswith('PARCEL_NUMBER')
+        assert csv_path == str(tmp_path / 'RP_PROPERTY_INFO.csv')
+        request = responses.calls[0].request
+        assert request.headers['User-Agent'].startswith('Mozilla/5.0')
+        assert request.headers['Referer'] == PCPAO_DATABASE_FILES_PAGE
+        assert request.headers['Origin'] == 'https://www.pcpao.gov'
+
+    @responses.activate
+    def test_primes_session_and_retries_once_after_forbidden(self, tmp_path):
+        responses.add(responses.POST, PCPAO_DOWNLOAD_URL, status=403)
+        responses.add(responses.GET, PCPAO_DATABASE_FILES_PAGE, status=200)
+        responses.add(
+            responses.POST,
+            PCPAO_DOWNLOAD_URL,
+            body=_pcpao_zip_bytes(),
+            status=200,
+            content_type='application/zip',
+        )
+
+        csv_path = download_pcpao_file('RP_PROPERTY_INFO', str(tmp_path))
+
+        assert csv_path == str(tmp_path / 'RP_PROPERTY_INFO.csv')
+        assert [call.request.method for call in responses.calls] == ['POST', 'GET', 'POST']
 
 
 class TestSafeDecimal:
@@ -220,6 +273,24 @@ class TestBulkUpsertProperties:
         sample_property.refresh_from_db()
         assert sample_property.address == 'Updated Address'
 
+    def test_does_not_rewrite_unchanged_properties(self, sample_property):
+        """Unchanged county rows do not create PostgreSQL table bloat."""
+        properties_data = [
+            {
+                'parcel_id': sample_property.parcel_id,
+                'address': sample_property.address,
+                'city': sample_property.city,
+                'zip_code': sample_property.zip_code,
+                'property_type': sample_property.property_type,
+            }
+        ]
+
+        with patch.object(PropertyListing.objects, 'bulk_update') as bulk_update:
+            result = bulk_upsert_properties(properties_data)
+
+        assert result == {'created': 0, 'updated': 0}
+        bulk_update.assert_not_called()
+
     def test_skips_records_without_parcel_id(self, db):
         """Test bulk upsert skips records without parcel_id."""
         from apps.analytics.models import PropertyListing
@@ -248,6 +319,18 @@ class TestBulkUpsertProperties:
         assert PropertyListing.objects.count() == 1
 
 
+class TestVacuumPropertyListingTable:
+    @patch('apps.analytics.services.pcpao_importer.connection')
+    def test_disables_parallel_index_cleanup(self, connection):
+        connection.vendor = 'postgresql'
+        connection.ops.quote_name.return_value = '"property_table"'
+        cursor = connection.cursor.return_value.__enter__.return_value
+
+        assert vacuum_property_listing_table() is True
+
+        cursor.execute.assert_called_once_with('VACUUM (ANALYZE, PARALLEL 0) "property_table"')
+
+
 class TestImportPcpaoDataCommand:
     def test_skips_rows_missing_zip_code(self, tmp_path, db):
         csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
@@ -266,6 +349,36 @@ class TestImportPcpaoDataCommand:
 
         assert not PropertyListing.objects.filter(parcel_id='missing-zip').exists()
         assert PropertyListing.objects.filter(parcel_id='valid-zip').exists()
+
+    def test_vacuum_first_is_safe_outside_postgresql(self, tmp_path, db):
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        csv_path.write_text(
+            '\n'.join(
+                [
+                    'PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,PROPERTY_USE',
+                    'vacuum-test,1 CLEAN ST,CLEARWATER,33755,0110 Single Family Home',
+                ]
+            ),
+            encoding='utf-8',
+        )
+
+        call_command('import_pcpao_data', file=str(csv_path), quiet=True, vacuum_first=True)
+
+        assert PropertyListing.objects.filter(parcel_id='vacuum-test').exists()
+
+    def test_reads_pcpao_windows_1252_characters(self, tmp_path, db):
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        csv_path.write_bytes(
+            (
+                'PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,OWNER1,PROPERTY_USE\n'
+                'encoded-owner,1 CLEAN ST,CLEARWATER,33755,JOSÉ,0110 Single Family Home\n'
+            ).encode('cp1252')
+        )
+
+        call_command('import_pcpao_data', file=str(csv_path), quiet=True)
+
+        imported = PropertyListing.objects.get(parcel_id='encoded-owner')
+        assert imported.owner_name == 'JOSÉ'
 
 
 class TestPropertyTypeConversion:

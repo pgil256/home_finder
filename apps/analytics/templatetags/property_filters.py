@@ -2,7 +2,15 @@ import re
 
 from django import template
 
+from apps.analytics.services.property_photos import sanitize_county_photo_url
+
 register = template.Library()
+
+
+@register.filter
+def county_photo_url(value):
+    """Expose only HTTPS photos hosted by the Property Appraiser."""
+    return sanitize_county_photo_url(value) or ''
 
 
 @register.filter

@@ -287,19 +287,47 @@ class TestExportRateLimit:
         assert pdf.status_code == 200
 
 
-class TestStreetViewRemoval:
+class TestGoogleIndependence:
     def test_paid_street_view_endpoint_is_gone(self, client, sample_property):
         response = client.get(f'/analytics/property/{sample_property.parcel_id}/streetview/')
 
         assert response.status_code == 404
 
-    def test_detail_page_has_no_google_street_view_requests(self, client, sample_property):
+    def test_detail_page_has_no_google_requests_and_uses_openstreetmap(self, client, sample_property):
         response = client.get(f'/analytics/property/{sample_property.parcel_id}/')
         html = response.content.decode('utf-8', 'ignore')
 
         assert '/streetview/' not in html
-        assert 'maps.googleapis.com/maps/api/streetview' not in html
+        assert 'googleapis.com' not in html
+        assert 'gstatic.com' not in html
+        assert 'google.com/maps' not in html
         assert 'GOOGLE_STREET_VIEW_API_KEY' not in html
+        assert 'https://www.openstreetmap.org/search?query=' in html
+
+    def test_detail_page_uses_county_property_photo_when_available(self, client, sample_property):
+        sample_property.image_url = 'https://www.pcpao.gov/property-photo/example.jpg'
+        sample_property.save(update_fields=['image_url'])
+
+        response = client.get(f'/analytics/property/{sample_property.parcel_id}/')
+        html = response.content.decode('utf-8', 'ignore')
+
+        assert sample_property.image_url in html
+        assert f'County property record photo for {sample_property.address}' in html
+
+    def test_detail_page_suppresses_historical_external_photo_urls(self, client, sample_property):
+        sample_property.image_url = 'https://maps.googleapis.com/maps/api/streetview?key=historical-key'
+        sample_property.save(update_fields=['image_url'])
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode('utf-8', 'ignore')
+
+        assert sample_property.image_url not in html
+        assert 'historical-key' not in html
+
+    def test_base_page_does_not_load_google_fonts(self, client):
+        html = client.get('/').content.decode('utf-8', 'ignore')
+
+        assert 'fonts.googleapis.com' not in html
+        assert 'fonts.gstatic.com' not in html
 
 
 class TestLegacyScraperRedirect:

@@ -34,7 +34,9 @@ def test_empty_scope_returns_empty_insight_payload():
     assert insights['exact']['parcel_count'] == 0
     assert insights['city_segments'] == []
     assert insights['outliers'] == {'market_value': [], 'assessed_gap': [], 'tax_rate': []}
-    assert insights['takeaways'] == ['No parcels match the current filters. Broaden the scope to generate market signals.']
+    assert insights['takeaways'] == [
+        'No parcels match the current filters. Broaden the scope to generate market signals.'
+    ]
 
 
 def test_exact_kpis_include_medians_and_derived_rates():

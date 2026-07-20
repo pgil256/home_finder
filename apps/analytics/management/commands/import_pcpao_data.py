@@ -7,6 +7,7 @@ Usage:
     python manage.py import_pcpao_data --quiet
 """
 
+import codecs
 import csv
 import logging
 import os
@@ -18,6 +19,7 @@ from apps.analytics.services.pcpao_importer import (
     bulk_upsert_properties,
     download_pcpao_file,
     map_csv_row_to_property,
+    vacuum_property_listing_table,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,11 @@ class Command(BaseCommand):
             type=int,
             help='Limit number of records to import (for testing)',
         )
+        parser.add_argument(
+            '--vacuum-first',
+            action='store_true',
+            help='Reclaim reusable PostgreSQL row space before importing',
+        )
 
     def handle(self, *args, **options):
         quiet = options['quiet']
@@ -49,6 +56,11 @@ class Command(BaseCommand):
 
         if not quiet:
             self.stdout.write('Starting PCPAO data import...')
+
+        if options['vacuum_first']:
+            if not quiet:
+                self.stdout.write('Reclaiming reusable property-table space...')
+            vacuum_property_listing_table()
 
         # Get CSV file path
         if options['file']:
@@ -70,7 +82,11 @@ class Command(BaseCommand):
         count = 0
         skipped = 0
 
-        with open(csv_path, encoding='utf-8-sig') as f:
+        with open(csv_path, 'rb') as raw_file:
+            has_utf8_bom = raw_file.read(len(codecs.BOM_UTF8)) == codecs.BOM_UTF8
+        encoding = 'utf-8-sig' if has_utf8_bom else 'cp1252'
+
+        with open(csv_path, encoding=encoding) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 prop = map_csv_row_to_property(row)

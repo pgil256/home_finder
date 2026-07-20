@@ -36,6 +36,16 @@
                     <svg class="w-24 h-24 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
+                    {% with photo_url=property.image_url|county_photo_url %}
+                    {% if photo_url %}
+                    <img src="{{ photo_url }}"
+                         alt="County property record photo for {{ property.address }}"
+                         loading="lazy"
+                         referrerpolicy="no-referrer"
+                         class="absolute inset-0 w-full h-full object-cover"
+                         onerror="this.style.display='none'">
+                    {% endif %}
+                    {% endwith %}
                     <!-- Property Type Badge -->
                     <div class="absolute top-4 left-4">
                         <span class="badge badge-neutral bg-white/90 backdrop-blur-sm text-sm">{{ property.property_type|clean_property_type }}</span>
@@ -280,7 +290,7 @@
                                 </svg>
                                 Realtor
                             </a>
-                            <a href="https://www.google.com/maps/search/?api=1&query={{ property.address|urlencode }}, {{ property.city|urlencode }}, FL {{ property.zip_code }}"
+                            <a href="https://www.openstreetmap.org/search?query={{ property.address|urlencode }}%2C%20{{ property.city|urlencode }}%2C%20FL%20{{ property.zip_code|urlencode }}"
                                target="_blank"
                                rel="noopener"
                                class="btn btn-ghost btn-sm justify-start text-charcoal-600">
@@ -288,7 +298,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                Map
+                                OpenStreetMap
                             </a>
                         </div>
                     </div>
@@ -345,6 +355,16 @@
                         <svg class="w-12 h-12 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
+                        {% with photo_url=similar.image_url|county_photo_url %}
+                        {% if photo_url %}
+                        <img src="{{ photo_url }}"
+                             alt="County property record photo for {{ similar.address }}"
+                             loading="lazy"
+                             referrerpolicy="no-referrer"
+                             class="absolute inset-0 w-full h-full object-cover"
+                             onerror="this.style.display='none'">
+                        {% endif %}
+                        {% endwith %}
                     </div>
                     <div class="absolute inset-0 bg-gradient-to-t from-charcoal-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-3">
                         <a href="{% url 'property-detail' similar.parcel_id %}" class="btn btn-sm bg-white text-charcoal-800 hover:bg-charcoal-100">

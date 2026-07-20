@@ -117,7 +117,9 @@ def _build_pdf_response(request: HttpRequest | None) -> HttpResponse:
     )
 
     title_style = ParagraphStyle('Title', fontSize=22, alignment=TA_CENTER, spaceAfter=4)
-    subtitle_style = ParagraphStyle('Subtitle', fontSize=10, alignment=TA_CENTER, textColor=rl_colors.grey, spaceAfter=16)
+    subtitle_style = ParagraphStyle(
+        'Subtitle', fontSize=10, alignment=TA_CENTER, textColor=rl_colors.grey, spaceAfter=16
+    )
     h_style = ParagraphStyle('Heading', fontSize=13, spaceBefore=12, spaceAfter=6)
     body_style = ParagraphStyle('Body', fontSize=9, alignment=TA_LEFT, spaceAfter=4)
 
@@ -257,9 +259,7 @@ def _write_outlier_sheet(
     _format_currency_columns(ws, [6])
 
 
-def _write_sample_sheet(
-    wb: Workbook, rows: list[dict[str, Any]], header_font: Font, header_fill: PatternFill
-) -> None:
+def _write_sample_sheet(wb: Workbook, rows: list[dict[str, Any]], header_font: Font, header_fill: PatternFill) -> None:
     ws = wb.create_sheet('Sample Parcels')
     headers = ['Parcel ID', 'Address', 'City', 'ZIP', 'Type', 'Market Value', 'Assessed Value', '$/Sqft', 'Tax Rate']
     _write_header(ws, headers, header_font, header_fill)

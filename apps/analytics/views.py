@@ -359,7 +359,9 @@ def _rate_limited_export(
 
 def download_excel(request):
     """Generate and serve an Excel file of properties matching the dashboard filters."""
-    return _rate_limited_export(request, bucket='export_excel', label='Excel workbook', generate=generate_excel_response)
+    return _rate_limited_export(
+        request, bucket='export_excel', label='Excel workbook', generate=generate_excel_response
+    )
 
 
 def download_pdf(request):

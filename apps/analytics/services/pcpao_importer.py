@@ -17,14 +17,22 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 import requests
-from django.db import transaction
+from django.db import connection, transaction
 
 from apps.analytics.models import PropertyListing
 
 logger = logging.getLogger(__name__)
 
 PCPAO_DOWNLOAD_URL = 'https://www.pcpao.gov/dal/databasefile/downloadDatabaseFile'
+PCPAO_DATABASE_FILES_PAGE = 'https://www.pcpao.gov/tools-data/data-downloads/raw-database-files'
 PCPAO_DOWNLOAD_TIMEOUT = 600  # PCPAO files can be 100MB+; allow 10 min
+PCPAO_REQUEST_HEADERS = {
+    'User-Agent': ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'),
+    'Referer': PCPAO_DATABASE_FILES_PAGE,
+    'Origin': 'https://www.pcpao.gov',
+    'Accept': 'application/zip, application/octet-stream, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
 
 
 # PCPAO CSV column to PropertyListing field mapping
@@ -61,20 +69,37 @@ def download_pcpao_file(filename: str, output_dir: str) -> str:
     output_path = os.path.join(output_dir, f'{filename}.csv')
     logger.info(f'Downloading {filename} from {PCPAO_DOWNLOAD_URL}')
 
-    response = requests.post(
-        PCPAO_DOWNLOAD_URL,
-        data={'hdn_tbl_name': filename, 'hdn_ftype': 'csv'},
-        timeout=PCPAO_DOWNLOAD_TIMEOUT,
-    )
-    response.raise_for_status()
+    with requests.Session() as session:
+        session.headers.update(PCPAO_REQUEST_HEADERS)
+        response = session.post(
+            PCPAO_DOWNLOAD_URL,
+            data={'hdn_tbl_name': filename, 'hdn_ftype': 'csv'},
+            timeout=PCPAO_DOWNLOAD_TIMEOUT,
+        )
 
-    content_type = response.headers.get('Content-Type', '')
+        # PCPAO rejects generic HTTP clients. Browser-like headers are usually
+        # enough; priming the official landing page supplies any session cookie
+        # the county adds later without weakening TLS or bypassing access rules.
+        if response.status_code == 403:
+            logger.warning('PCPAO rejected the initial download request; priming a browser session and retrying once')
+            landing_response = session.get(PCPAO_DATABASE_FILES_PAGE, timeout=60)
+            landing_response.raise_for_status()
+            response = session.post(
+                PCPAO_DOWNLOAD_URL,
+                data={'hdn_tbl_name': filename, 'hdn_ftype': 'csv'},
+                timeout=PCPAO_DOWNLOAD_TIMEOUT,
+            )
+
+        response.raise_for_status()
+        content_type = response.headers.get('Content-Type', '')
+        archive = response.content
+
     if 'zip' not in content_type.lower():
         raise RuntimeError(
             f'Expected zip from PCPAO, got Content-Type={content_type!r}; the download endpoint may have changed again.'
         )
 
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(archive)) as zf:
         csv_names = [n for n in zf.namelist() if n.lower().endswith('.csv')]
         if not csv_names:
             raise RuntimeError(f'No CSV inside PCPAO zip: {zf.namelist()}')
@@ -241,11 +266,16 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             existing = existing_records.get(parcel_id)
 
             if existing:
-                # Update existing record in memory
+                # Avoid rewriting unchanged rows. PostgreSQL keeps the old row
+                # version for every UPDATE; rewriting the full county dataset
+                # each month can exhaust a size-limited database with dead rows.
+                changed = False
                 for field in update_fields:
-                    if field in prop:
+                    if field in prop and getattr(existing, field) != prop[field]:
                         setattr(existing, field, prop[field])
-                properties_to_update.append(existing)
+                        changed = True
+                if changed:
+                    properties_to_update.append(existing)
             else:
                 # Create new PropertyListing instance
                 new_properties.append(
@@ -263,3 +293,16 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             stats['updated'] = len(properties_to_update)
 
     return stats
+
+
+def vacuum_property_listing_table() -> bool:
+    """Make dead PostgreSQL row space reusable before a county refresh."""
+    if connection.vendor != 'postgresql':
+        return False
+
+    table_name = connection.ops.quote_name(PropertyListing._meta.db_table)
+    with connection.cursor() as cursor:
+        # A parallel worker can require enough temporary index space to fail
+        # when a size-limited Neon project is already near its ceiling.
+        cursor.execute(f'VACUUM (ANALYZE, PARALLEL 0) {table_name}')
+    return True

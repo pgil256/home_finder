@@ -20,10 +20,10 @@ jobs:
     name: Smoke (read-only)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -34,17 +34,22 @@ jobs:
       - name: Run smoke suite
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://homefinder.patbuilds.dev' }}
-        run: python -m pytest tests/e2e/test_smoke.py -v --no-header -p no:cacheprovider
+        run: >-
+          python -m pytest
+          -c tests/e2e/pytest.ini
+          --confcutdir=tests/e2e
+          tests/e2e/test_smoke.py
+          -v --no-header -p no:cacheprovider
 
   functional:
     name: Functional (write paths)
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_suite == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -56,17 +61,22 @@ jobs:
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url }}
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
-        run: python -m pytest tests/e2e/test_functional.py -v --no-header -p no:cacheprovider
+        run: >-
+          python -m pytest
+          -c tests/e2e/pytest.ini
+          --confcutdir=tests/e2e
+          tests/e2e/test_functional.py
+          -v --no-header -p no:cacheprovider
 
   browser:
     name: Browser (Playwright)
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_suite == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -81,4 +91,9 @@ jobs:
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url }}
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
-        run: python -m pytest tests/e2e/browser/ -v --no-header -p no:cacheprovider
+        run: >-
+          python -m pytest
+          -c tests/e2e/pytest.ini
+          --confcutdir=tests/e2e
+          tests/e2e/browser/
+          -v --no-header -p no:cacheprovider
