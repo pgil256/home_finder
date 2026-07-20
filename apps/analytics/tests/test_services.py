@@ -16,6 +16,7 @@ from apps.analytics.services.pcpao_importer import (
     map_csv_row_to_property,
     safe_decimal,
     safe_int,
+    vacuum_property_listing_table,
 )
 from apps.analytics.services.property_types import DOR_USE_CODES, dor_code_to_description
 
@@ -316,6 +317,18 @@ class TestBulkUpsertProperties:
 
         assert result['created'] == 1
         assert PropertyListing.objects.count() == 1
+
+
+class TestVacuumPropertyListingTable:
+    @patch('apps.analytics.services.pcpao_importer.connection')
+    def test_disables_parallel_index_cleanup(self, connection):
+        connection.vendor = 'postgresql'
+        connection.ops.quote_name.return_value = '"property_table"'
+        cursor = connection.cursor.return_value.__enter__.return_value
+
+        assert vacuum_property_listing_table() is True
+
+        cursor.execute.assert_called_once_with('VACUUM (ANALYZE, PARALLEL 0) "property_table"')
 
 
 class TestImportPcpaoDataCommand:

@@ -302,5 +302,7 @@ def vacuum_property_listing_table() -> bool:
 
     table_name = connection.ops.quote_name(PropertyListing._meta.db_table)
     with connection.cursor() as cursor:
-        cursor.execute(f'VACUUM (ANALYZE) {table_name}')
+        # A parallel worker can require enough temporary index space to fail
+        # when a size-limited Neon project is already near its ceiling.
+        cursor.execute(f'VACUUM (ANALYZE, PARALLEL 0) {table_name}')
     return True
