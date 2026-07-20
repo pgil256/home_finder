@@ -366,6 +366,20 @@ class TestImportPcpaoDataCommand:
 
         assert PropertyListing.objects.filter(parcel_id='vacuum-test').exists()
 
+    def test_reads_pcpao_windows_1252_characters(self, tmp_path, db):
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        csv_path.write_bytes(
+            (
+                'PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,OWNER1,PROPERTY_USE\n'
+                'encoded-owner,1 CLEAN ST,CLEARWATER,33755,JOSÉ,0110 Single Family Home\n'
+            ).encode('cp1252')
+        )
+
+        call_command('import_pcpao_data', file=str(csv_path), quiet=True)
+
+        imported = PropertyListing.objects.get(parcel_id='encoded-owner')
+        assert imported.owner_name == 'JOSÉ'
+
 
 class TestPropertyTypeConversion:
     def test_dor_code_single_family(self):

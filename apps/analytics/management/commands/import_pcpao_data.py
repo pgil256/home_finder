@@ -7,6 +7,7 @@ Usage:
     python manage.py import_pcpao_data --quiet
 """
 
+import codecs
 import csv
 import logging
 import os
@@ -81,7 +82,11 @@ class Command(BaseCommand):
         count = 0
         skipped = 0
 
-        with open(csv_path, encoding='utf-8-sig') as f:
+        with open(csv_path, 'rb') as raw_file:
+            has_utf8_bom = raw_file.read(len(codecs.BOM_UTF8)) == codecs.BOM_UTF8
+        encoding = 'utf-8-sig' if has_utf8_bom else 'cp1252'
+
+        with open(csv_path, encoding=encoding) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 prop = map_csv_row_to_property(row)
