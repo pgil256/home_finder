@@ -143,7 +143,9 @@ def _exact_kpis(qs) -> dict[str, Any]:
     return {
         **base,
         **gap,
-        'median_market_value': _median_field(qs.exclude(market_value__isnull=True).order_by('market_value'), 'market_value'),
+        'median_market_value': _median_field(
+            qs.exclude(market_value__isnull=True).order_by('market_value'), 'market_value'
+        ),
         'median_price_per_sqft': _median_annotation(
             qs.filter(market_value__gt=0, building_sqft__gt=0),
             'price_per_sqft',
@@ -280,7 +282,9 @@ def _charts(df: pd.DataFrame, sample_size: int) -> dict[str, dict[str, Any]]:
             currency=True,
         ),
         'citySegments': _segment_chart_payload(_segments(df, 'city', 10), 'Median market value by city'),
-        'typeSegments': _segment_chart_payload(_segments(df, 'property_type', 10), 'Median market value by property type'),
+        'typeSegments': _segment_chart_payload(
+            _segments(df, 'property_type', 10), 'Median market value by property type'
+        ),
         'yearTrend': _year_trend_payload(df),
         'valueGapScatter': _value_gap_scatter_payload(df),
     }
@@ -393,7 +397,9 @@ def _value_gap_scatter_payload(df: pd.DataFrame) -> dict[str, Any]:
         note = 'Scatterplot uses a deterministic 400-row sample for responsiveness.'
     else:
         note = None
-    points = [{'x': _clean_number(row.assessed_value), 'y': _clean_number(row.market_value)} for row in clean.itertuples()]
+    points = [
+        {'x': _clean_number(row.assessed_value), 'y': _clean_number(row.market_value)} for row in clean.itertuples()
+    ]
     return {
         'labels': [],
         'datasets': [
@@ -438,7 +444,9 @@ def _iqr_outlier_rows(df: pd.DataFrame, field: str) -> list[dict[str, Any]]:
     q1, q3 = np.percentile(clean[field], [25, 75])
     threshold = q3 + 1.5 * (q3 - q1)
     rows = clean[clean[field] > threshold].sort_values(field, ascending=False).head(MAX_OUTLIERS)
-    return [_parcel_row(row, metric_label='Market value', metric_value=getattr(row, field)) for row in rows.itertuples()]
+    return [
+        _parcel_row(row, metric_label='Market value', metric_value=getattr(row, field)) for row in rows.itertuples()
+    ]
 
 
 def _top_metric_rows(df: pd.DataFrame, field: str, ascending: bool) -> list[dict[str, Any]]:
@@ -550,9 +558,7 @@ def _takeaways(
         )
     if type_segments:
         leader = type_segments[0]
-        takeaways.append(
-            f'{leader["name"]} is the most common property type represented in the filtered data.'
-        )
+        takeaways.append(f'{leader["name"]} is the most common property type represented in the filtered data.')
     if outliers.get('market_value'):
         takeaways.append('High-value IQR outliers are exposed as drilldowns so the analysis stays auditable.')
     takeaways.append('These are exploratory public-record signals, not predictions or investment advice.')

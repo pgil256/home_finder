@@ -14,6 +14,8 @@ def test_S1_home_loads(client, base_url):
     assert r.status_code == 200
     assert 'Pinellas Market Lens' in r.text
     assert 'Find Your Perfect Home' not in r.text
+    assert 'fonts.googleapis.com' not in r.text
+    assert 'fonts.gstatic.com' not in r.text
 
 
 def test_S2_scraper_form_loads(client, base_url):
@@ -39,6 +41,15 @@ def test_S4_property_detail_loads(client, base_url, known_parcel_id):
     r = client.get(f'{base_url}/analytics/property/{known_parcel_id}/', timeout=TIMEOUT)
     assert r.status_code == 200
     assert known_parcel_id in r.text
+    assert 'maps.googleapis.com' not in r.text
+    assert 'google.com/maps' not in r.text
+    assert 'https://www.openstreetmap.org/search?query=' in r.text
+
+
+def test_S4b_paid_street_view_route_is_gone(client, base_url, known_parcel_id):
+    """The retired paid image endpoint stays unavailable."""
+    r = client.get(f'{base_url}/analytics/property/{known_parcel_id}/streetview/', timeout=TIMEOUT)
+    assert r.status_code == 404
 
 
 def test_S5_invalid_parcel_returns_404(client, base_url):

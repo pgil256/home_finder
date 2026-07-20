@@ -314,6 +314,15 @@ class TestGoogleIndependence:
         assert sample_property.image_url in html
         assert f'County property record photo for {sample_property.address}' in html
 
+    def test_detail_page_suppresses_historical_external_photo_urls(self, client, sample_property):
+        sample_property.image_url = 'https://maps.googleapis.com/maps/api/streetview?key=historical-key'
+        sample_property.save(update_fields=['image_url'])
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode('utf-8', 'ignore')
+
+        assert sample_property.image_url not in html
+        assert 'historical-key' not in html
+
     def test_base_page_does_not_load_google_fonts(self, client):
         html = client.get('/').content.decode('utf-8', 'ignore')
 

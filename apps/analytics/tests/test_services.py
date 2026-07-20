@@ -1,11 +1,17 @@
+import io
+import zipfile
 from decimal import Decimal
 
 import pytest
+import responses
 from django.core.management import call_command
 
 from apps.analytics.models import PropertyListing
 from apps.analytics.services.pcpao_importer import (
+    PCPAO_DATABASE_FILES_PAGE,
+    PCPAO_DOWNLOAD_URL,
     bulk_upsert_properties,
+    download_pcpao_file,
     map_csv_row_to_property,
     safe_decimal,
     safe_int,
@@ -13,6 +19,51 @@ from apps.analytics.services.pcpao_importer import (
 from apps.analytics.services.property_types import DOR_USE_CODES, dor_code_to_description
 
 pytestmark = pytest.mark.django_db
+
+
+def _pcpao_zip_bytes() -> bytes:
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, 'w') as zip_file:
+        zip_file.writestr('RP_PROPERTY_INFO.csv', 'PARCEL_NUMBER,SITE_ADDRESS\nexample,1 TEST ST\n')
+    return archive.getvalue()
+
+
+class TestDownloadPcpaoFile:
+    @responses.activate
+    def test_uses_browser_headers_and_extracts_csv(self, tmp_path):
+        responses.add(
+            responses.POST,
+            PCPAO_DOWNLOAD_URL,
+            body=_pcpao_zip_bytes(),
+            status=200,
+            content_type='application/zip',
+        )
+
+        csv_path = download_pcpao_file('RP_PROPERTY_INFO', str(tmp_path))
+
+        assert (tmp_path / 'RP_PROPERTY_INFO.csv').read_text(encoding='utf-8').startswith('PARCEL_NUMBER')
+        assert csv_path == str(tmp_path / 'RP_PROPERTY_INFO.csv')
+        request = responses.calls[0].request
+        assert request.headers['User-Agent'].startswith('Mozilla/5.0')
+        assert request.headers['Referer'] == PCPAO_DATABASE_FILES_PAGE
+        assert request.headers['Origin'] == 'https://www.pcpao.gov'
+
+    @responses.activate
+    def test_primes_session_and_retries_once_after_forbidden(self, tmp_path):
+        responses.add(responses.POST, PCPAO_DOWNLOAD_URL, status=403)
+        responses.add(responses.GET, PCPAO_DATABASE_FILES_PAGE, status=200)
+        responses.add(
+            responses.POST,
+            PCPAO_DOWNLOAD_URL,
+            body=_pcpao_zip_bytes(),
+            status=200,
+            content_type='application/zip',
+        )
+
+        csv_path = download_pcpao_file('RP_PROPERTY_INFO', str(tmp_path))
+
+        assert csv_path == str(tmp_path / 'RP_PROPERTY_INFO.csv')
+        assert [call.request.method for call in responses.calls] == ['POST', 'GET', 'POST']
 
 
 class TestSafeDecimal:

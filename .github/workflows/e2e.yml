@@ -34,7 +34,12 @@ jobs:
       - name: Run smoke suite
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://homefinder.patbuilds.dev' }}
-        run: python -m pytest tests/e2e/test_smoke.py -v --no-header -p no:cacheprovider
+        run: >-
+          python -m pytest
+          -c tests/e2e/pytest.ini
+          --confcutdir=tests/e2e
+          tests/e2e/test_smoke.py
+          -v --no-header -p no:cacheprovider
 
   functional:
     name: Functional (write paths)
@@ -56,7 +61,12 @@ jobs:
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url }}
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
-        run: python -m pytest tests/e2e/test_functional.py -v --no-header -p no:cacheprovider
+        run: >-
+          python -m pytest
+          -c tests/e2e/pytest.ini
+          --confcutdir=tests/e2e
+          tests/e2e/test_functional.py
+          -v --no-header -p no:cacheprovider
 
   browser:
     name: Browser (Playwright)
@@ -81,4 +91,9 @@ jobs:
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url }}
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
-        run: python -m pytest tests/e2e/browser/ -v --no-header -p no:cacheprovider
+        run: >-
+          python -m pytest
+          -c tests/e2e/pytest.ini
+          --confcutdir=tests/e2e
+          tests/e2e/browser/
+          -v --no-header -p no:cacheprovider

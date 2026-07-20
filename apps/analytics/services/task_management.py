@@ -36,7 +36,9 @@ def get_client_ip(request) -> str:
     return request.META.get('REMOTE_ADDR', '')
 
 
-def check_rate_limit(client_ip: str, *, bucket: str = 'scrape_rate', window_seconds: int = SCRAPE_RATE_LIMIT_SECONDS) -> int | None:
+def check_rate_limit(
+    client_ip: str, *, bucket: str = 'scrape_rate', window_seconds: int = SCRAPE_RATE_LIMIT_SECONDS
+) -> int | None:
     """Return seconds to wait if rate-limited, else None.
 
     `bucket` namespaces the cache key so unrelated rate limits (e.g. search

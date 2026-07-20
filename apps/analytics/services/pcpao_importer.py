@@ -24,7 +24,15 @@ from apps.analytics.models import PropertyListing
 logger = logging.getLogger(__name__)
 
 PCPAO_DOWNLOAD_URL = 'https://www.pcpao.gov/dal/databasefile/downloadDatabaseFile'
+PCPAO_DATABASE_FILES_PAGE = 'https://www.pcpao.gov/tools-data/data-downloads/raw-database-files'
 PCPAO_DOWNLOAD_TIMEOUT = 600  # PCPAO files can be 100MB+; allow 10 min
+PCPAO_REQUEST_HEADERS = {
+    'User-Agent': ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'),
+    'Referer': PCPAO_DATABASE_FILES_PAGE,
+    'Origin': 'https://www.pcpao.gov',
+    'Accept': 'application/zip, application/octet-stream, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
 
 
 # PCPAO CSV column to PropertyListing field mapping
@@ -61,20 +69,37 @@ def download_pcpao_file(filename: str, output_dir: str) -> str:
     output_path = os.path.join(output_dir, f'{filename}.csv')
     logger.info(f'Downloading {filename} from {PCPAO_DOWNLOAD_URL}')
 
-    response = requests.post(
-        PCPAO_DOWNLOAD_URL,
-        data={'hdn_tbl_name': filename, 'hdn_ftype': 'csv'},
-        timeout=PCPAO_DOWNLOAD_TIMEOUT,
-    )
-    response.raise_for_status()
+    with requests.Session() as session:
+        session.headers.update(PCPAO_REQUEST_HEADERS)
+        response = session.post(
+            PCPAO_DOWNLOAD_URL,
+            data={'hdn_tbl_name': filename, 'hdn_ftype': 'csv'},
+            timeout=PCPAO_DOWNLOAD_TIMEOUT,
+        )
 
-    content_type = response.headers.get('Content-Type', '')
+        # PCPAO rejects generic HTTP clients. Browser-like headers are usually
+        # enough; priming the official landing page supplies any session cookie
+        # the county adds later without weakening TLS or bypassing access rules.
+        if response.status_code == 403:
+            logger.warning('PCPAO rejected the initial download request; priming a browser session and retrying once')
+            landing_response = session.get(PCPAO_DATABASE_FILES_PAGE, timeout=60)
+            landing_response.raise_for_status()
+            response = session.post(
+                PCPAO_DOWNLOAD_URL,
+                data={'hdn_tbl_name': filename, 'hdn_ftype': 'csv'},
+                timeout=PCPAO_DOWNLOAD_TIMEOUT,
+            )
+
+        response.raise_for_status()
+        content_type = response.headers.get('Content-Type', '')
+        archive = response.content
+
     if 'zip' not in content_type.lower():
         raise RuntimeError(
             f'Expected zip from PCPAO, got Content-Type={content_type!r}; the download endpoint may have changed again.'
         )
 
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
+    with zipfile.ZipFile(io.BytesIO(archive)) as zf:
         csv_names = [n for n in zf.namelist() if n.lower().endswith('.csv')]
         if not csv_names:
             raise RuntimeError(f'No CSV inside PCPAO zip: {zf.namelist()}')

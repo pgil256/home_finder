@@ -28,6 +28,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Apply database migrations
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY || 'github-actions-import-not-secret' }}
+          DEBUG: "False"
+          ALLOWED_HOSTS: "localhost"
+        run: python manage.py migrate --noinput
+
       - name: Run bulk import
         env:
           DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}

@@ -24,6 +24,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
+from apps.analytics.services.property_photos import sanitize_county_photo_url
+
 # Chrome for Testing paths
 # Priority: 1. Environment variables (production), 2. Local dev paths, 3. webdriver-manager fallback
 CHROME_BINARY = os.environ.get('CHROME_BIN') or os.path.expanduser('~/.chrome-for-testing/chrome-linux64/chrome')
@@ -639,11 +641,15 @@ class PCPAOScraper:
                 src = img['src']
                 # Handle relative URLs
                 if src.startswith('//'):
-                    return f'https:{src}'
+                    candidate = f'https:{src}'
                 elif src.startswith('/'):
-                    return f'{self.BASE_URL.rstrip("/")}{src}'
+                    candidate = f'{self.BASE_URL.rstrip("/")}{src}'
                 elif src.startswith('http'):
-                    return src
+                    candidate = src
+                else:
+                    continue
+                if photo_url := sanitize_county_photo_url(candidate):
+                    return photo_url
 
         # Fallback: look for any large image that might be a property photo
         for img in soup.find_all('img'):
@@ -658,9 +664,13 @@ class PCPAOScraper:
                 try:
                     if int(width) >= 200 and int(height) >= 150:
                         if src.startswith('/'):
-                            return f'{self.BASE_URL.rstrip("/")}{src}'
+                            candidate = f'{self.BASE_URL.rstrip("/")}{src}'
                         elif src.startswith('http'):
-                            return src
+                            candidate = src
+                        else:
+                            continue
+                        if photo_url := sanitize_county_photo_url(candidate):
+                            return photo_url
                 except ValueError:
                     pass
 
