@@ -181,13 +181,154 @@ Link glossary terms (just value, assessed value, millage, SFHA) inline from the 
 
 ---
 
-## Suggested order
+## Data sources
 
-1. Import the extra `RP_PROPERTY_INFO` columns (one migration + importer mapping). This unblocks #1, #3, #4, #8 and #9.
-2. New-owner tax estimate + fix the "Annual Tax" label. Ship before Nov 3 with the exemption config ready to flip.
-3. Monthly cost calculator + budget-first search.
-4. Risk flags card.
-5. Saved/compare page.
-6. CDN caching refactor.
-7. Sales comps, roof permits, flood zone.
-8. Guide content.
+### Today
+
+The only runtime data source is the **Pinellas County Property Appraiser (PCPAO)**:
+
+- `RP_PROPERTY_INFO` bulk CSV, imported monthly by `.github/workflows/refresh-data.yml`
+- On-demand single-parcel scrape (`refresh_one_parcel`) behind the Refresh button
+- County-hosted parcel photos
+
+Zillow, Redfin, Realtor.com and OpenStreetMap are outbound links only, not APIs. `tasks/tax_collector_scraper.py` is only referenced by tests; nothing in the product calls it.
+
+### After this plan
+
+**Architecture rule:** every external call happens in a GitHub Actions job, never in a Vercel request. Request handlers only read Neon. The one exception is map tiles, which the visitor's browser loads directly from a free tile host. The repo is public, so Actions minutes are free.
+
+| Source | Used for | Auth | Access | Cadence |
+|---|---|---|---|---|
+| PCPAO `RP_PROPERTY_INFO` (more columns) | Tax inputs, risk flags, coordinates, neighborhood | None | Same POST download the importer already uses | Monthly |
+| PCPAO `RP_MILLAGE_RATES` | School vs non-school millage per tax district | None | Same | Monthly (changes yearly) |
+| PCPAO `RP_SALES` | Last sale, qualified-sale comps, flip flag | None | Same | Monthly |
+| PCPAO `RP_PERMITS` | Roof / HVAC permit year | None | Same | Monthly |
+| FEMA NFHL ArcGIS REST (`/public/NFHL/MapServer/28`) | Flood zone + base flood elevation per parcel | None | Batch point-in-polygon in the Action | Quarterly |
+| OpenFEMA `v3/NfipClaims` | Flood-insurance claim history by ZIP | None | REST, filter `countyCode eq '12103'` (~52k Pinellas claims) | Quarterly |
+| FRED `MORTGAGE30US` (Freddie Mac PMMS) | Default mortgage rate in the calculator | Free API key | REST | Weekly |
+| OpenFreeMap | Map tiles for MapLibre GL | None | Browser loads `tiles.openfreemap.org/styles/liberty` | Per page view (their cost, not ours) |
+| *Optional:* HUD Fair Market Rents / Small Area FMRs | "Typical rent here" for rent-vs-buy | Free bearer token | REST | Yearly |
+| *Optional:* FHFA House Price Index, ZIP5 annual | 5-year price trend by ZIP | None | ~40 MB xlsx download | Yearly |
+| *Optional:* FEMA National Risk Index, census tract | Hurricane / flood / wind risk ratings (joins on PCPAO `CENSUS`) | None | Bulk download | Yearly |
+| Static config (checked into repo) | Homestead exemption rules, FL closing-cost rates, FHA/conforming loan limits, FHA MIP | — | Updated by hand | Yearly, or after law changes |
+| Links only | Florida Housing / Hometown Heroes, Pinellas County down-payment assistance, HUD housing counselors, FloodSmart | — | Outbound links | — |
+
+Verified 2026-09-29:
+- **OpenFEMA's v2 `FimaNfipClaims` endpoint is deprecated and removed on 2026-10-15.** Its data is frozen as of 2026-06-01. Use `v3/NfipClaims`.
+- **The Census API now requires a free key.** Unkeyed requests redirect to a "Missing Key" page.
+- HUD's API returns 401 without a token.
+- FEMA NFHL, OpenFEMA v3, the FHFA file and OpenFreeMap all responded without auth.
+
+**Secrets:** `FRED_API_KEY` (and `HUD_API_TOKEN` if used) live only in GitHub Actions secrets. Vercel never needs them.
+
+---
+
+## Implementation plan
+
+One PR per step. Each step ships something visible and keeps CI green.
+
+### PR 0 — Groundwork (S)
+
+- **Fix the stale fixture.** `apps/analytics/fixtures/sample_pcpao_data.csv` uses the old column names (`PARCEL_ID`, `SITE_ADDR`, …), but `map_csv_row_to_property` reads the current schema (`PARCEL_NUMBER`, `SITE_ADDRESS`, …). The README Quick Start therefore imports **zero rows**. Regenerate the fixture with ~50 real-schema rows, including the new columns and a mix of evac zones, waterfront, homestead-capped and non-capped parcels.
+- Remove `matplotlib` and `PyPDF2` from `requirements.txt`. Nothing imports either.
+- Add `requirements-data.txt` for Action-only dependencies (e.g. `shapely` in PR 9) so they never enter the Vercel bundle.
+
+### PR 1 — Import the dropped `RP_PROPERTY_INFO` columns (M)
+
+- Migration `0007`: add nullable fields to `PropertyListing`:
+  - `latitude`, `longitude`
+  - `evac_zone`, `tax_district`, `neighborhood_code` (indexed), `census_tract`, `views`
+  - Booleans: `elevation_cert`, `waterfront`, `seawall`, `subsidence`, `contamination`, `historic_landmark`, `homestead_cap`
+  - Decimals: `homestead_savings`, `millage_rate`, `special_assessment`, `sales_comp_value`
+  - `living_units`, `roll_year`
+
+  Nullable adds are metadata-only in Postgres.
+- `pcpao_importer.py`: add a `_yn()` helper, extend `map_csv_row_to_property`, and extend `update_fields` in `bulk_upsert_properties`.
+- **Storage risk:** the first run after this migration changes *every* row. That creates roughly one table's worth of dead tuples on a 0.5 GB Neon project. Before merging, check current size (`SELECT pg_total_relation_size('analytics_propertylisting')`, adjusting for the table's actual `db_table`), and add a `--vacuum-every N` option that runs `vacuum_property_listing_table()` every N batches during the backfill.
+- Tests: mapping tests for the new columns in `test_services.py`.
+
+### PR 2 — New-owner tax estimate (M) — ship before Nov 3
+
+- Import `RP_MILLAGE_RATES` into a small `TaxDistrictMillage(district_code, year, total_mills, school_mills)` table. Classify school levies by `TAX_AUTH_NAME`; check the real values first.
+- `services/tax_estimate.py`:
+  - Pure function `estimate_new_owner_tax(just_value, millage, special_assessment, homestead, rules)`.
+  - `HOMESTEAD_RULES` keyed by effective year: current law now, plus the CS/HJR 1F schedule to switch on if it passes.
+- Precompute `est_tax_homestead` and `est_tax_no_homestead` during import so they can be filtered and sorted.
+- `property-detail.html`: "Your estimated taxes" card showing seller's bill vs. yours, with the March 1 homestead filing reminder. Relabel the current "Annual Tax" (it is `TAX_AMOUNT_NO_EX`).
+- Tests: table-driven cases with hand-computed expected values, including just value under $50k, between $50k and $75k, and above $75k.
+
+### PR 3 — Monthly cost calculator + budget search (M)
+
+- `static/js/dev/affordability.js`, pure functions:
+  - `monthlyPI`, `pmi`, `fhaMip`
+  - `closingCosts` (FL note doc stamps, intangible tax, promulgated title rate)
+  - `maxPriceForBudget` (bisection over the forward calculation)
+- Add a webpack entry and Jest tests.
+- Detail page: calculator panel, seeded via `{{ data|json_script }}` with just value, estimated tax and current rate. Label clearly that just value is not the asking price.
+- `.github/workflows/refresh-rates.yml` (weekly): fetch FRED `MORTGAGE30US` into a one-row `MortgageRate` table.
+- `services/lending_config.py`: yearly constants (FHA MIP, FHA and conforming loan limits for Pinellas).
+- `search.html`: a "monthly budget" field. JS converts it to `max_price` before submit, so there is no server change.
+
+### PR 4 — Risk flags card + filters (S)
+
+- `services/risk_flags.py`: `build_risk_flags(listing) -> list[RiskFlag(level, title, why, what_to_ask)]`, pure and unit-tested. Covers evac zone, waterfront/seawall, elevation cert, subsidence, contamination, historic landmark, pre-2002 build, older condo.
+- `apply_filters`: add `evac_zone`, `exclude_subsidence`, and `max_est_tax`. Add matching `SEARCH_FIELDS` entries, chips and form fields.
+
+### PR 5 — Saved homes + compare (S)
+
+- `GET /analytics/compare/?ids=…`: cap at 6 IDs, reuse the tax, risk and calculator services, and render a side-by-side table.
+- Nav link "Saved (n)" reads `localStorage['savedProperties']` and builds the compare URL.
+
+### PR 6 — CDN caching (M)
+
+- Stop writing `request.session[SEARCH_SESSION_KEY]` on GET in `insights_dashboard` and `_initial_search_values`. Keep "last search" in `localStorage` or the URL.
+- Replace `{% csrf_token %}` on the detail page with a token fetched from an uncached `/analytics/csrf/` endpoint when Refresh is clicked. After a refresh, redirect to `?refreshed=<timestamp>` so the visitor doesn't get the cached pre-refresh page.
+- Add `@cache_control(public=True, s_maxage=86400, stale_while_revalidate=604800)` to insights, parcel, compare and static pages.
+- Test: responses carry `s-maxage`, have no `Set-Cookie`, and have no `Vary: Cookie`. Include a template that renders `messages`, since that can touch the session.
+- Optional: call a Vercel deploy hook at the end of `refresh-data.yml` to purge the CDN right after each import.
+
+### PR 7 — Sales history + comps (M)
+
+- Stream `RP_SALES` in the Action. Keep only qualified (`QUALIFIED_FLG = 'Q'`), improved (`VACANT_IMPROVED = 'I'`) sales from the last 36 months. Drop grantee and grantor names.
+- Store `last_sale_date` and `last_sale_price` on `PropertyListing`: track the max date per parcel while streaming the whole file.
+- Slim `Sale(parcel_id, sale_date, price)` table, reloaded monthly with `TRUNCATE` + bulk insert. `TRUNCATE` leaves no dead tuples.
+- `services/comps.py`: same `neighborhood_code` and type bucket, sold in the last 12 months, sqft within ±25%. Report median $/sqft × subject sqft with n and range, and hide it when n < 3. Add a flip flag (2+ qualified sales in 24 months).
+- Update `_methodology()` and the README "Limitations" section.
+
+### PR 8 — Roof and system age (S)
+
+- First, profile `RP_PERMITS` (`PERMIT_TYPE` / `PERMIT_DSCR` value counts) to choose keywords.
+- Derive `roof_permit_year` (and optionally `hvac_permit_year`) during import. Store only those columns.
+- Risk flag: no roof permit in 15+ years (or none on record) → "ask for roof age; insurers will."
+
+### PR 9 — Flood zone + flood-claim history (M)
+
+- New Action step, quarterly or `workflow_dispatch`:
+  - Page through NFHL layer 28 for the Pinellas bounding box (`resultOffset`, GeoJSON).
+  - Build a `shapely` STRtree and join all parcel coordinates.
+  - Write `flood_zone` and `static_bfe`.
+  - Cache the GeoJSON between runs with `actions/cache`.
+- OpenFEMA `v3/NfipClaims` for county `12103`: aggregate by ZIP (claim count, claims since 2020, median paid) into a small `ZipFloodHistory` table.
+- Risk flag for Special Flood Hazard Areas (A/AE/V/VE): lenders require flood insurance. Add an "outside SFHA" filter.
+
+### PR 10 — Map (S)
+
+- MapLibre GL + the OpenFreeMap `liberty` style, lazy-loaded on the detail page only, with a pin from the stored coordinates.
+- Optional: FEMA NFHL flood-zone overlay as a raster source pointed at FEMA's own MapServer export endpoint. That is live flood mapping with no hosting cost.
+- Credit OpenStreetMap contributors and OpenFreeMap.
+
+### PR 11 — Guide + repositioning (S)
+
+- Rewrite `/help/` as a first-time buyer guide: steps, Florida specifics, and assistance-program links.
+- Add a glossary partial linked inline from the parcel page.
+- Home page: lead with "Look up any Pinellas home" address search instead of the analytics pitch. Keep the dashboard as a secondary "Explore the market" path.
+
+### Optional follow-ups
+
+- HUD Small Area FMR "typical rent" line in the calculator (rent vs. buy).
+- FHFA ZIP5 5-year price trend on the parcel page.
+- FEMA National Risk Index tract ratings in the risk card.
+
+### Sequencing
+
+PR 0 → PR 1 → PR 2 are the critical path; PR 2 should be live before the Nov 3 vote. PRs 3–5 depend only on PR 1. PR 6 can land any time but should come before any traffic push. PRs 7–10 are independent of each other.
