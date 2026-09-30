@@ -50,12 +50,15 @@ ANALYSIS_FIELDS = (
 # insights_dashboard, the Excel export and the PDF export. On a hosted Postgres
 # with a metered egress allowance that is the single largest source of data
 # transfer in the app -- a scheduled monitor hitting all three endpoints will
-# quietly pull hundreds of megabytes a day. Cache the finished payload (a few
-# hundred KB at most) so a given filter combination costs one table scan per
-# TTL window instead of one per request.
+# quietly pull hundreds of megabytes a day. Cache the finished payload so a
+# given filter combination costs one table scan per TTL window instead of one
+# per request. Measured on real county data: a miss reads ~8 MB, the cached
+# payload is ~45 KB.
 #
-# Set MARKET_INSIGHTS_CACHE_TTL to 0 to disable caching entirely.
-MARKET_INSIGHTS_CACHE_TTL = int(getattr(settings, 'MARKET_INSIGHTS_CACHE_TTL', 15 * 60))
+# The data only changes with the monthly import, which clears the cache, so a
+# day-long TTL loses nothing. Set MARKET_INSIGHTS_CACHE_TTL to 0 to disable
+# caching entirely.
+MARKET_INSIGHTS_CACHE_TTL = int(getattr(settings, 'MARKET_INSIGHTS_CACHE_TTL', 24 * 60 * 60))
 
 # Bump when the shape of the payload changes, so deploys don't serve a stale
 # structure to new template/export code.

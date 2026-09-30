@@ -207,3 +207,22 @@ class TestDatabaseUnavailableMiddleware:
 
         assert response.status_code == 200
         assert response.content == b'ok'
+
+
+class TestImportClearsInsightsCache:
+    def test_import_drops_cached_payloads(self, tmp_path):
+        """Payloads live for a day, so the monthly import must invalidate them."""
+        from django.core.management import call_command
+
+        _make_parcels()
+        build_market_insights(None)
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        csv_path.write_text(
+            'PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,PROPERTY_USE\n'
+            'cache-new,9 Fresh St,CLEARWATER,33755,0110 Single Family Home\n',
+            encoding='utf-8',
+        )
+
+        call_command('import_pcpao_data', file=str(csv_path), quiet=True)
+
+        assert build_market_insights(None)['exact']['parcel_count'] == 6

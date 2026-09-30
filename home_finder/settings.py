@@ -222,11 +222,13 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Cache: database-backed (works on Vercel without an external cache service).
 # Run `python manage.py createcachetable` once after deploy to create the table.
+# Entries count against Neon's 512 MiB storage cap: a cached insights payload
+# is ~45 KB, so 300 entries stay under ~15 MB.
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'cache_table',
-        'OPTIONS': {'MAX_ENTRIES': 1000},
+        'OPTIONS': {'MAX_ENTRIES': 300},
     }
 }
 
