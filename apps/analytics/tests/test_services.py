@@ -23,6 +23,8 @@ from apps.analytics.services.property_types import DOR_USE_CODES, dor_code_to_de
 
 pytestmark = pytest.mark.django_db
 
+SAMPLE_FIXTURE = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_pcpao_data.csv'
+
 
 def _pcpao_zip_bytes() -> bytes:
     archive = io.BytesIO()
@@ -225,6 +227,72 @@ class TestMapCsvRowToProperty:
         assert result['tax_amount'] is None
         assert 'tax_status' not in result or result.get('tax_status') != 'From PCPAO'
 
+    def test_maps_tax_and_risk_columns(self):
+        row = {
+            'PARCEL_NUMBER': '05-29-15-54666-005-0080',
+            'ROLL_YEAR': '2026',
+            'TAX_DISTRICT': 'CW',
+            'MILLAGE_RATE': '19.919700000000002',
+            'SPECIAL_ASSESSMENT': '140',
+            'HX_CAP': 'Yes',
+            'SALES_COMP': '3310000',
+            'LATITUDE': '27.978634278',
+            'LONGITUDE': '-82.827283724',
+            'EVAC_ZONE': 'A',
+            'NBORHOOD_CD': '7706.110000000001',
+            'FRONTAGE': 'Gulf',
+            'VIEWS': 'Gulf',
+            'WATERFRONT_YN': 'Y',
+            'SEAWALL': 'Yes',
+            'SUBSIDENCE_YN': 'N',
+            'CONTAMINATION_YN': 'N',
+            'DLHL_YN': 'Y',
+            'TOTAL_LIVING_UNITS': '1',
+        }
+        result = map_csv_row_to_property(row)
+
+        assert result['roll_year'] == 2026
+        assert result['tax_district'] == 'CW'
+        assert result['millage_rate'] == Decimal('19.9197')
+        assert result['special_assessment'] == Decimal('140.00')
+        assert result['homestead_cap'] is True
+        assert result['sales_comp_value'] == Decimal('3310000')
+        assert result['latitude'] == Decimal('27.978634')
+        assert result['longitude'] == Decimal('-82.827284')
+        assert result['evac_zone'] == 'A'
+        assert result['neighborhood_code'] == '7706.11'
+        assert result['frontage'] == 'Gulf'
+        assert result['views'] == 'Gulf'
+        assert result['waterfront'] is True
+        assert result['seawall'] is True
+        assert result['subsidence'] is False
+        assert result['contamination'] is False
+        assert result['historic_landmark'] is True
+        assert result['living_units'] == 1
+
+    def test_county_placeholders_become_none(self):
+        row = {
+            'PARCEL_NUMBER': 'placeholders',
+            'EVAC_ZONE': 'NON EVAC',
+            'VIEWS': 'None',
+            'FRONTAGE': '',
+            'SEAWALL': '',
+            'LATITUDE': '',
+            'HX_CAP': 'No',
+        }
+        result = map_csv_row_to_property(row)
+
+        assert result['evac_zone'] == 'NONE'
+        assert result['views'] is None
+        assert result['frontage'] is None
+        assert result['seawall'] is None
+        assert result['latitude'] is None
+        assert result['homestead_cap'] is False
+
+    def test_unknown_evac_zone_is_none(self):
+        assert map_csv_row_to_property({'PARCEL_NUMBER': 'x', 'EVAC_ZONE': ''})['evac_zone'] is None
+        assert map_csv_row_to_property({'PARCEL_NUMBER': 'x', 'EVAC_ZONE': 'Z'})['evac_zone'] is None
+
 
 class TestBulkUpsertProperties:
     def test_creates_new_properties(self, db):
@@ -383,9 +451,7 @@ class TestImportPcpaoDataCommand:
 
     def test_sample_fixture_imports(self, db):
         """The README Quick Start fixture must match the live PCPAO schema."""
-        fixture = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_pcpao_data.csv'
-
-        call_command('import_pcpao_data', file=str(fixture), quiet=True)
+        call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
 
         # 48 sampled rows; one has no site address and is skipped on purpose.
         assert PropertyListing.objects.count() == 47
@@ -393,6 +459,33 @@ class TestImportPcpaoDataCommand:
         assert home.city == 'St. Petersburg'
         assert home.market_value == Decimal('282885')
         assert home.assessed_value == Decimal('77124')
+        assert home.evac_zone == 'B'
+        assert home.tax_district == 'SP'
+        assert home.homestead_cap is True
+        assert home.latitude is not None
+
+    def test_reimporting_unchanged_file_rewrites_nothing(self, db):
+        """Values must round-trip through the database exactly; otherwise
+        every monthly import rewrites every row and bloats PostgreSQL."""
+        call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
+
+        with patch.object(PropertyListing.objects, 'bulk_update') as bulk_update:
+            call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
+
+        bulk_update.assert_not_called()
+
+    def test_vacuum_every_runs_between_batches(self, tmp_path, db):
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        lines = ['PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,PROPERTY_USE']
+        lines += [f'batch-{i},{i} VACUUM ST,CLEARWATER,33755,0110 Single Family Home' for i in range(10_000)]
+        csv_path.write_text('\n'.join(lines), encoding='utf-8')
+
+        with patch('apps.analytics.management.commands.import_pcpao_data.vacuum_property_listing_table') as vacuum:
+            call_command('import_pcpao_data', file=str(csv_path), quiet=True, vacuum_every=2)
+
+        # Two full batches of 5000 rows: one vacuum after the second.
+        vacuum.assert_called_once_with()
+        assert PropertyListing.objects.count() == 10_000
 
 
 class TestPropertyTypeConversion:

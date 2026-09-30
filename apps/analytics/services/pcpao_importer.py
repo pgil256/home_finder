@@ -35,26 +35,6 @@ PCPAO_REQUEST_HEADERS = {
 }
 
 
-# PCPAO CSV column to PropertyListing field mapping
-# Based on RP_PROPERTY_INFO file structure
-FIELD_MAPPING = {
-    'PARCEL_ID': 'parcel_id',
-    'SITE_ADDR': 'address',
-    'SITE_CITY': 'city',
-    'SITE_ZIP': 'zip_code',
-    'OWN_NAME': 'owner_name',
-    'JV': 'market_value',  # Just Value = Market Value
-    'AV': 'assessed_value',  # Assessed Value
-    'LIV_AREA': 'building_sqft',  # Living Area
-    'YR_BLT': 'year_built',
-    'BEDS': 'bedrooms',
-    'BATHS': 'bathrooms',
-    'DOR_UC': 'property_type',  # DOR Use Code
-    'LAND_SQFT': 'lot_sqft',
-    'TAX_AMOUNT_NO_EX': 'tax_amount',  # Tax amount from PCPAO
-}
-
-
 def download_pcpao_file(filename: str, output_dir: str) -> str:
     """
     Download a PCPAO data file. PCPAO returns a zip; we extract the CSV inside.
@@ -135,6 +115,50 @@ def safe_int(value: str) -> int | None:
         return None
 
 
+def _quantized(value: str | None, places: int) -> Decimal | None:
+    """Round to the model field's decimal places.
+
+    PCPAO exports float artifacts ('19.919700000000002') and 9-place
+    coordinates. Unrounded values never compare equal to what the database
+    returns, so every row would be rewritten on every import.
+    """
+    number = safe_decimal(value or '')
+    if number is None:
+        return None
+    return number.quantize(Decimal(1).scaleb(-places))
+
+
+def _yn(value: str | None) -> bool | None:
+    """PCPAO flags are 'Y'/'N' or 'Yes'/'No'; anything else is unknown."""
+    flag = (value or '').strip().upper()
+    if flag in ('Y', 'YES'):
+        return True
+    if flag in ('N', 'NO'):
+        return False
+    return None
+
+
+def _text(value: str | None, placeholders: tuple[str, ...] = ()) -> str | None:
+    s = (value or '').strip()
+    if not s or s.upper() in placeholders:
+        return None
+    return s
+
+
+def _neighborhood_code(value: str | None) -> str | None:
+    """NBORHOOD_CD is NNNN.NN, but some rows carry float artifacts
+    ('3000.2000000000003'); normalize so neighbors group together."""
+    code = _quantized(value, 2)
+    return str(code) if code is not None else None
+
+
+def _evac_zone(value: str | None) -> str | None:
+    zone = (value or '').strip().upper()
+    if zone == 'NON EVAC':
+        return 'NONE'
+    return zone if zone in ('A', 'B', 'C', 'D', 'E') else None
+
+
 _CITY_FIXUPS = {
     'St Petersburg': 'St. Petersburg',
     'St Pete Beach': 'St. Pete Beach',
@@ -173,9 +197,13 @@ def map_csv_row_to_property(row: dict[str, str]) -> dict[str, Any]:
       - CNTY_JST_VALUE (just/market value), CNTY_ASD_VALUE (assessed)
       - TOTAL_LIVING_SQFT, YEAR_BUILT, ACREAGE
       - PROPERTY_USE (e.g. '0110 Single Family Home')
-      - TAX_AMOUNT_NO_EX
+      - TAX_AMOUNT_NO_EX (tax before exemptions, not the owner's bill)
+      - Tax inputs: ROLL_YEAR, TAX_DISTRICT, MILLAGE_RATE, SPECIAL_ASSESSMENT, HX_CAP, SALES_COMP
+      - Risk: LATITUDE/LONGITUDE, EVAC_ZONE, NBORHOOD_CD, FRONTAGE, VIEWS, WATERFRONT_YN,
+        SEAWALL, SUBSIDENCE_YN, CONTAMINATION_YN, DLHL_YN, TOTAL_LIVING_UNITS
 
-    Beds/baths aren't in this table — they live in RP_BUILDING (not yet imported).
+    Not imported: ELEVATION_CERT is 'N/A' on every row, and HX_SAVINGS is
+    blank for ~97% of parcels. Beds/baths live in RP_BUILDING (not yet imported).
     """
     result: dict[str, Any] = {}
 
@@ -204,6 +232,26 @@ def map_csv_row_to_property(row: dict[str, str]) -> dict[str, Any]:
     result['tax_amount'] = safe_decimal(row.get('TAX_AMOUNT_NO_EX', ''))
     if result['tax_amount'] is not None:
         result['tax_status'] = 'From PCPAO'
+
+    result['roll_year'] = safe_int(row.get('ROLL_YEAR', ''))
+    result['tax_district'] = _text(row.get('TAX_DISTRICT'))
+    result['millage_rate'] = _quantized(row.get('MILLAGE_RATE'), 4)
+    result['special_assessment'] = _quantized(row.get('SPECIAL_ASSESSMENT'), 2)
+    result['homestead_cap'] = _yn(row.get('HX_CAP'))
+    result['sales_comp_value'] = _quantized(row.get('SALES_COMP'), 2)
+
+    result['latitude'] = _quantized(row.get('LATITUDE'), 6)
+    result['longitude'] = _quantized(row.get('LONGITUDE'), 6)
+    result['evac_zone'] = _evac_zone(row.get('EVAC_ZONE'))
+    result['neighborhood_code'] = _neighborhood_code(row.get('NBORHOOD_CD'))
+    result['frontage'] = _text(row.get('FRONTAGE'))
+    result['views'] = _text(row.get('VIEWS'), placeholders=('NONE', 'DO NOT USE'))
+    result['waterfront'] = _yn(row.get('WATERFRONT_YN'))
+    result['seawall'] = _yn(row.get('SEAWALL'))
+    result['subsidence'] = _yn(row.get('SUBSIDENCE_YN'))
+    result['contamination'] = _yn(row.get('CONTAMINATION_YN'))
+    result['historic_landmark'] = _yn(row.get('DLHL_YN'))
+    result['living_units'] = safe_int(row.get('TOTAL_LIVING_UNITS', ''))
 
     return result
 
@@ -259,6 +307,24 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             'lot_sqft',
             'tax_amount',
             'tax_status',
+            'roll_year',
+            'tax_district',
+            'millage_rate',
+            'special_assessment',
+            'homestead_cap',
+            'sales_comp_value',
+            'latitude',
+            'longitude',
+            'evac_zone',
+            'neighborhood_code',
+            'frontage',
+            'views',
+            'waterfront',
+            'seawall',
+            'subsidence',
+            'contamination',
+            'historic_landmark',
+            'living_units',
         ]
 
         for prop in valid_properties:

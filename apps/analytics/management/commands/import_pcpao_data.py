@@ -5,6 +5,7 @@ Usage:
     python manage.py import_pcpao_data
     python manage.py import_pcpao_data --file /path/to/RP_PROPERTY_INFO.csv
     python manage.py import_pcpao_data --quiet
+    python manage.py import_pcpao_data --vacuum-every 10
 """
 
 import codecs
@@ -50,10 +51,20 @@ class Command(BaseCommand):
             action='store_true',
             help='Reclaim reusable PostgreSQL row space before importing',
         )
+        parser.add_argument(
+            '--vacuum-every',
+            type=int,
+            metavar='N',
+            help=(
+                'Vacuum the property table after every N batches of 5000 rows, so a backfill '
+                'that rewrites every row reuses dead-row space instead of growing the table'
+            ),
+        )
 
     def handle(self, *args, **options):
         quiet = options['quiet']
         limit = options.get('limit')
+        vacuum_every = options.get('vacuum_every')
 
         if not quiet:
             self.stdout.write('Starting PCPAO data import...')
@@ -69,13 +80,13 @@ class Command(BaseCommand):
             if not os.path.exists(csv_path):
                 self.stderr.write(f'File not found: {csv_path}')
                 return
-            self._process_csv(csv_path, quiet, limit)
+            self._process_csv(csv_path, quiet, limit, vacuum_every)
         else:
             if not quiet:
                 self.stdout.write('Downloading RP_PROPERTY_INFO.csv...')
             with tempfile.TemporaryDirectory() as tmpdir:
                 csv_path = download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
-                self._process_csv(csv_path, quiet, limit)
+                self._process_csv(csv_path, quiet, limit, vacuum_every)
 
         # Cached market insights describe the old data. They live for a day
         # to save database egress, so drop them now rather than serve them.
@@ -84,11 +95,12 @@ class Command(BaseCommand):
         except Exception:
             logger.warning('Could not clear the cache after the import', exc_info=True)
 
-    def _process_csv(self, csv_path: str, quiet: bool, limit: int = None):
+    def _process_csv(self, csv_path: str, quiet: bool, limit: int = None, vacuum_every: int = None):
         """Process CSV file and import records."""
         properties = []
         count = 0
         skipped = 0
+        batches = 0
 
         with open(csv_path, 'rb') as raw_file:
             has_utf8_bom = raw_file.read(len(codecs.BOM_UTF8)) == codecs.BOM_UTF8
@@ -120,6 +132,9 @@ class Command(BaseCommand):
                             f'skipped so far: {skipped})'
                         )
                     properties = []
+                    batches += 1
+                    if vacuum_every and batches % vacuum_every == 0:
+                        vacuum_property_listing_table()
 
         # Process remaining records
         if properties:
