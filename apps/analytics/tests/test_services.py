@@ -1,6 +1,7 @@
 import io
 import zipfile
 from decimal import Decimal
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -379,6 +380,19 @@ class TestImportPcpaoDataCommand:
 
         imported = PropertyListing.objects.get(parcel_id='encoded-owner')
         assert imported.owner_name == 'JOSÉ'
+
+    def test_sample_fixture_imports(self, db):
+        """The README Quick Start fixture must match the live PCPAO schema."""
+        fixture = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_pcpao_data.csv'
+
+        call_command('import_pcpao_data', file=str(fixture), quiet=True)
+
+        # 48 sampled rows; one has no site address and is skipped on purpose.
+        assert PropertyListing.objects.count() == 47
+        home = PropertyListing.objects.get(parcel_id='36-30-16-78588-003-0060')
+        assert home.city == 'St. Petersburg'
+        assert home.market_value == Decimal('282885')
+        assert home.assessed_value == Decimal('77124')
 
 
 class TestPropertyTypeConversion:
