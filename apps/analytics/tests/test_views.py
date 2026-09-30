@@ -1,11 +1,13 @@
 from decimal import Decimal
 from io import BytesIO
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 import openpyxl
 import pytest
 
-from apps.analytics.models import PropertyListing
+from apps.analytics.models import PropertyListing, TaxDistrictMillage
+from apps.analytics.services import tax_estimate
 
 pytestmark = pytest.mark.django_db
 
@@ -403,3 +405,122 @@ class TestCrawlerHygiene:
         assert '125 Main St' in html
         assert '$250,000' in html
         assert '1500 sqft' in html
+
+
+class TestTaxEstimateCard:
+    """1043 61st Ave N, St. Petersburg: the owner's Save Our Homes cap holds
+    a $282,885 home at a $77,124 assessment. Hand-worked figures are in
+    test_tax_estimate.py."""
+
+    @pytest.fixture(autouse=True)
+    def buying_in_2026(self):
+        # Patched rather than frozen: freezegun can crash pandas' first import.
+        with patch.object(tax_estimate, 'buyer_tax_year', return_value=2027):
+            yield
+
+    @pytest.fixture
+    def capped_home(self, db):
+        TaxDistrictMillage.objects.create(
+            district_code='SP',
+            tax_year=2025,
+            rate_description='2025 Final',
+            total_mills=Decimal('19.9197'),
+            school_mills=Decimal('6.2930'),
+        )
+        return PropertyListing.objects.create(
+            parcel_id='36-30-16-78588-003-0060',
+            address='1043 61ST AVE N',
+            city='St. Petersburg',
+            zip_code='33703',
+            property_type='Single Family Home',
+            market_value=Decimal('282885'),
+            assessed_value=Decimal('77124'),
+            tax_amount=Decimal('5540'),
+            tax_status='From PCPAO',
+            roll_year=2026,
+            tax_district='SP',
+            special_assessment=Decimal('0'),
+            homestead_cap=True,
+            est_tax_current=678,
+            est_tax_homestead=4777,
+            est_tax_no_homestead=5635,
+        )
+
+    def _html(self, client, listing):
+        return client.get(f'/analytics/property/{listing.parcel_id}/').content.decode('utf-8', 'ignore')
+
+    def test_compares_current_owner_with_new_owner(self, client, capped_home):
+        html = self._html(client, capped_home)
+
+        assert 'Your Property Taxes If You Buy' in html
+        assert '$678' in html
+        assert '$4,777' in html
+        assert '$4,099 more than today' in html
+        assert '$5,635' in html
+        assert 'Est. taxes if you buy: $4,777/yr' in html
+        assert 'by March 1' in html
+        assert 'Estimated 2027 bill' in html
+        assert '2025 final millage for tax district SP (19.9197 mills)' in html
+
+    def test_shows_amendment_3_scenario_while_vote_is_pending(self, client, capped_home):
+        html = self._html(client, capped_home)
+
+        assert 'If Amendment 3 passes on November 3' in html
+        assert '$3,434' in html
+
+    def test_amendment_3_passed_flips_main_and_alternative_estimates(self, client, capped_home):
+        with patch.object(tax_estimate, 'AMENDMENT_3_STATUS', 'passed'):
+            html = self._html(client, capped_home)
+
+        assert 'Est. taxes if you buy: $3,434/yr' in html
+        assert 'If you move to Florida after January 1, 2027' in html
+        assert 'If Amendment 3 passes' not in html
+
+    def test_amendment_3_failed_hides_alternative(self, client, capped_home):
+        with patch.object(tax_estimate, 'AMENDMENT_3_STATUS', 'failed'):
+            html = self._html(client, capped_home)
+
+        assert 'Amendment 3' not in html
+        assert 'Est. taxes if you buy: $4,777/yr' in html
+
+    def test_recomputes_from_refreshed_just_value(self, client, capped_home):
+        """A per-parcel refresh changes market_value without rerunning the import."""
+        capped_home.market_value = Decimal('300000')
+        capped_home.save(update_fields=['market_value'])
+
+        html = self._html(client, capped_home)
+
+        assert '$5,118' in html  # homestead, current law
+        assert '$5,976' in html  # no homestead
+
+    def test_buying_from_an_investor_can_lower_the_bill(self, client, capped_home):
+        capped_home.homestead_cap = False
+        capped_home.est_tax_current = 5635
+        capped_home.save(update_fields=['homestead_cap', 'est_tax_current'])
+
+        assert '$858 less than today' in self._html(client, capped_home)
+
+    def test_parcels_that_cannot_be_homesteaded_show_one_estimate(self, client, capped_home):
+        capped_home.est_tax_homestead = None
+        capped_home.save(update_fields=['est_tax_homestead'])
+
+        html = self._html(client, capped_home)
+
+        assert 'You, living here' not in html
+        assert 'A new owner' in html
+        assert 'Amendment 3' not in html
+        assert 'Est. taxes if you buy: $5,635/yr' in html
+
+    def test_no_card_without_millage(self, client, capped_home):
+        TaxDistrictMillage.objects.all().delete()
+
+        response = client.get(f'/analytics/property/{capped_home.parcel_id}/')
+
+        assert response.status_code == 200
+        assert 'Your Property Taxes If You Buy' not in response.content.decode()
+
+    def test_county_tax_figure_is_labeled_before_exemptions(self, client, capped_home):
+        html = self._html(client, capped_home)
+
+        assert 'Tax Before Exemptions' in html
+        assert 'Annual Tax' not in html

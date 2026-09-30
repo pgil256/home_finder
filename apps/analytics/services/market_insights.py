@@ -60,9 +60,9 @@ ANALYSIS_FIELDS = (
 # caching entirely.
 MARKET_INSIGHTS_CACHE_TTL = int(getattr(settings, 'MARKET_INSIGHTS_CACHE_TTL', 24 * 60 * 60))
 
-# Bump when the shape of the payload changes, so deploys don't serve a stale
-# structure to new template/export code.
-MARKET_INSIGHTS_CACHE_VERSION = 1
+# Bump when the payload's shape or wording changes, so deploys don't serve a
+# stale structure or stale labels to new template/export code.
+MARKET_INSIGHTS_CACHE_VERSION = 2
 
 # Single-value query params that change the underlying queryset. Kept in sync
 # with apply_filters() in filtering.py -- anything read there must appear here
@@ -121,7 +121,7 @@ def summarize_filters(request) -> list[tuple[str, str]]:
     if g.get('min_lot_sqft') or g.get('max_lot_sqft'):
         out.append(('Lot sqft', _range_summary(g.get('min_lot_sqft'), g.get('max_lot_sqft'))))
     if g.get('min_tax_amount') or g.get('max_tax_amount'):
-        out.append(('Annual tax', _range_summary(g.get('min_tax_amount'), g.get('max_tax_amount'), '$')))
+        out.append(('Tax before exemptions', _range_summary(g.get('min_tax_amount'), g.get('max_tax_amount'), '$')))
     if not out:
         out.append(('Scope', 'All Pinellas County parcels'))
     return out
@@ -623,7 +623,7 @@ def _kpi_cards(exact: dict[str, Any]) -> list[dict[str, str]]:
         {
             'label': 'Median tax rate',
             'value': _percent(exact['median_tax_rate']),
-            'note': 'Annual tax divided by market value',
+            'note': 'Tax before exemptions divided by market value',
         },
         {
             'label': 'Avg assessed gap',

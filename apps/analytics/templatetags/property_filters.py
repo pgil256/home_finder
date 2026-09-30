@@ -39,3 +39,14 @@ def format_price(value):
         return f'${num:,.0f}'
     except (ValueError, TypeError):
         return 'Contact for Price'
+
+
+@register.filter
+def dollars(value):
+    """Whole dollars with commas (4777 -> '$4,777'), including $0 and negatives."""
+    try:
+        num = float(value)
+    except (ValueError, TypeError):
+        return ''
+    sign = '-' if num < 0 else ''
+    return f'{sign}${abs(num):,.0f}'
