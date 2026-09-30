@@ -220,6 +220,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # X frame config
 X_FRAME_OPTIONS = 'DENY'
 
+# Sessions live in a signed cookie, not the database. Every filtered insights
+# request saves the last search to the session, and crawlers that don't keep
+# cookies created a new django_session row each time: database writes, egress,
+# and rows nothing ever deleted. Session data here is only the last search and
+# the admin login, so it fits in a cookie.
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+
 # Cache: database-backed (works on Vercel without an external cache service).
 # Run `python manage.py createcachetable` once after deploy to create the table.
 # Entries count against Neon's 512 MiB storage cap: a cached insights payload

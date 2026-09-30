@@ -344,3 +344,20 @@ class TestLegacyScraperRedirect:
         parsed = urlparse(response.url)
         assert parsed.path == '/analytics/download/excel/'
         assert parse_qs(parsed.query)['city'] == ['Clearwater']
+
+
+class TestSessionsStayOutOfTheDatabase:
+    def test_filtered_insights_request_writes_no_session_row(self, client, sample_property):
+        from django.contrib.sessions.models import Session
+
+        response = client.get('/insights/', {'city': 'Clearwater'})
+
+        assert response.status_code == 200
+        assert Session.objects.count() == 0
+
+    def test_last_search_still_prefills_the_filter_builder(self, client, sample_property):
+        client.get('/insights/', {'city': 'Clearwater', 'min_price': '100000'})
+
+        html = client.get('/analytics/').content.decode()
+
+        assert 'value="100000"' in html
