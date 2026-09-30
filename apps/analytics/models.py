@@ -2,10 +2,16 @@ from django.db import models
 
 
 class PropertyListing(models.Model):
+    # Indexes cost storage on a 512 MiB Neon plan, so only columns that a
+    # query can use an index for get one. Filters use city__iexact and
+    # property_type__icontains, which a plain B-tree can't serve; the
+    # similar-properties lookup (exact city + type, value range) uses
+    # idx_city_type_value.
+
     # Property Appraiser Data
     parcel_id = models.CharField(max_length=50, unique=True)
-    address = models.CharField(max_length=255, db_index=True)
-    city = models.CharField(max_length=100, db_index=True)
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
     zip_code = models.CharField(max_length=10, db_index=True)
     owner_name = models.CharField(max_length=255, null=True, blank=True)
 
@@ -19,7 +25,7 @@ class PropertyListing(models.Model):
     bedrooms = models.IntegerField(null=True)
     bathrooms = models.DecimalField(max_digits=4, decimal_places=2, null=True)
     stories = models.IntegerField(null=True)
-    property_type = models.CharField(max_length=100, db_index=True)
+    property_type = models.CharField(max_length=100)
     garage = models.CharField(max_length=50, null=True, blank=True)
 
     # Land Information
@@ -28,8 +34,8 @@ class PropertyListing(models.Model):
 
     # Tax Collector Data
     tax_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True)
-    tax_status = models.CharField(max_length=50, default='Unknown', db_index=True)  # Paid, Unpaid, Delinquent
-    delinquent = models.BooleanField(default=False, db_index=True)
+    tax_status = models.CharField(max_length=50, default='Unknown')  # Paid, Unpaid, Delinquent
+    delinquent = models.BooleanField(default=False)
     tax_year = models.IntegerField(null=True)
 
     # Metadata
@@ -43,12 +49,7 @@ class PropertyListing(models.Model):
 
     class Meta:
         indexes = [
-            # Compound indexes for common filter combinations
-            models.Index(fields=['city', 'property_type'], name='idx_city_proptype'),
-            models.Index(fields=['city', 'zip_code'], name='idx_city_zip'),
-            models.Index(fields=['city', 'market_value'], name='idx_city_value'),
-            models.Index(fields=['property_type', 'market_value'], name='idx_proptype_value'),
-            # Triple compound for the primary dashboard search pattern
+            # Similar properties on the detail page: exact city + type, value range.
             models.Index(fields=['city', 'property_type', 'market_value'], name='idx_city_type_value'),
         ]
 
