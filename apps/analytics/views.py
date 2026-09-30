@@ -279,7 +279,11 @@ def property_detail(request, parcel_id: str):
             market_value__lte=max_price,
         )
 
-    similar_properties = similar_properties[:4]
+    # Only what the cards show: crawlers walk parcel pages through these links,
+    # so every column read here is paid for in database egress.
+    similar_properties = similar_properties.only(
+        'parcel_id', 'address', 'market_value', 'bedrooms', 'bathrooms', 'building_sqft', 'image_url'
+    )[:4]
 
     return render(
         request,

@@ -361,3 +361,45 @@ class TestSessionsStayOutOfTheDatabase:
         html = client.get('/analytics/').content.decode()
 
         assert 'value="100000"' in html
+
+
+class TestCrawlerHygiene:
+    def test_robots_txt_keeps_crawlers_off_expensive_urls(self, client):
+        response = client.get('/robots.txt')
+        body = response.content.decode()
+
+        assert response.status_code == 200
+        assert response['Content-Type'].startswith('text/plain')
+        assert 'Disallow: /insights/?' in body
+        assert 'Disallow: /analytics/download/' in body
+
+    def test_filtered_insights_are_not_indexed(self, client, sample_property):
+        filtered = client.get('/insights/', {'city': 'Clearwater'}).content.decode()
+        default = client.get('/insights/').content.decode()
+
+        assert '<meta name="robots" content="noindex, nofollow">' in filtered
+        assert 'noindex' not in default
+
+    def test_export_links_are_nofollow(self, client, sample_property):
+        html = client.get('/insights/').content.decode()
+
+        for url in ('/analytics/download/excel/', '/analytics/download/pdf/'):
+            start = html.index(f'href="{url}')
+            assert 'rel="nofollow"' in html[start : html.index('>', start)]
+
+    def test_similar_properties_still_render(self, client, sample_property):
+        PropertyListing.objects.create(
+            parcel_id='15-29-16-12345-000-0020',
+            address='125 Main St',
+            city=sample_property.city,
+            zip_code=sample_property.zip_code,
+            property_type=sample_property.property_type,
+            market_value=Decimal('250000.00'),
+            building_sqft=1500,
+        )
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        assert '125 Main St' in html
+        assert '$250,000' in html
+        assert '1500 sqft' in html
