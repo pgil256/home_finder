@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import hashlib
+import logging
 import math
 from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
 import pandas as pd
+from django.conf import settings
+from django.core.cache import cache
 from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, FloatField, Max, Min, Sum
 from django.db.models.functions import Cast
 from django.urls import reverse
@@ -20,6 +24,8 @@ from .palette import (
     PRIMARY_FILL_MEDIUM,
     PRIMARY_FILL_SOFT,
 )
+
+logger = logging.getLogger(__name__)
 
 MAX_ANALYSIS_ROWS = 50_000
 MAX_OUTLIERS = 12
@@ -38,6 +44,47 @@ ANALYSIS_FIELDS = (
     'year_built',
     'tax_amount',
 )
+
+# Building the insight payload pulls up to MAX_ANALYSIS_ROWS rows out of the
+# database, and three separate entry points need it on every request:
+# insights_dashboard, the Excel export and the PDF export. On a hosted Postgres
+# with a metered egress allowance that is the single largest source of data
+# transfer in the app -- a scheduled monitor hitting all three endpoints will
+# quietly pull hundreds of megabytes a day. Cache the finished payload (a few
+# hundred KB at most) so a given filter combination costs one table scan per
+# TTL window instead of one per request.
+#
+# Set MARKET_INSIGHTS_CACHE_TTL to 0 to disable caching entirely.
+MARKET_INSIGHTS_CACHE_TTL = int(getattr(settings, 'MARKET_INSIGHTS_CACHE_TTL', 15 * 60))
+
+# Bump when the shape of the payload changes, so deploys don't serve a stale
+# structure to new template/export code.
+MARKET_INSIGHTS_CACHE_VERSION = 1
+
+# Single-value query params that change the underlying queryset. Kept in sync
+# with apply_filters() in filtering.py -- anything read there must appear here
+# or two different filter sets will collide on one cache key.
+CACHE_KEY_PARAMS = (
+    'q',
+    'city',
+    'zip_code',
+    'min_price',
+    'max_price',
+    'beds',
+    'baths',
+    'year_built',
+    'min_sqft',
+    'max_sqft',
+    'min_lot_sqft',
+    'max_lot_sqft',
+    'min_tax_amount',
+    'max_tax_amount',
+    'include_all',
+)
+
+# Multi-value params, normalised to a sorted list so ?a=1&a=2 and ?a=2&a=1
+# resolve to the same key.
+CACHE_KEY_MULTI_PARAMS = ('property_type',)
 
 
 def filtered_queryset(request=None):
@@ -77,7 +124,65 @@ def summarize_filters(request) -> list[tuple[str, str]]:
     return out
 
 
-def build_market_insights(request=None) -> dict[str, Any]:
+def insights_cache_key(request=None) -> str:
+    """Stable cache key for the filter set carried on `request`.
+
+    Only the params that actually reach the queryset are included, so cosmetic
+    query string differences (page, sort, tracking params) reuse one entry.
+    """
+    if request is None:
+        raw = 'all'
+    else:
+        params = request.GET
+        parts: list[str] = []
+        for name in CACHE_KEY_PARAMS:
+            value = (params.get(name) or '').strip()
+            if value:
+                parts.append(f'{name}={value}')
+        for name in CACHE_KEY_MULTI_PARAMS:
+            for value in sorted({v.strip() for v in params.getlist(name) if v.strip()}):
+                parts.append(f'{name}={value}')
+        raw = '&'.join(sorted(parts)) or 'all'
+
+    digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()[:32]
+    return f'market_insights:v{MARKET_INSIGHTS_CACHE_VERSION}:{digest}'
+
+
+def build_market_insights(request=None, *, use_cache: bool = True) -> dict[str, Any]:
+    """Return the market insight payload, served from cache when possible.
+
+    Pass use_cache=False to force a recompute (management commands, tests that
+    assert on live data).
+    """
+    if not use_cache or MARKET_INSIGHTS_CACHE_TTL <= 0:
+        return _compute_market_insights(request)
+
+    key = insights_cache_key(request)
+
+    # A cache failure must never take down the page: the cache backend is the
+    # database here, so a connection blip surfaces as OperationalError. Fall
+    # through to a live computation and let that raise instead -- the error
+    # then points at the real problem rather than at the cache layer.
+    try:
+        cached = cache.get(key)
+    except Exception:
+        logger.warning('Market insights cache read failed for %s', key, exc_info=True)
+        cached = None
+
+    if cached is not None:
+        return cached
+
+    payload = _compute_market_insights(request)
+
+    try:
+        cache.set(key, payload, MARKET_INSIGHTS_CACHE_TTL)
+    except Exception:
+        logger.warning('Market insights cache write failed for %s', key, exc_info=True)
+
+    return payload
+
+
+def _compute_market_insights(request=None) -> dict[str, Any]:
     qs = filtered_queryset(request)
     exact = _exact_kpis(qs)
     df, source_count = _analysis_frame(qs)

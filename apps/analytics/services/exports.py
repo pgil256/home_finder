@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
+from django.db.utils import InterfaceError, OperationalError
 from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -25,6 +26,11 @@ def generate_excel_response(request: HttpRequest | None = None) -> HttpResponse:
     """Build the analysis workbook, or a friendly error if generation fails."""
     try:
         return _build_excel_response(request)
+    except (OperationalError, InterfaceError):
+        # Not an export problem — the database is unreachable. Let it bubble to
+        # DatabaseUnavailableMiddleware so the client gets a 503, rather than
+        # telling the user to "adjust your filters" for an outage they can't fix.
+        raise
     except Exception:
         logger.exception('Excel export generation failed')
         return _export_error_response('Excel workbook')
@@ -92,6 +98,10 @@ def generate_pdf_response(request: HttpRequest | None = None) -> HttpResponse:
     """Build the PDF insight brief, or a friendly error if generation fails."""
     try:
         return _build_pdf_response(request)
+    except (OperationalError, InterfaceError):
+        # See generate_excel_response — connection failures are a 503, not a
+        # "bad filters" message.
+        raise
     except Exception:
         logger.exception('PDF export generation failed')
         return _export_error_response('PDF brief')

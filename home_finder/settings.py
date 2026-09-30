@@ -108,6 +108,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Last in the list, so its process_exception hook runs first and can
+    # convert database connection failures into a 503 before anything else
+    # tries to interpret them.
+    'home_finder.middleware.DatabaseUnavailableMiddleware',
 ]
 
 ROOT_URLCONF = 'home_finder.urls'

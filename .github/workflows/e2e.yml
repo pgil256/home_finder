@@ -1,15 +1,24 @@
 name: E2E
 
 on:
+  # Smoke against production once a day, not every 4 hours.
+  #
+  # The insight endpoints this suite exercises each pull up to 50k rows out of
+  # Neon. At 6 runs/day that alone was roughly 5 GB/month of egress, which is
+  # the entire free-plan data transfer allowance -- the monitor was taking down
+  # the thing it was monitoring. Daily keeps the signal without the bill.
   schedule:
-    # Smoke against production every 4 hours
-    - cron: "0 */4 * * *"
+    - cron: "0 13 * * *"
   workflow_dispatch:
     inputs:
       base_url:
         description: "Override target URL (defaults to production)"
         required: false
         default: "https://homefinder.patbuilds.dev"
+      run_exports:
+        description: "Also run the export smoke tests (heavy: full table scan per export)"
+        type: boolean
+        default: false
       run_full_suite:
         description: "Also run functional + browser tests (writes to DB; requires E2E_DATABASE_URL secret)"
         type: boolean
@@ -34,12 +43,18 @@ jobs:
       - name: Run smoke suite
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://homefinder.patbuilds.dev' }}
-        run: >-
-          python -m pytest
-          -c tests/e2e/pytest.ini
-          --confcutdir=tests/e2e
-          tests/e2e/test_smoke.py
-          -v --no-header -p no:cacheprovider
+          RUN_EXPORTS: ${{ github.event.inputs.run_exports || 'false' }}
+        # The export tests are marked `heavy`: each one builds a workbook/PDF
+        # over the whole filtered table, so they are opt-in rather than part of
+        # the daily read-only smoke.
+        run: |
+          set -euo pipefail
+          BASE_ARGS=(-c tests/e2e/pytest.ini --confcutdir=tests/e2e tests/e2e/test_smoke.py -v --no-header -p no:cacheprovider)
+          if [ "$RUN_EXPORTS" = "true" ]; then
+            python -m pytest "${BASE_ARGS[@]}"
+          else
+            python -m pytest "${BASE_ARGS[@]}" -m "not heavy"
+          fi
 
   functional:
     name: Functional (write paths)
