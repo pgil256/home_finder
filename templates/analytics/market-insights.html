@@ -8,6 +8,10 @@
 {% block og_description %}A data-science dashboard for exploring Pinellas County parcel values, tax burden, assessed-value gaps, and market outliers.{% endblock %}
 {% block twitter_title %}Pinellas Market Lens{% endblock %}
 {% block twitter_description %}Explore Pinellas County property market insights from official public records.{% endblock %}
+{% block head_extra %}
+{# Each filter combination rebuilds the analysis from the database; only the default view should be indexed. #}
+{% if request.GET %}<meta name="robots" content="noindex, nofollow">{% endif %}
+{% endblock %}
 
 {% block hero-image-content %}
 <section class="bg-white border-b border-charcoal-100">
@@ -30,6 +34,7 @@
             </div>
             <div class="flex flex-wrap gap-3">
                 <a href="{% url 'download-excel' %}{% if dashboard_querystring %}?{{ dashboard_querystring }}{% endif %}"
+                   rel="nofollow"
                    class="btn btn-secondary"
                    title="Download the filtered market analysis workbook">
                     <svg class="h-5 w-5 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -38,6 +43,7 @@
                     <span>Analysis workbook</span>
                 </a>
                 <a href="{% url 'download-pdf' %}{% if dashboard_querystring %}?{{ dashboard_querystring }}{% endif %}"
+                   rel="nofollow"
                    class="btn btn-primary"
                    title="Download the filtered market insight brief">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -63,7 +69,7 @@
             </svg>
             <span>Default scope shows residential property classes.</span>
         </div>
-        <a href="{% url 'insights' %}?{{ show_all_querystring }}" class="font-medium text-primary-700 hover:text-primary-800 sm:ml-auto">
+        <a href="{% url 'insights' %}?{{ show_all_querystring }}" rel="nofollow" class="font-medium text-primary-700 hover:text-primary-800 sm:ml-auto">
             Include all property types
         </a>
     </div>
@@ -74,6 +80,7 @@
         <span class="text-xs font-semibold uppercase tracking-wide text-charcoal-400">Active scope</span>
         {% for chip in active_filter_chips %}
         <a href="{% url 'insights' %}{% if chip.querystring %}?{{ chip.querystring }}{% endif %}"
+           rel="nofollow"
            class="inline-flex items-center gap-1 rounded-md bg-primary-50 px-2 py-1 text-xs text-primary-700 transition-colors hover:bg-primary-100">
             {{ chip.label }}
             <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>

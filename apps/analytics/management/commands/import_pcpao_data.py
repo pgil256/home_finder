@@ -13,6 +13,7 @@ import logging
 import os
 import tempfile
 
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from apps.analytics.services.pcpao_importer import (
@@ -75,6 +76,13 @@ class Command(BaseCommand):
             with tempfile.TemporaryDirectory() as tmpdir:
                 csv_path = download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
                 self._process_csv(csv_path, quiet, limit)
+
+        # Cached market insights describe the old data. They live for a day
+        # to save database egress, so drop them now rather than serve them.
+        try:
+            cache.clear()
+        except Exception:
+            logger.warning('Could not clear the cache after the import', exc_info=True)
 
     def _process_csv(self, csv_path: str, quiet: bool, limit: int = None):
         """Process CSV file and import records."""

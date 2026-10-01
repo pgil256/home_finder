@@ -3,10 +3,26 @@ from __future__ import annotations
 import logging
 
 from django.db import connection
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 
 logger = logging.getLogger(__name__)
+
+
+# Each filtered insights view and each export rebuilds the analysis from about
+# 50,000 database rows, and the database has a monthly data-transfer quota.
+# Crawlers get the default pages only.
+ROBOTS_TXT = """User-agent: *
+Disallow: /insights/?
+Disallow: /analytics/download/
+Disallow: /analytics/dashboard/
+Disallow: /scraper/
+Disallow: /admin/
+"""
+
+
+def robots_txt(request):
+    return HttpResponse(ROBOTS_TXT, content_type='text/plain')
 
 
 def home(request):

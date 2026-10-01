@@ -34,7 +34,12 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY || 'github-actions-import-not-secret' }}
           DEBUG: "False"
           ALLOWED_HOSTS: "localhost"
-        run: python manage.py migrate --noinput
+        # createcachetable is idempotent. The market-insights cache that keeps
+        # database egress down is stored in that table, and cache errors are
+        # swallowed, so a missing table would silently disable it.
+        run: |
+          python manage.py migrate --noinput
+          python manage.py createcachetable
 
       - name: Run bulk import
         env:
