@@ -9,6 +9,8 @@ on the page POST to /dal/databasefile/downloadDatabaseFile with hdn_tbl_name and
 hdn_ftype). The legacy /Data/Downloads/<file>.csv path no longer exists.
 """
 
+import codecs
+import csv
 import io
 import logging
 import os
@@ -19,7 +21,15 @@ from typing import Any
 import requests
 from django.db import connection, transaction
 
-from apps.analytics.models import PropertyListing
+from apps.analytics.models import PropertyListing, TaxDistrictMillage
+from apps.analytics.services.tax_estimate import (
+    HOMESTEAD_PARCEL_TYPES,
+    Millage,
+    buyer_tax_year,
+    estimate_current_tax,
+    estimate_new_owner_tax,
+    homestead_rules,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +103,13 @@ def download_pcpao_file(filename: str, output_dir: str) -> str:
 
     logger.info(f'Extracted {target} to {output_path}')
     return output_path
+
+
+def csv_encoding(csv_path: str) -> str:
+    """PCPAO exports are Windows-1252 unless they start with a UTF-8 BOM."""
+    with open(csv_path, 'rb') as raw_file:
+        has_utf8_bom = raw_file.read(len(codecs.BOM_UTF8)) == codecs.BOM_UTF8
+    return 'utf-8-sig' if has_utf8_bom else 'cp1252'
 
 
 def safe_decimal(value: str) -> Decimal | None:
@@ -189,8 +206,12 @@ def _split_property_use(value: str) -> str | None:
     return value.strip() or None
 
 
-def map_csv_row_to_property(row: dict[str, str]) -> dict[str, Any]:
+def map_csv_row_to_property(row: dict[str, str], millage: dict[str, Millage] | None = None) -> dict[str, Any]:
     """Map a PCPAO RP_PROPERTY_INFO row to PropertyListing fields.
+
+    With a district -> Millage lookup (see import_millage_rates), also
+    precomputes the tax estimates. Without one, the estimate fields are left
+    out so an upsert keeps whatever the database already has.
 
     Schema reference:
       - PARCEL_NUMBER, SITE_ADDRESS, STR_CITY, STR_ZIP, OWNER1
@@ -253,7 +274,86 @@ def map_csv_row_to_property(row: dict[str, str]) -> dict[str, Any]:
     result['historic_landmark'] = _yn(row.get('DLHL_YN'))
     result['living_units'] = safe_int(row.get('TOTAL_LIVING_UNITS', ''))
 
+    if millage is not None:
+        result.update(_tax_estimates(row, result, millage))
+
     return result
+
+
+def _tax_estimates(row: dict[str, str], prop: dict[str, Any], millage: dict[str, Millage]) -> dict[str, int | None]:
+    estimates: dict[str, int | None] = dict.fromkeys(('est_tax_current', 'est_tax_homestead', 'est_tax_no_homestead'))
+    district = millage.get(prop['tax_district'] or '')
+    just_value = prop['market_value']
+    if district is None or just_value is None:
+        return estimates
+
+    special_assessment = prop['special_assessment']
+    county_taxable = safe_decimal(row.get('CNTY_TAXABLE_VALUE', ''))
+    school_taxable = safe_decimal(row.get('SCHL_TAXABLE_VALUE', ''))
+    if county_taxable is not None and school_taxable is not None:
+        estimates['est_tax_current'] = estimate_current_tax(
+            county_taxable, school_taxable, district, special_assessment
+        )
+
+    estimates['est_tax_no_homestead'] = estimate_new_owner_tax(just_value, district, special_assessment)
+    # Stays None for parcels nobody can homestead: commercial, or no dwelling.
+    if row.get('PARCEL_TYPE') in HOMESTEAD_PARCEL_TYPES and (prop['building_sqft'] or 0) > 0:
+        estimates['est_tax_homestead'] = estimate_new_owner_tax(
+            just_value, district, special_assessment, homestead_rules(buyer_tax_year())
+        )
+    return estimates
+
+
+def import_millage_rates(csv_path: str) -> dict[str, Millage]:
+    """Replace TaxDistrictMillage with an RP_MILLAGE_RATES file.
+
+    Each row is one taxing authority's rate in one district; levies whose
+    TAX_AUTH_NAME mentions SCHOOL are summed separately. Returns the most
+    recent year's millage per district.
+    """
+    sums: dict[tuple[str, int, str], list[Decimal]] = {}
+    with open(csv_path, encoding=csv_encoding(csv_path), newline='') as f:
+        for row in csv.DictReader(f):
+            district = row['MILL_CD'].strip()
+            description = row['TAX_RATE_DSCR'].strip()  # e.g. '2025 Final'
+            year = safe_int(description[:4])
+            rate = _quantized(row['TAX_RATE_DISPLAY'], 4)
+            if not district or year is None or rate is None:
+                continue
+            total_and_school = sums.setdefault((district, year, description), [Decimal(0), Decimal(0)])
+            total_and_school[0] += rate
+            if 'SCHOOL' in row['TAX_AUTH_NAME'].upper():
+                total_and_school[1] += rate
+
+    # If a year has both proposed and final rates, keep the final ones.
+    chosen: dict[tuple[str, int], tuple[str, list[Decimal]]] = {}
+    for (district, year, description), total_and_school in sorted(sums.items()):
+        current = chosen.get((district, year))
+        if current is None or 'FINAL' in description.upper():
+            chosen[(district, year)] = (description, total_and_school)
+
+    rows = [
+        TaxDistrictMillage(
+            district_code=district,
+            tax_year=year,
+            rate_description=description,
+            total_mills=total,
+            school_mills=school,
+        )
+        for (district, year), (description, (total, school)) in chosen.items()
+    ]
+    with transaction.atomic():
+        TaxDistrictMillage.objects.all().delete()
+        TaxDistrictMillage.objects.bulk_create(rows)
+    return stored_millage()
+
+
+def stored_millage() -> dict[str, Millage]:
+    """Most recent millage per district from the database."""
+    latest: dict[str, Millage] = {}
+    for row in TaxDistrictMillage.objects.order_by('district_code', 'tax_year'):
+        latest[row.district_code] = Millage(total=row.total_mills, school=row.school_mills)
+    return latest
 
 
 def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1000) -> dict[str, int]:
@@ -325,6 +425,9 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             'contamination',
             'historic_landmark',
             'living_units',
+            'est_tax_current',
+            'est_tax_homestead',
+            'est_tax_no_homestead',
         ]
 
         for prop in valid_properties:

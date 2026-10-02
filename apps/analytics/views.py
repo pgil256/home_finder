@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from .models import PropertyListing
+from .models import PropertyListing, TaxDistrictMillage
 from .services.exports import generate_excel_response, generate_pdf_response
 from .services.filtering import (
     PINELLAS_CITIES,
@@ -22,6 +22,7 @@ from .services.filtering import (
 )
 from .services.market_insights import build_market_insights
 from .services.task_management import check_rate_limit, get_client_ip
+from .services.tax_estimate import build_tax_outlook
 
 # Per-parcel refresh rate limit: 60s between refreshes for the same parcel,
 # regardless of who's asking. Prevents one user (or bot) from hammering
@@ -170,7 +171,7 @@ def _active_filter_chips(request) -> list[dict[str, str]]:
         add(_range_label('Lot size', get.get('min_lot_sqft'), get.get('max_lot_sqft')), 'min_lot_sqft', 'max_lot_sqft')
     if get.get('min_tax_amount') or get.get('max_tax_amount'):
         add(
-            _range_label('Annual tax', get.get('min_tax_amount'), get.get('max_tax_amount'), '$'),
+            _range_label('Tax before exemptions', get.get('min_tax_amount'), get.get('max_tax_amount'), '$'),
             'min_tax_amount',
             'max_tax_amount',
         )
@@ -285,12 +286,19 @@ def property_detail(request, parcel_id: str):
         'parcel_id', 'address', 'market_value', 'bedrooms', 'bathrooms', 'building_sqft', 'image_url'
     )[:4]
 
+    district_millage = None
+    if property_obj.tax_district:
+        district_millage = (
+            TaxDistrictMillage.objects.filter(district_code=property_obj.tax_district).order_by('-tax_year').first()
+        )
+
     return render(
         request,
         'analytics/property-detail.html',
         {
             'property': property_obj,
             'similar_properties': similar_properties,
+            'tax_outlook': build_tax_outlook(property_obj, district_millage),
         },
     )
 
