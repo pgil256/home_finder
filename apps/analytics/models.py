@@ -38,6 +38,28 @@ class PropertyListing(models.Model):
     delinquent = models.BooleanField(default=False)
     tax_year = models.IntegerField(null=True)
 
+    # Tax inputs (PCPAO RP_PROPERTY_INFO)
+    roll_year = models.IntegerField(null=True)
+    tax_district = models.CharField(max_length=8, null=True, blank=True)
+    millage_rate = models.DecimalField(max_digits=7, decimal_places=4, null=True)
+    special_assessment = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    homestead_cap = models.BooleanField(null=True)  # Save Our Homes cap applies (owner has homestead)
+    sales_comp_value = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+
+    # Location and risk (PCPAO RP_PROPERTY_INFO)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True)
+    evac_zone = models.CharField(max_length=4, null=True, blank=True)  # A-E, or NONE
+    neighborhood_code = models.CharField(max_length=16, null=True, blank=True)
+    frontage = models.CharField(max_length=32, null=True, blank=True)
+    views = models.CharField(max_length=32, null=True, blank=True)
+    waterfront = models.BooleanField(null=True)
+    seawall = models.BooleanField(null=True)
+    subsidence = models.BooleanField(null=True)
+    contamination = models.BooleanField(null=True)
+    historic_landmark = models.BooleanField(null=True)
+    living_units = models.IntegerField(null=True)
+
     # Metadata
     last_scraped = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)

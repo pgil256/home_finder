@@ -7,6 +7,8 @@ from unittest.mock import patch
 import pytest
 import responses
 from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from apps.analytics.models import PropertyListing
 from apps.analytics.services.pcpao_importer import (
@@ -22,6 +24,16 @@ from apps.analytics.services.pcpao_importer import (
 from apps.analytics.services.property_types import DOR_USE_CODES, dor_code_to_description
 
 pytestmark = pytest.mark.django_db
+
+SAMPLE_FIXTURE = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_pcpao_data.csv'
+
+
+def _listing_writes(queries) -> list[str]:
+    """INSERT/UPDATE statements against the property table."""
+    table = PropertyListing._meta.db_table
+    return [
+        q['sql'] for q in queries if table in q['sql'] and q['sql'].lstrip().upper().startswith(('INSERT', 'UPDATE'))
+    ]
 
 
 def _pcpao_zip_bytes() -> bytes:
@@ -225,6 +237,72 @@ class TestMapCsvRowToProperty:
         assert result['tax_amount'] is None
         assert 'tax_status' not in result or result.get('tax_status') != 'From PCPAO'
 
+    def test_maps_tax_and_risk_columns(self):
+        row = {
+            'PARCEL_NUMBER': '05-29-15-54666-005-0080',
+            'ROLL_YEAR': '2026',
+            'TAX_DISTRICT': 'CW',
+            'MILLAGE_RATE': '19.919700000000002',
+            'SPECIAL_ASSESSMENT': '140',
+            'HX_CAP': 'Yes',
+            'SALES_COMP': '3310000',
+            'LATITUDE': '27.978634278',
+            'LONGITUDE': '-82.827283724',
+            'EVAC_ZONE': 'A',
+            'NBORHOOD_CD': '7706.110000000001',
+            'FRONTAGE': 'Gulf',
+            'VIEWS': 'Gulf',
+            'WATERFRONT_YN': 'Y',
+            'SEAWALL': 'Yes',
+            'SUBSIDENCE_YN': 'N',
+            'CONTAMINATION_YN': 'N',
+            'DLHL_YN': 'Y',
+            'TOTAL_LIVING_UNITS': '1',
+        }
+        result = map_csv_row_to_property(row)
+
+        assert result['roll_year'] == 2026
+        assert result['tax_district'] == 'CW'
+        assert result['millage_rate'] == Decimal('19.9197')
+        assert result['special_assessment'] == Decimal('140.00')
+        assert result['homestead_cap'] is True
+        assert result['sales_comp_value'] == Decimal('3310000')
+        assert result['latitude'] == Decimal('27.978634')
+        assert result['longitude'] == Decimal('-82.827284')
+        assert result['evac_zone'] == 'A'
+        assert result['neighborhood_code'] == '7706.11'
+        assert result['frontage'] == 'Gulf'
+        assert result['views'] == 'Gulf'
+        assert result['waterfront'] is True
+        assert result['seawall'] is True
+        assert result['subsidence'] is False
+        assert result['contamination'] is False
+        assert result['historic_landmark'] is True
+        assert result['living_units'] == 1
+
+    def test_county_placeholders_become_none(self):
+        row = {
+            'PARCEL_NUMBER': 'placeholders',
+            'EVAC_ZONE': 'NON EVAC',
+            'VIEWS': 'None',
+            'FRONTAGE': '',
+            'SEAWALL': '',
+            'LATITUDE': '',
+            'HX_CAP': 'No',
+        }
+        result = map_csv_row_to_property(row)
+
+        assert result['evac_zone'] == 'NONE'
+        assert result['views'] is None
+        assert result['frontage'] is None
+        assert result['seawall'] is None
+        assert result['latitude'] is None
+        assert result['homestead_cap'] is False
+
+    def test_unknown_evac_zone_is_none(self):
+        assert map_csv_row_to_property({'PARCEL_NUMBER': 'x', 'EVAC_ZONE': ''})['evac_zone'] is None
+        assert map_csv_row_to_property({'PARCEL_NUMBER': 'x', 'EVAC_ZONE': 'Z'})['evac_zone'] is None
+
 
 class TestBulkUpsertProperties:
     def test_creates_new_properties(self, db):
@@ -274,6 +352,32 @@ class TestBulkUpsertProperties:
         sample_property.refresh_from_db()
         assert sample_property.address == 'Updated Address'
 
+    def test_update_keeps_the_row_and_its_other_columns(self, sample_property):
+        """Changed rows are written as an upsert; the existing row must keep
+        its id, its creation time, and columns the county file doesn't carry."""
+        original = PropertyListing.objects.get(pk=sample_property.pk)
+
+        bulk_upsert_properties(
+            [
+                {
+                    'parcel_id': sample_property.parcel_id,
+                    'address': 'Updated Address',
+                    'city': sample_property.city,
+                    'zip_code': sample_property.zip_code,
+                    'property_type': sample_property.property_type,
+                }
+            ]
+        )
+
+        assert PropertyListing.objects.count() == 1
+        updated = PropertyListing.objects.get(parcel_id=sample_property.parcel_id)
+        assert updated.pk == original.pk
+        assert updated.created_at == original.created_at
+        assert updated.address == 'Updated Address'
+        assert updated.bedrooms == original.bedrooms == 3
+        assert updated.owner_name == original.owner_name
+        assert updated.tax_status == original.tax_status == 'Paid'
+
     def test_does_not_rewrite_unchanged_properties(self, sample_property):
         """Unchanged county rows do not create PostgreSQL table bloat."""
         properties_data = [
@@ -286,11 +390,11 @@ class TestBulkUpsertProperties:
             }
         ]
 
-        with patch.object(PropertyListing.objects, 'bulk_update') as bulk_update:
+        with CaptureQueriesContext(connection) as ctx:
             result = bulk_upsert_properties(properties_data)
 
         assert result == {'created': 0, 'updated': 0}
-        bulk_update.assert_not_called()
+        assert _listing_writes(ctx.captured_queries) == []
 
     def test_skips_records_without_parcel_id(self, db):
         """Test bulk upsert skips records without parcel_id."""
@@ -383,9 +487,7 @@ class TestImportPcpaoDataCommand:
 
     def test_sample_fixture_imports(self, db):
         """The README Quick Start fixture must match the live PCPAO schema."""
-        fixture = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_pcpao_data.csv'
-
-        call_command('import_pcpao_data', file=str(fixture), quiet=True)
+        call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
 
         # 48 sampled rows; one has no site address and is skipped on purpose.
         assert PropertyListing.objects.count() == 47
@@ -393,6 +495,33 @@ class TestImportPcpaoDataCommand:
         assert home.city == 'St. Petersburg'
         assert home.market_value == Decimal('282885')
         assert home.assessed_value == Decimal('77124')
+        assert home.evac_zone == 'B'
+        assert home.tax_district == 'SP'
+        assert home.homestead_cap is True
+        assert home.latitude is not None
+
+    def test_reimporting_unchanged_file_rewrites_nothing(self, db):
+        """Values must round-trip through the database exactly; otherwise
+        every monthly import rewrites every row and bloats PostgreSQL."""
+        call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
+
+        with CaptureQueriesContext(connection) as ctx:
+            call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
+
+        assert _listing_writes(ctx.captured_queries) == []
+
+    def test_vacuum_every_runs_between_batches(self, tmp_path, db):
+        csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
+        lines = ['PARCEL_NUMBER,SITE_ADDRESS,STR_CITY,STR_ZIP,PROPERTY_USE']
+        lines += [f'batch-{i},{i} VACUUM ST,CLEARWATER,33755,0110 Single Family Home' for i in range(10_000)]
+        csv_path.write_text('\n'.join(lines), encoding='utf-8')
+
+        with patch('apps.analytics.management.commands.import_pcpao_data.vacuum_property_listing_table') as vacuum:
+            call_command('import_pcpao_data', file=str(csv_path), quiet=True, vacuum_every=2)
+
+        # Two full batches of 5000 rows: one vacuum after the second.
+        vacuum.assert_called_once_with()
+        assert PropertyListing.objects.count() == 10_000
 
 
 class TestPropertyTypeConversion:
