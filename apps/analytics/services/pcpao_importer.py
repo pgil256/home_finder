@@ -263,7 +263,7 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
     Uses batch operations to avoid N+1 query pattern:
     - Single query to find existing records
     - bulk_create for new records
-    - bulk_update for existing records
+    - one upsert per batch for existing records that changed
 
     Args:
         properties: List of property dictionaries with PropertyListing fields
@@ -353,9 +353,23 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             PropertyListing.objects.bulk_create(new_properties, batch_size=batch_size)
             stats['created'] = len(new_properties)
 
-        # Bulk update existing records (single query)
+        # Changed rows go in as INSERT ... ON CONFLICT (parcel_id) DO UPDATE,
+        # one statement per batch. bulk_update builds a CASE expression per
+        # field per row, which made a backfill that touches every row about
+        # 20x slower than a fresh load. Clearing the pk lets the insert half
+        # take a throwaway id; the parcel_id conflict routes each row to the
+        # update half, which keeps the existing id and every column outside
+        # update_fields.
         if properties_to_update:
-            PropertyListing.objects.bulk_update(properties_to_update, update_fields, batch_size=batch_size)
+            for existing in properties_to_update:
+                existing.pk = None
+            PropertyListing.objects.bulk_create(
+                properties_to_update,
+                batch_size=batch_size,
+                update_conflicts=True,
+                unique_fields=['parcel_id'],
+                update_fields=update_fields,
+            )
             stats['updated'] = len(properties_to_update)
 
     return stats

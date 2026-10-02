@@ -7,6 +7,8 @@ from unittest.mock import patch
 import pytest
 import responses
 from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from apps.analytics.models import PropertyListing
 from apps.analytics.services.pcpao_importer import (
@@ -24,6 +26,14 @@ from apps.analytics.services.property_types import DOR_USE_CODES, dor_code_to_de
 pytestmark = pytest.mark.django_db
 
 SAMPLE_FIXTURE = Path(__file__).resolve().parent.parent / 'fixtures' / 'sample_pcpao_data.csv'
+
+
+def _listing_writes(queries) -> list[str]:
+    """INSERT/UPDATE statements against the property table."""
+    table = PropertyListing._meta.db_table
+    return [
+        q['sql'] for q in queries if table in q['sql'] and q['sql'].lstrip().upper().startswith(('INSERT', 'UPDATE'))
+    ]
 
 
 def _pcpao_zip_bytes() -> bytes:
@@ -342,6 +352,32 @@ class TestBulkUpsertProperties:
         sample_property.refresh_from_db()
         assert sample_property.address == 'Updated Address'
 
+    def test_update_keeps_the_row_and_its_other_columns(self, sample_property):
+        """Changed rows are written as an upsert; the existing row must keep
+        its id, its creation time, and columns the county file doesn't carry."""
+        original = PropertyListing.objects.get(pk=sample_property.pk)
+
+        bulk_upsert_properties(
+            [
+                {
+                    'parcel_id': sample_property.parcel_id,
+                    'address': 'Updated Address',
+                    'city': sample_property.city,
+                    'zip_code': sample_property.zip_code,
+                    'property_type': sample_property.property_type,
+                }
+            ]
+        )
+
+        assert PropertyListing.objects.count() == 1
+        updated = PropertyListing.objects.get(parcel_id=sample_property.parcel_id)
+        assert updated.pk == original.pk
+        assert updated.created_at == original.created_at
+        assert updated.address == 'Updated Address'
+        assert updated.bedrooms == original.bedrooms == 3
+        assert updated.owner_name == original.owner_name
+        assert updated.tax_status == original.tax_status == 'Paid'
+
     def test_does_not_rewrite_unchanged_properties(self, sample_property):
         """Unchanged county rows do not create PostgreSQL table bloat."""
         properties_data = [
@@ -354,11 +390,11 @@ class TestBulkUpsertProperties:
             }
         ]
 
-        with patch.object(PropertyListing.objects, 'bulk_update') as bulk_update:
+        with CaptureQueriesContext(connection) as ctx:
             result = bulk_upsert_properties(properties_data)
 
         assert result == {'created': 0, 'updated': 0}
-        bulk_update.assert_not_called()
+        assert _listing_writes(ctx.captured_queries) == []
 
     def test_skips_records_without_parcel_id(self, db):
         """Test bulk upsert skips records without parcel_id."""
@@ -469,10 +505,10 @@ class TestImportPcpaoDataCommand:
         every monthly import rewrites every row and bloats PostgreSQL."""
         call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
 
-        with patch.object(PropertyListing.objects, 'bulk_update') as bulk_update:
+        with CaptureQueriesContext(connection) as ctx:
             call_command('import_pcpao_data', file=str(SAMPLE_FIXTURE), quiet=True)
 
-        bulk_update.assert_not_called()
+        assert _listing_writes(ctx.captured_queries) == []
 
     def test_vacuum_every_runs_between_batches(self, tmp_path, db):
         csv_path = tmp_path / 'RP_PROPERTY_INFO.csv'
