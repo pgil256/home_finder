@@ -1,0 +1,41 @@
+name: Database guard
+
+# Rebuilds the county data if the property table is ever empty, then fails so
+# the run gets noticed. When the data is there this is one small query a day.
+# It runs before the daily E2E smoke (13:00 UTC), so the smoke checks the
+# result of any rebuild.
+
+on:
+  schedule:
+    - cron: "30 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  guard:
+    name: Rebuild if empty
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY || 'github-actions-import-not-secret' }}
+      DEBUG: "False"
+      ALLOWED_HOSTS: "localhost"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Make sure the tables exist
+        run: |
+          python manage.py migrate --noinput
+          python manage.py createcachetable
+
+      - name: Rebuild the property data if it is gone
+        run: python manage.py guard_property_data
