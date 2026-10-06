@@ -226,3 +226,15 @@ class TestImportClearsInsightsCache:
         call_command('import_pcpao_data', file=str(csv_path), quiet=True)
 
         assert build_market_insights(None)['exact']['parcel_count'] == 6
+
+
+class TestRiskFiltersSplitTheCache:
+    @pytest.mark.parametrize(
+        'params',
+        [{'exclude_evac': 'A'}, {'exclude_evac': 'B'}, {'exclude_subsidence': '1'}, {'max_est_tax': '5000'}],
+    )
+    def test_each_risk_filter_gets_its_own_key(self, params):
+        """A filter that reaches the queryset but not the key would serve the wrong payload."""
+        factory = RequestFactory()
+
+        assert insights_cache_key(factory.get('/insights/', params)) != insights_cache_key(factory.get('/insights/'))

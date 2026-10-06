@@ -3,18 +3,21 @@
 **Date:** 2026-09-29
 **Goal:** Make Pinellas Market Lens genuinely useful to a first-time homebuyer without adding paid APIs or meaningful hosting cost.
 
-## Status (2026-10-02)
+## Status (2026-10-06)
 
-PR 0, PR 1 and PR 2 (the critical path) are open as stacked pull requests. Merge them in order: `claude/roadmap-pr0-groundwork`, then `claude/roadmap-pr1-county-columns`, then `claude/first-time-buyer-roadmap-03f518` (PR 2).
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5) and PR 4 (risk flags). Still to do: PR 3 and PR 5, then PR 6 before any traffic push, then PR 7–11.
 
-Production moved to a new Neon project on 2026-10-01. The old one exceeded its data-transfer quota in July, and Neon never lifted the restriction, so the site's data pages were down until the move. The fix (pgil256/home_finder#4) caches the insights payload, runs the E2E smoke once a day instead of every 4 hours, moves sessions into signed cookies, and drops 14 unused indexes. The database is now 220 MB against a 512 MiB cap.
+What changed around the roadmap:
 
-After merging:
+- **New database.** Production moved to a new Neon project on 2026-10-01. The old one exceeded its data-transfer quota in July, and Neon never lifted the restriction. pgil256/home_finder#4 caches the insights payload, runs the E2E smoke daily, moves sessions into signed cookies, and drops 14 unused indexes. The database is about 260 MB against a 512 MiB cap.
+- **Unexplained wipe.** On 2026-10-02 every table in production disappeared with no operation logged by Neon and no job of ours running. A refresh rebuilt it. A daily "Database guard" workflow (pgil256/home_finder#8) now re-imports the county data if the property table is ever empty, then fails so the run gets noticed.
+- **2026 millage.** The county published final 2026 millage in early October. The importer picked it up on its own, and estimates now use it.
 
-1. **PR 1 and PR 2:** run the **Refresh PCPAO data** workflow once. It applies migrations 0008 and 0009 and backfills the new columns. That import rewrites every row, and the workflow vacuums every 10 batches so the rewrite reuses space. On a local Postgres load of the full county file the rewrite took 1m15s, and the compacted database grew from 186 MB to 205 MB.
-2. **PR 2:** after the November 3 vote, set `AMENDMENT_3_STATUS` in `apps/analytics/services/tax_estimate.py` to `'passed'` or `'failed'`. Once the Department of Revenue publishes the 2027 inflation-adjusted exemption, add it to `CURRENT_LAW`.
+Standing follow-ups:
 
-Next up: PR 3–5 (each depends only on PR 1), then PR 6 before any traffic push. Filtered pages still set a session cookie on GET, so PR 6's work to make them CDN-cacheable remains.
+1. After the November 3 vote, set `AMENDMENT_3_STATUS` in `apps/analytics/services/tax_estimate.py` to `'passed'` or `'failed'`. Once the Department of Revenue publishes the 2027 inflation-adjusted exemption, add it to `CURRENT_LAW`.
+2. A full refresh reads every existing row, roughly 200 MB of the 5 GB monthly data-transfer allowance. Don't run it casually.
+3. Filtered pages still set a session cookie on GET, so PR 6's work to make them CDN-cacheable remains.
 
 ### Findings from the live county files (downloaded 2026-09-30)
 
@@ -302,7 +305,9 @@ One PR per step. Each step ships something visible and keeps CI green.
 - `services/lending_config.py`: yearly constants (FHA MIP, FHA and conforming loan limits for Pinellas).
 - `search.html`: a "monthly budget" field. JS converts it to `max_price` before submit, so there is no server change.
 
-### PR 4 — Risk flags card + filters (S)
+### PR 4 — Risk flags card + filters (S) — done
+
+*As built:* `services/risk_flags.py` builds the card from evacuation zone, waterfront and frontage, seawall, subsidence, contamination, historic landmark, build year and property type. It also flags mobile and manufactured homes, which the county orders out for any hurricane. Condos are flagged from 25 years old, and the wording says the inspection rule applies to buildings of three or more stories, because the county file has no story count. The filters are `exclude_evac` (drop zones A through the chosen one), `exclude_subsidence` and `max_est_tax`, and all three are part of the insights cache key.
 
 - `services/risk_flags.py`: `build_risk_flags(listing) -> list[RiskFlag(level, title, why, what_to_ask)]`, pure and unit-tested. Covers evac zone, waterfront/seawall, elevation cert, subsidence, contamination, historic landmark, pre-2002 build, older condo.
 - `apply_filters`: add `evac_zone`, `exclude_subsidence`, and `max_est_tax`. Add matching `SEARCH_FIELDS` entries, chips and form fields.

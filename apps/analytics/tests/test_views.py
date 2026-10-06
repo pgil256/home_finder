@@ -524,3 +524,72 @@ class TestTaxEstimateCard:
 
         assert 'Tax Before Exemptions' in html
         assert 'Annual Tax' not in html
+
+
+class TestRiskFlagsCard:
+    def test_parcel_page_lists_flags_most_serious_first(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(
+            evac_zone='A', waterfront=True, frontage='Gulf', seawall=True, subsidence=True
+        )
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        assert 'What to Check Before You Buy' in html
+        for title in ('Subsidence on record', 'Evacuation zone A', 'Waterfront: Gulf', 'Seawall'):
+            assert title in html
+        assert html.index('Subsidence on record') < html.index('Waterfront: Gulf')
+        assert 'Built in 1987, before the 2002 Florida Building Code' in html
+        assert 'Check first' in html
+
+    def test_nothing_flagged_is_not_called_a_clean_bill_of_health(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(
+            year_built=2015, subsidence=False, contamination=False, waterfront=False
+        )
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        assert 'Nothing is flagged in the county' in html
+        assert 'still get a home inspection' in html
+
+    def test_no_card_before_the_risk_columns_are_imported(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(year_built=2015)
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        assert 'What to Check Before You Buy' not in html
+
+
+class TestRiskFilterPlumbing:
+    PARAMS = {'exclude_evac': 'B', 'exclude_subsidence': '1', 'max_est_tax': '6000'}
+
+    def test_insights_filters_and_shows_removable_chips(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(evac_zone='A', est_tax_homestead=3000)
+
+        response = client.get('/insights/', self.PARAMS)
+        html = response.content.decode()
+
+        assert response.context['total_count'] == 0
+        for label in ('Outside evacuation zones A-B', 'No subsidence on record', 'New-owner tax up to $6000'):
+            assert label in html
+
+    def test_filters_survive_the_trip_through_the_search_form(self, client):
+        response = client.post('/analytics/', self.PARAMS)
+
+        assert response.status_code == 302
+        query = parse_qs(urlparse(response['Location']).query)
+        assert query == {key: [value] for key, value in self.PARAMS.items()}
+
+    def test_search_form_prefills_the_risk_filters(self, client):
+        html = client.get('/analytics/', self.PARAMS).content.decode()
+
+        assert '<option value="B" selected>Outside evacuation zones A-B</option>' in html
+        assert 'name="max_est_tax"' in html and 'value="6000"' in html
+        assert 'name="exclude_subsidence" value="1" checked' in html
+
+    def test_export_summary_names_the_risk_filters(self, client, sample_property):
+        response = client.get('/analytics/download/excel/', {'include_all': '1', **self.PARAMS})
+
+        workbook = openpyxl.load_workbook(BytesIO(response.content))
+        text = ' '.join(str(cell) for sheet in workbook for row in sheet.iter_rows(values_only=True) for cell in row)
+        assert 'Outside evacuation zones A-B' in text
+        assert 'None on record' in text

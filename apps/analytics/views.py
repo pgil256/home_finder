@@ -21,6 +21,13 @@ from .services.filtering import (
     apply_sorting,
 )
 from .services.market_insights import build_market_insights
+from .services.risk_flags import (
+    EVAC_FILTER_CHOICES,
+    allowed_evac_zones,
+    build_risk_flags,
+    evac_filter_label,
+    has_risk_data,
+)
 from .services.task_management import check_rate_limit, get_client_ip
 from .services.tax_estimate import build_tax_outlook
 
@@ -52,6 +59,9 @@ SEARCH_FIELDS = (
     'max_lot_sqft',
     'min_tax_amount',
     'max_tax_amount',
+    'exclude_evac',
+    'exclude_subsidence',
+    'max_est_tax',
 )
 # beds/baths intentionally excluded — PCPAO doesn't expose this data.
 
@@ -175,6 +185,12 @@ def _active_filter_chips(request) -> list[dict[str, str]]:
             'min_tax_amount',
             'max_tax_amount',
         )
+    if allowed_evac_zones(get.get('exclude_evac', '')):
+        add(evac_filter_label(get['exclude_evac']), 'exclude_evac')
+    if get.get('exclude_subsidence') == '1':
+        add('No subsidence on record', 'exclude_subsidence')
+    if get.get('max_est_tax'):
+        add(f'New-owner tax up to ${get["max_est_tax"]}', 'max_est_tax')
     return chips
 
 
@@ -202,6 +218,7 @@ def web_scraper_view(request):
             'cities': sorted(PINELLAS_CITIES),
             'property_types': PROPERTY_TYPES,
             'search_values': search_values,
+            'evac_filter_choices': EVAC_FILTER_CHOICES,
         },
     )
 
@@ -259,6 +276,7 @@ def insights_dashboard(request):
             'active_filter_chips': _active_filter_chips(request),
             'modify_search_url': _search_url_from_values(filter_values),
             'insights_url': reverse('insights'),
+            'evac_filter_choices': EVAC_FILTER_CHOICES,
         },
     )
 
@@ -299,6 +317,8 @@ def property_detail(request, parcel_id: str):
             'property': property_obj,
             'similar_properties': similar_properties,
             'tax_outlook': build_tax_outlook(property_obj, district_millage),
+            'risk_flags': build_risk_flags(property_obj),
+            'has_risk_data': has_risk_data(property_obj),
         },
     )
 

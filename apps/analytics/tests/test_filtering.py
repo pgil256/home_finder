@@ -110,3 +110,59 @@ class TestApplySorting:
         ids = list(ordered.values_list('parcel_id', flat=True))
         assert ids[:2] == ['a', 'b']
         assert ids[-1] == 'n'
+
+
+class TestRiskAndTaxFilters:
+    def _parcels(self):
+        specs = [
+            (
+                'zone-a',
+                {'evac_zone': 'A', 'subsidence': False, 'est_tax_homestead': 9000, 'est_tax_no_homestead': 10000},
+            ),
+            ('zone-c', {'evac_zone': 'C', 'subsidence': True, 'est_tax_homestead': 4000, 'est_tax_no_homestead': 5000}),
+            (
+                'no-zone',
+                {'evac_zone': 'NONE', 'subsidence': False, 'est_tax_homestead': 3000, 'est_tax_no_homestead': 3600},
+            ),
+            (
+                'unknown',
+                {'evac_zone': None, 'subsidence': None, 'est_tax_homestead': None, 'est_tax_no_homestead': None},
+            ),
+            # A lot nobody can homestead: only the no-homestead estimate exists.
+            ('lot', {'evac_zone': 'D', 'subsidence': False, 'est_tax_homestead': None, 'est_tax_no_homestead': 2500}),
+        ]
+        for parcel_id, fields in specs:
+            PropertyListing.objects.filter(pk=_prop(parcel_id).pk).update(**fields)
+
+    def _ids(self, **params):
+        qs, _, _ = _filter(**params)
+        return set(qs.values_list('parcel_id', flat=True))
+
+    def test_exclude_evac_drops_zones_through_the_chosen_one(self):
+        self._parcels()
+
+        assert self._ids(exclude_evac='A') == {'zone-c', 'no-zone', 'lot'}
+        assert self._ids(exclude_evac='C') == {'no-zone', 'lot'}
+        assert self._ids(exclude_evac='E') == {'no-zone'}
+
+    def test_unknown_zone_is_not_treated_as_safe(self):
+        self._parcels()
+
+        assert 'unknown' not in self._ids(exclude_evac='A')
+
+    def test_exclude_subsidence_keeps_unknowns_and_clean_parcels(self):
+        self._parcels()
+
+        assert self._ids(exclude_subsidence='1') == {'zone-a', 'no-zone', 'unknown', 'lot'}
+
+    def test_max_est_tax_uses_the_homestead_estimate_when_there_is_one(self):
+        self._parcels()
+
+        # zone-c would pay 4,000 with homestead; its 5,000 no-homestead figure doesn't matter.
+        assert self._ids(max_est_tax='4500') == {'zone-c', 'no-zone', 'lot'}
+        assert self._ids(max_est_tax='2800') == {'lot'}
+
+    def test_invalid_values_are_ignored_not_fatal(self):
+        self._parcels()
+
+        assert len(self._ids(exclude_evac='Z', max_est_tax='cheap', exclude_subsidence='yes')) == 5
