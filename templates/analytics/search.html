@@ -296,6 +296,37 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Risk and new-owner tax -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="exclude_evac" class="label">Evacuation Zone</label>
+                            <select id="exclude_evac" name="exclude_evac" class="select">
+                                <option value="">Any</option>
+                                {% for value, label in evac_filter_choices %}
+                                <option value="{{ value }}" {% if search_values.exclude_evac == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="max_est_tax" class="label">Max New-Owner Tax per Year</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number"
+                                       id="max_est_tax"
+                                       name="max_est_tax"
+                                       value="{{ search_values.max_est_tax }}"
+                                       class="input pl-8"
+                                       placeholder="e.g., 6000"
+                                       min="0"
+                                       step="100">
+                            </div>
+                        </div>
+                    </div>
+                    <label class="flex cursor-pointer items-center gap-3">
+                        <input type="checkbox" name="exclude_subsidence" value="1" {% if search_values.exclude_subsidence == '1' %}checked{% endif %} class="checkbox">
+                        <span class="text-sm text-charcoal-600">Leave out parcels with subsidence on record</span>
+                    </label>
                 </div>
             </div>
 

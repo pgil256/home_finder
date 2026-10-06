@@ -161,6 +161,23 @@
                             <input type="number" name="max_tax_amount" value="{{ filter_values.max_tax_amount }}" placeholder="Max" class="input input-sm">
                         </div>
                     </fieldset>
+                    <div>
+                        <label for="filter-evac" class="label">Evacuation Zone</label>
+                        <select id="filter-evac" name="exclude_evac" class="select">
+                            <option value="">Any</option>
+                            {% for value, label in evac_filter_choices %}
+                            <option value="{{ value }}" {% if filter_values.exclude_evac == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter-est-tax" class="label">Max New-Owner Tax</label>
+                        <input type="number" id="filter-est-tax" name="max_est_tax" value="{{ filter_values.max_est_tax }}" placeholder="6000" min="0" class="input input-sm">
+                    </div>
+                    <label class="flex cursor-pointer items-center gap-3">
+                        <input type="checkbox" name="exclude_subsidence" value="1" {% if filter_values.exclude_subsidence == '1' %}checked{% endif %} class="checkbox">
+                        <span class="text-sm text-charcoal-600">No subsidence on record</span>
+                    </label>
                 </div>
                 <div class="card-footer flex items-center justify-between gap-3">
                     <a href="{% url 'insights' %}" class="btn btn-ghost btn-sm">Reset</a>

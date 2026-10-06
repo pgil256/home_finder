@@ -186,6 +186,42 @@
             </div>
             {% endif %}
 
+            <!-- Risk flags -->
+            {% if risk_flags or has_risk_data %}
+            <div class="card" id="risks">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">What to Check Before You Buy</h2>
+                    <p class="text-sm text-charcoal-500 mt-1">From the county's parcel record. These are prompts for your inspections and insurance quotes, not findings.</p>
+                </div>
+                <div class="card-body">
+                    {% if risk_flags %}
+                    <ul class="space-y-5">
+                        {% for flag in risk_flags %}
+                        <li class="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+                            {% if flag.level == 'high' %}
+                            <span class="self-start rounded-full border border-danger-200 bg-danger-50 px-2.5 py-0.5 text-xs font-semibold text-danger-700 sm:w-28 sm:flex-shrink-0 sm:text-center">Check first</span>
+                            {% elif flag.level == 'medium' %}
+                            <span class="self-start rounded-full border border-warning-200 bg-warning-50 px-2.5 py-0.5 text-xs font-semibold text-warning-800 sm:w-28 sm:flex-shrink-0 sm:text-center">Worth checking</span>
+                            {% elif flag.level == 'good' %}
+                            <span class="self-start rounded-full border border-success-200 bg-success-50 px-2.5 py-0.5 text-xs font-semibold text-success-700 sm:w-28 sm:flex-shrink-0 sm:text-center">Good news</span>
+                            {% else %}
+                            <span class="self-start rounded-full border border-charcoal-200 bg-charcoal-50 px-2.5 py-0.5 text-xs font-semibold text-charcoal-600 sm:w-28 sm:flex-shrink-0 sm:text-center">Good to know</span>
+                            {% endif %}
+                            <div>
+                                <p class="font-semibold text-charcoal-800">{{ flag.title }}</p>
+                                <p class="text-sm text-charcoal-600 mt-0.5">{{ flag.why }}</p>
+                                <p class="text-sm text-charcoal-700 mt-1"><span class="font-medium">What to do:</span> {{ flag.ask }}</p>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-charcoal-600">Nothing is flagged in the county's record for this parcel. That isn't a clean bill of health, so still get a home inspection.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Valuation Card -->
             <div class="card">
                 <div class="card-header">

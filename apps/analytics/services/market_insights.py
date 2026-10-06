@@ -24,6 +24,7 @@ from .palette import (
     PRIMARY_FILL_MEDIUM,
     PRIMARY_FILL_SOFT,
 )
+from .risk_flags import allowed_evac_zones, evac_filter_label
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,9 @@ CACHE_KEY_PARAMS = (
     'max_lot_sqft',
     'min_tax_amount',
     'max_tax_amount',
+    'exclude_evac',
+    'exclude_subsidence',
+    'max_est_tax',
     'include_all',
 )
 
@@ -122,6 +126,12 @@ def summarize_filters(request) -> list[tuple[str, str]]:
         out.append(('Lot sqft', _range_summary(g.get('min_lot_sqft'), g.get('max_lot_sqft'))))
     if g.get('min_tax_amount') or g.get('max_tax_amount'):
         out.append(('Tax before exemptions', _range_summary(g.get('min_tax_amount'), g.get('max_tax_amount'), '$')))
+    if allowed_evac_zones(g.get('exclude_evac', '')):
+        out.append(('Evacuation zone', evac_filter_label(g['exclude_evac'])))
+    if g.get('exclude_subsidence') == '1':
+        out.append(('Subsidence', 'None on record'))
+    if g.get('max_est_tax'):
+        out.append(('New-owner tax', _range_summary(None, g.get('max_est_tax'), '$')))
     if not out:
         out.append(('Scope', 'All Pinellas County parcels'))
     return out

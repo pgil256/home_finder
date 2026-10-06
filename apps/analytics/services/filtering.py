@@ -6,6 +6,7 @@ from django.core.paginator import Page, Paginator
 from django.db.models import F, Q, QuerySet
 
 from ..models import PropertyListing
+from .risk_flags import allowed_evac_zones
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +142,9 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
     max_lot_sqft = request.GET.get('max_lot_sqft')
     min_tax_amount = request.GET.get('min_tax_amount')
     max_tax_amount = request.GET.get('max_tax_amount')
+    exclude_evac = request.GET.get('exclude_evac')
+    exclude_subsidence = request.GET.get('exclude_subsidence')
+    max_est_tax = request.GET.get('max_est_tax')
 
     if q:
         q = q.strip()
@@ -230,6 +234,30 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
             properties = properties.filter(tax_amount__lte=float(max_tax_amount))
         except ValueError:
             logger.warning('Invalid max_tax_amount filter value: %r', max_tax_amount)
+
+    # Risk and new-owner tax filters. Parcels whose zone or estimate is
+    # unknown are left out rather than passed off as low-risk or cheap.
+    if exclude_evac:
+        zones = allowed_evac_zones(exclude_evac)
+        if zones is None:
+            logger.warning('Invalid exclude_evac filter value: %r', exclude_evac)
+        else:
+            properties = properties.filter(evac_zone__in=zones)
+
+    if exclude_subsidence == '1':
+        properties = properties.exclude(subsidence=True)
+
+    if max_est_tax:
+        try:
+            limit = float(max_est_tax)
+        except ValueError:
+            logger.warning('Invalid max_est_tax filter value: %r', max_est_tax)
+        else:
+            # What a buyer living there would pay; parcels that can't be
+            # homesteaded fall back to the no-homestead estimate.
+            properties = properties.filter(
+                Q(est_tax_homestead__lte=limit) | Q(est_tax_homestead__isnull=True, est_tax_no_homestead__lte=limit)
+            )
 
     defaulted_to_residential = bool(not property_types_filter and not show_all_types)
     return properties, property_types_filter, defaulted_to_residential
