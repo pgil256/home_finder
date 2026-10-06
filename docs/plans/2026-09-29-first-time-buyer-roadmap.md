@@ -3,6 +3,33 @@
 **Date:** 2026-09-29
 **Goal:** Make Pinellas Market Lens genuinely useful to a first-time homebuyer without adding paid APIs or meaningful hosting cost.
 
+## Status (2026-10-02)
+
+PR 0, PR 1 and PR 2 (the critical path) are open as stacked pull requests. Merge them in order: `claude/roadmap-pr0-groundwork`, then `claude/roadmap-pr1-county-columns`, then `claude/first-time-buyer-roadmap-03f518` (PR 2).
+
+Production moved to a new Neon project on 2026-10-01. The old one exceeded its data-transfer quota in July, and Neon never lifted the restriction, so the site's data pages were down until the move. The fix (pgil256/home_finder#4) caches the insights payload, runs the E2E smoke once a day instead of every 4 hours, moves sessions into signed cookies, and drops 14 unused indexes. The database is now 220 MB against a 512 MiB cap.
+
+After merging:
+
+1. **PR 1 and PR 2:** run the **Refresh PCPAO data** workflow once. It applies migrations 0008 and 0009 and backfills the new columns. That import rewrites every row, and the workflow vacuums every 10 batches so the rewrite reuses space. On a local Postgres load of the full county file the rewrite took 1m15s, and the compacted database grew from 186 MB to 205 MB.
+2. **PR 2:** after the November 3 vote, set `AMENDMENT_3_STATUS` in `apps/analytics/services/tax_estimate.py` to `'passed'` or `'failed'`. Once the Department of Revenue publishes the 2027 inflation-adjusted exemption, add it to `CURRENT_LAW`.
+
+Next up: PR 3–5 (each depends only on PR 1), then PR 6 before any traffic push. Filtered pages still set a session cookie on GET, so PR 6's work to make them CDN-cacheable remains.
+
+### Findings from the live county files (downloaded 2026-09-30)
+
+These corrected the plan below:
+
+- `ELEVATION_CERT` is `N/A` on every one of 437,569 rows. It is not imported, and the risk card can't use it.
+- `HX_SAVINGS` is blank for about 97% of parcels and isn't the Save Our Homes gap. It is not imported. The gap is `CNTY_JST_VALUE − CNTY_ASD_VALUE`, already stored as `market_value − assessed_value`.
+- `CENSUS` is a 12-digit block group (the tract is its first 11 digits). It is deferred to the National Risk Index follow-up.
+- `MILLAGE_RATE`, `LATITUDE`/`LONGITUDE` and `NBORHOOD_CD` carry float artifacts (`19.919700000000002`, `3000.2000000000003`). The importer rounds them to each field's precision. Without that, every monthly import would rewrite every row.
+- The 2026 roll confirms current law: the homestead exemption is $25,000 on every levy plus **$26,411** (CPI-adjusted) on non-school levies above $50,000. For 169,041 homesteads, `CNTY_ASD_VALUE − CNTY_TAXABLE_VALUE` is exactly 51,411 and `CNTY_ASD_VALUE − SCHL_TAXABLE_VALUE` is exactly 25,000.
+- `RP_MILLAGE_RATES` has 52 districts at "2025 Final". The per-district sums match `MILLAGE_RATE` on every parcel. School levies are `12A PINELLAS COUNTY SCHOOL BOARD` and `12B SCHOOL LOCAL` (6.293 mills county-wide).
+- `TAX_AMOUNT_NO_EX` roughly tracks just value × millage but isn't an exact match for about half the parcels. It is nobody's bill.
+- `MUNI_TAXABLE_VALUE` differs from `CNTY_TAXABLE_VALUE` for about 3% of parcels (city senior exemptions), so the current-owner estimate uses county taxable value for all non-school levies.
+- The ballot measure is **Amendment 3** ("Save Our Homes From Excessive Property Taxes"). People who establish Florida residency after January 1, 2027 wait five years for the larger exemption. It also lowers the non-homestead cap from 10% to 5%, which doesn't help a buyer in year one, because the cap resets on sale.
+
 ---
 
 ## Positioning
@@ -101,7 +128,7 @@ A plain-English card on the parcel page, built entirely from columns in #0:
 
 - Evacuation zone (A evacuates first)
 - Waterfront / seawall (seawall repair is the owner's cost)
-- Elevation certificate on file (ask the seller for it; it can lower flood premiums)
+- Ask the seller for an elevation certificate; it can lower flood premiums. PCPAO's `ELEVATION_CERT` column is always `N/A`, so this is advice, not a data flag.
 - Subsidence reported, contamination flagged, historic landmark
 - Built before the 2002 Florida Building Code: ask for wind-mitigation and 4-point inspections
 - Condo in an older building: Florida's post-Surfside milestone-inspection and structural-reserve rules can mean special assessments or HOA increases. Confirm current age thresholds before hard-coding.
@@ -165,7 +192,7 @@ Link glossary terms (just value, assessed value, millage, SFHA) inline from the 
 
    Then add `Cache-Control: public, s-maxage=86400, stale-while-revalidate=604800` to insights and parcel pages.
 2. **Precompute derived fields during the monthly import**: new-owner tax, last sale, flood zone, roof year. Request handlers should only read columns.
-3. **Storage budget.** The Neon free tier is 0.5 GB and the current dataset is about 150 MB. Estimated additions: about 15 narrow columns (~20–40 MB) plus 36 months of qualified sales (<10 MB). Filter in the Action; never load full history tables. `RP_SALES_HISTORY` also carries buyer and seller mailing addresses, which aren't needed. Adding nullable columns in Postgres is metadata-only, and the importer's skip-unchanged-rows logic keeps monthly churn low because most new fields change yearly.
+3. **Storage budget.** The Neon free tier is 0.5 GB and the dataset is 220 MB (measured 2026-10-01, after dropping unused indexes). Estimated additions: about 15 narrow columns (~20–40 MB) plus 36 months of qualified sales (<10 MB). Filter in the Action; never load full history tables. `RP_SALES_HISTORY` also carries buyer and seller mailing addresses, which aren't needed. Adding nullable columns in Postgres is metadata-only, and the importer's skip-unchanged-rows logic keeps monthly churn low because most new fields change yearly.
 4. **Trim the serverless bundle.** `matplotlib` and `PyPDF2` appear unused. `selenium`, `webdriver-manager` and `bs4` are only used in the scraper path. A smaller bundle means faster cold starts. Verify before removing.
 5. **Keep calculators client-side.** They add no server cost and work offline once loaded.
 6. **Watch the Vercel plan.** Hobby is for non-commercial use. Adding lender or insurance referral links or ads would mean budgeting for Pro, or moving hosting.
@@ -227,13 +254,17 @@ Verified 2026-09-29:
 
 One PR per step. Each step ships something visible and keeps CI green.
 
-### PR 0 — Groundwork (S)
+### PR 0 — Groundwork (S) — done
+
+*As built:* `scripts/make_sample_fixture.py` samples 48 real rows from a PCPAO download (owner, mailing and deed columns blanked) and writes the matching `sample_millage_rates.csv`. `requirements-data.txt` is deferred to PR 9, the first step that needs it.
 
 - **Fix the stale fixture.** `apps/analytics/fixtures/sample_pcpao_data.csv` uses the old column names (`PARCEL_ID`, `SITE_ADDR`, …), but `map_csv_row_to_property` reads the current schema (`PARCEL_NUMBER`, `SITE_ADDRESS`, …). The README Quick Start therefore imports **zero rows**. Regenerate the fixture with ~50 real-schema rows, including the new columns and a mix of evac zones, waterfront, homestead-capped and non-capped parcels.
 - Remove `matplotlib` and `PyPDF2` from `requirements.txt`. Nothing imports either.
 - Add `requirements-data.txt` for Action-only dependencies (e.g. `shapely` in PR 9) so they never enter the Vercel bundle.
 
-### PR 1 — Import the dropped `RP_PROPERTY_INFO` columns (M)
+### PR 1 — Import the dropped `RP_PROPERTY_INFO` columns (M) — done
+
+*As built:* migration `0008` (`0007` is the index cleanup from pgil256/home_finder#4). Dropped `elevation_cert`, `homestead_savings` and `census_tract` (see findings). Added `frontage`. The `neighborhood_code` index is deferred to PR 7, where comps query it. `--vacuum-every N` is in place, and the refresh workflow passes `--vacuum-every 10`. Changed rows are written with one `INSERT ... ON CONFLICT DO UPDATE` per batch; `bulk_update` took about 29 minutes for a full-table rewrite.
 
 - Migration `0007`: add nullable fields to `PropertyListing`:
   - `latitude`, `longitude`
@@ -247,7 +278,9 @@ One PR per step. Each step ships something visible and keeps CI green.
 - **Storage risk:** the first run after this migration changes *every* row. That creates roughly one table's worth of dead tuples on a 0.5 GB Neon project. Before merging, check current size (`SELECT pg_total_relation_size('analytics_propertylisting')`, adjusting for the table's actual `db_table`), and add a `--vacuum-every N` option that runs `vacuum_property_listing_table()` every N batches during the backfill.
 - Tests: mapping tests for the new columns in `test_services.py`.
 
-### PR 2 — New-owner tax estimate (M) — ship before Nov 3
+### PR 2 — New-owner tax estimate (M) — ship before Nov 3 — done
+
+*As built:* migration `0009` adds `TaxDistrictMillage` and `est_tax_current` / `est_tax_homestead` / `est_tax_no_homestead` (whole dollars; `est_tax_homestead` is null for parcels that can't be homesteaded). Rules live in `CURRENT_LAW` and `AMENDMENT_3`, switched by `AMENDMENT_3_STATUS`. The parcel page recomputes new-owner figures from the current just value, so they survive a per-parcel refresh. It shows the Amendment 3 scenario while the vote is pending, and after a pass it shows the new-resident scenario instead. Filter labels and the insights note now say "tax before exemptions".
 
 - Import `RP_MILLAGE_RATES` into a small `TaxDistrictMillage(district_code, year, total_mills, school_mills)` table. Classify school levies by `TAX_AUTH_NAME`; check the real values first.
 - `services/tax_estimate.py`:
