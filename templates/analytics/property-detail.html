@@ -123,6 +123,69 @@
                 </div>
             </div>
 
+            <!-- New-owner tax estimate -->
+            {% if tax_outlook %}
+            <div class="card" id="taxes">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">Your Property Taxes If You Buy</h2>
+                    <p class="text-sm text-charcoal-500 mt-1">Florida resets a home's taxable value after it sells, so the current owner's bill won't be yours.</p>
+                </div>
+                <div class="card-body space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="rounded-lg border border-charcoal-100 p-4">
+                            <p class="text-sm text-charcoal-500">Current owner pays</p>
+                            {% if tax_outlook.current_owner is not None %}
+                            <p class="text-2xl font-semibold text-charcoal-800 mt-1">{{ tax_outlook.current_owner|dollars }}<span class="text-sm font-normal text-charcoal-500">/yr</span></p>
+                            <p class="text-xs text-charcoal-500 mt-1">{% if property.homestead_cap %}With their homestead exemption and Save Our Homes cap{% else %}At today's taxable value{% endif %}</p>
+                            {% else %}
+                            <p class="text-2xl font-semibold text-charcoal-400 mt-1">Unknown</p>
+                            {% endif %}
+                        </div>
+                        {% if tax_outlook.homestead is not None %}
+                        <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
+                            <p class="text-sm font-medium text-primary-700">You, living here</p>
+                            <p class="text-2xl font-semibold text-charcoal-900 mt-1">{{ tax_outlook.homestead|dollars }}<span class="text-sm font-normal text-charcoal-500">/yr</span></p>
+                            <p class="text-xs text-charcoal-600 mt-1">
+                                With homestead{% if tax_outlook.homestead_increase > 0 %}: {{ tax_outlook.homestead_difference|dollars }} more than today{% elif tax_outlook.homestead_increase < 0 %}: {{ tax_outlook.homestead_difference|dollars }} less than today{% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <div class="rounded-lg border border-charcoal-100 p-4">
+                            <p class="text-sm text-charcoal-500">{% if tax_outlook.homestead is not None %}As a rental or second home{% else %}A new owner{% endif %}</p>
+                            <p class="text-2xl font-semibold text-charcoal-800 mt-1">{{ tax_outlook.no_homestead|dollars }}<span class="text-sm font-normal text-charcoal-500">/yr</span></p>
+                            <p class="text-xs text-charcoal-500 mt-1">No homestead exemption</p>
+                        </div>
+                    </div>
+
+                    {% if tax_outlook.alternative %}
+                    <div class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-charcoal-700">
+                        <p><span class="font-semibold">{{ tax_outlook.alternative.label }}:</span> about {{ tax_outlook.alternative.amount|dollars }}/yr if you live here.</p>
+                        <p class="text-xs text-charcoal-600 mt-1">{{ tax_outlook.alternative.note }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if tax_outlook.homestead is not None %}
+                    <div class="flex items-start gap-3 text-sm text-charcoal-700">
+                        <svg class="w-5 h-5 flex-shrink-0 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p>
+                            <span class="font-semibold">Homestead isn't automatic.</span>
+                            File with the Property Appraiser by March 1 of the year after you close.
+                            <a href="https://www.pcpao.gov/homestead-exemption" target="_blank" rel="noopener" class="text-primary-600 hover:text-primary-700 font-medium">How to file</a>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <p class="text-xs text-charcoal-500 leading-relaxed">
+                        Estimated {{ tax_outlook.tax_year }} bill. Assessed at the county's {% if property.roll_year %}{{ property.roll_year }} {% endif %}just value of {{ tax_outlook.just_value|dollars }},
+                        using {{ tax_outlook.millage_description|lower }} millage for tax district {{ property.tax_district }} ({{ tax_outlook.millage.total|floatformat:4 }} mills){% if tax_outlook.special_assessment %}, plus {{ tax_outlook.special_assessment|dollars }} in non-ad valorem assessments{% endif %}.
+                        Just value is the county's January 1 estimate and often runs below recent sale prices. If you pay more, expect a higher bill.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Valuation Card -->
             <div class="card">
                 <div class="card-header">
@@ -154,7 +217,11 @@
                             <div class="space-y-3">
                                 {% if property.tax_amount %}
                                 <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
+                                    {% if property.tax_status == 'From PCPAO' %}
+                                    <span class="text-charcoal-600" title="The county's tax figure before any exemptions. It is not what the current owner or a buyer pays.">Tax Before Exemptions</span>
+                                    {% else %}
                                     <span class="text-charcoal-600">Annual Tax</span>
+                                    {% endif %}
                                     <span class="font-semibold text-charcoal-800">${{ property.tax_amount|floatformat:2 }}</span>
                                 </div>
                                 {% endif %}
@@ -207,6 +274,11 @@
                         <p class="font-display text-display-md text-primary-600">{{ property.market_value|format_price }}</p>
                         {% if property.assessed_value %}
                         <p class="text-sm text-charcoal-400 mt-1">Assessed: ${{ property.assessed_value|floatformat:0 }}</p>
+                        {% endif %}
+                        {% if tax_outlook %}
+                        <a href="#taxes" class="inline-block text-sm text-primary-600 hover:text-primary-700 font-medium mt-2">
+                            Est. taxes if you buy: {% if tax_outlook.homestead is not None %}{{ tax_outlook.homestead|dollars }}{% else %}{{ tax_outlook.no_homestead|dollars }}{% endif %}/yr
+                        </a>
                         {% endif %}
                     </div>
 

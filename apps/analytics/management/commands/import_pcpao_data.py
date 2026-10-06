@@ -4,11 +4,11 @@ Import PCPAO bulk data into the database.
 Usage:
     python manage.py import_pcpao_data
     python manage.py import_pcpao_data --file /path/to/RP_PROPERTY_INFO.csv
+    python manage.py import_pcpao_data --file RP_PROPERTY_INFO.csv --millage-file RP_MILLAGE_RATES.csv
     python manage.py import_pcpao_data --quiet
     python manage.py import_pcpao_data --vacuum-every 10
 """
 
-import codecs
 import csv
 import logging
 import os
@@ -19,10 +19,14 @@ from django.core.management.base import BaseCommand
 
 from apps.analytics.services.pcpao_importer import (
     bulk_upsert_properties,
+    csv_encoding,
     download_pcpao_file,
+    import_millage_rates,
     map_csv_row_to_property,
+    stored_millage,
     vacuum_property_listing_table,
 )
+from apps.analytics.services.tax_estimate import Millage
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +39,14 @@ class Command(BaseCommand):
             '--file',
             type=str,
             help='Path to local CSV file (skips download)',
+        )
+        parser.add_argument(
+            '--millage-file',
+            type=str,
+            help=(
+                'Path to a local RP_MILLAGE_RATES CSV for tax estimates. With --file and no '
+                '--millage-file, the millage already in the database is used.'
+            ),
         )
         parser.add_argument(
             '--quiet',
@@ -77,16 +89,20 @@ class Command(BaseCommand):
         # Get CSV file path
         if options['file']:
             csv_path = options['file']
-            if not os.path.exists(csv_path):
-                self.stderr.write(f'File not found: {csv_path}')
-                return
-            self._process_csv(csv_path, quiet, limit, vacuum_every)
+            millage_path = options.get('millage_file')
+            for path in (csv_path, millage_path):
+                if path and not os.path.exists(path):
+                    self.stderr.write(f'File not found: {path}')
+                    return
+            millage = import_millage_rates(millage_path) if millage_path else stored_millage()
+            self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet))
         else:
             if not quiet:
-                self.stdout.write('Downloading RP_PROPERTY_INFO.csv...')
+                self.stdout.write('Downloading RP_MILLAGE_RATES.csv and RP_PROPERTY_INFO.csv...')
             with tempfile.TemporaryDirectory() as tmpdir:
+                millage = import_millage_rates(download_pcpao_file('RP_MILLAGE_RATES', tmpdir))
                 csv_path = download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
-                self._process_csv(csv_path, quiet, limit, vacuum_every)
+                self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet))
 
         # Cached market insights describe the old data. They live for a day
         # to save database egress, so drop them now rather than serve them.
@@ -95,21 +111,31 @@ class Command(BaseCommand):
         except Exception:
             logger.warning('Could not clear the cache after the import', exc_info=True)
 
-    def _process_csv(self, csv_path: str, quiet: bool, limit: int = None, vacuum_every: int = None):
+    def _millage_or_none(self, millage: dict[str, Millage], quiet: bool) -> dict[str, Millage] | None:
+        if millage:
+            return millage
+        if not quiet:
+            self.stdout.write('No millage rates loaded; keeping existing tax estimates.')
+        return None
+
+    def _process_csv(
+        self,
+        csv_path: str,
+        quiet: bool,
+        limit: int = None,
+        vacuum_every: int = None,
+        millage: dict[str, Millage] | None = None,
+    ):
         """Process CSV file and import records."""
         properties = []
         count = 0
         skipped = 0
         batches = 0
 
-        with open(csv_path, 'rb') as raw_file:
-            has_utf8_bom = raw_file.read(len(codecs.BOM_UTF8)) == codecs.BOM_UTF8
-        encoding = 'utf-8-sig' if has_utf8_bom else 'cp1252'
-
-        with open(csv_path, encoding=encoding) as f:
+        with open(csv_path, encoding=csv_encoding(csv_path)) as f:
             reader = csv.DictReader(f)
             for row in reader:
-                prop = map_csv_row_to_property(row)
+                prop = map_csv_row_to_property(row, millage)
                 # Need parcel_id plus required/search-critical address fields.
                 # Vacant/orphan parcels with incomplete site data are skipped.
                 if not (prop.get('parcel_id') and prop.get('address') and prop.get('city') and prop.get('zip_code')):

@@ -97,7 +97,7 @@ pip install -r requirements.txt
 
 copy .env.example .env
 python manage.py migrate
-python manage.py import_pcpao_data --file apps/analytics/fixtures/sample_pcpao_data.csv
+python manage.py import_pcpao_data --file apps/analytics/fixtures/sample_pcpao_data.csv --millage-file apps/analytics/fixtures/sample_millage_rates.csv
 
 npm install
 npm run build
@@ -123,6 +123,7 @@ pytest tests/e2e/browser/
 - PCPAO records are public assessment records, not MLS transactions.
 - Bedrooms and bathrooms are not reliable in the bulk public dataset, so they are not used as core market signals.
 - The dashboard is exploratory analysis, not investment advice or a predictive appraisal model.
+- New-owner tax estimates assess the home at the county's just value with the latest adopted millage. A buyer who pays more than just value, or buys after millage rates change, will see a different bill.
 - Interactive pandas/numpy charts are capped to keep serverless responses responsive; exact headline KPIs are computed against the full filtered queryset.
 
 ## License
