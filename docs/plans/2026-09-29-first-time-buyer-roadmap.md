@@ -5,7 +5,7 @@
 
 ## Status (2026-10-08)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search) is built. Still to do: PR 5, then PR 6 before any traffic push, then PR 7–11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search) and PR 5 (saved homes and compare) are built. Still to do: PR 6 before any traffic push, then PR 7–11.
 
 What changed around the roadmap:
 
@@ -315,7 +315,9 @@ One PR per step. Each step ships something visible and keeps CI green.
 - `services/risk_flags.py`: `build_risk_flags(listing) -> list[RiskFlag(level, title, why, what_to_ask)]`, pure and unit-tested. Covers evac zone, waterfront/seawall, elevation cert, subsidence, contamination, historic landmark, pre-2002 build, older condo.
 - `apply_filters`: add `evac_zone`, `exclude_subsidence`, and `max_est_tax`. Add matching `SEARCH_FIELDS` entries, chips and form fields.
 
-### PR 5 — Saved homes + compare (S)
+### PR 5 — Saved homes + compare (S) — built
+
+*As built:* `services/compare.py` loads up to six parcels in two queries and reuses `build_tax_outlook` and `build_risk_flags`. The page shows the current owner's tax next to the buyer's, with and without homestead, and lists each home's flags with a link to the parcel page for what to ask. Monthly payment and cash to close come from the same browser math as the parcel page (`initCompare` in `affordability.js`), with one set of loan terms for every home, each priced at its just value. The saved list moved into `common.js`, which the Save button now calls; it keeps the header's "Saved (n)" link pointed at the compare URL. Opening `/analytics/compare/` with no IDs sends the browser to its own saved homes. Remove takes a home off the list and reloads with the other columns. Saved IDs the county no longer has are counted in a note but never pruned from the browser, so a database wipe can't empty anyone's list. The page is `noindex` and disallowed in `robots.txt`. Lender fees ($4,000) are now `DEFAULT_OTHER_COSTS` in `lending_config.py`, shared by both pages.
 
 - `GET /analytics/compare/?ids=…`: cap at 6 IDs, reuse the tax, risk and calculator services, and render a side-by-side table.
 - Nav link "Saved (n)" reads `localStorage['savedProperties']` and builds the compare URL.

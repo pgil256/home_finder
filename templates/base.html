@@ -63,6 +63,9 @@
                     <a href="{% url 'insights' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'insights' or request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         Explore the market
                     </a>
+                    <a href="{% url 'compare' %}" data-saved-link="{% url 'compare' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'compare' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
+                        Saved<span data-saved-count></span>
+                    </a>
                     <a href="{% url 'about' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'about' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         About
                     </a>
@@ -99,6 +102,9 @@
                 </a>
                 <a href="{% url 'insights' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'insights' or request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     Explore the market
+                </a>
+                <a href="{% url 'compare' %}" data-saved-link="{% url 'compare' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'compare' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
+                    Saved<span data-saved-count></span>
                 </a>
                 <a href="{% url 'about' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'about' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     About

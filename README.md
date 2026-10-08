@@ -36,6 +36,7 @@ A parcel drilldown and the responsive mobile layout:
 | `/analytics/` | Filter-builder form that redirects into `/insights/` |
 | `/analytics/dashboard/` | Legacy URL that redirects to `/insights/` |
 | `/analytics/property/<parcel_id>/` | Parcel drilldown used to audit sample parcels and outlier rows |
+| `/analytics/compare/?ids=<parcel IDs>` | Saved homes side by side (up to 6): value, new-owner tax, monthly cost and risk flags. The list lives in the browser's `localStorage`; the header's Saved link builds the URL |
 | `/analytics/download/excel/` | Analysis workbook: Overview, City Segments, Property Type Segments, Outliers, Sample Parcels, Methodology |
 | `/analytics/download/pdf/` | PDF insight brief with filters, exact KPIs, takeaways, segments, outliers, and methodology |
 

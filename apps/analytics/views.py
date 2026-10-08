@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST
 
 from .models import PropertyListing, TaxDistrictMillage
 from .services.address_lookup import LOOKUP_LIMIT, lookup_parcels
+from .services.compare import COMPARE_LIMIT, ComparedHome, build_comparison
 from .services.exports import generate_excel_response, generate_pdf_response
 from .services.filtering import (
     PINELLAS_CITIES,
@@ -356,6 +357,42 @@ def property_detail(request, parcel_id: str):
             'affordability': _parcel_affordability(tax_outlook),
             'risk_flags': build_risk_flags(property_obj),
             'has_risk_data': has_risk_data(property_obj),
+        },
+    )
+
+
+def _compare_affordability(homes: list[ComparedHome]) -> dict | None:
+    """Seed data for the compare page's cost rows, or None if no home has a tax estimate.
+
+    `homes` lines up with the table's columns; a home without an estimate is null.
+    """
+    if not any(home.tax_outlook for home in homes):
+        return None
+    config = affordability_config()
+    config['homes'] = [
+        {
+            'price': float(home.tax_outlook.just_value),
+            'taxHomestead': home.tax_outlook.homestead,
+            'taxNoHomestead': home.tax_outlook.no_homestead,
+        }
+        if home.tax_outlook
+        else None
+        for home in homes
+    ]
+    return config
+
+
+def compare_homes(request):
+    """Saved homes side by side. The browser keeps the list and sends it as `?ids=`."""
+    comparison = build_comparison(request.GET.get('ids'))
+    return render(
+        request,
+        'analytics/compare.html',
+        {
+            'comparison': comparison,
+            'homes': comparison.homes,
+            'affordability': _compare_affordability(comparison.homes),
+            'compare_limit': COMPARE_LIMIT,
         },
     )
 

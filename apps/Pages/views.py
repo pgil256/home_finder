@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 ROBOTS_TXT = """User-agent: *
 Disallow: /insights/?
 Disallow: /lookup/?
+Disallow: /analytics/compare/
 Disallow: /analytics/download/
 Disallow: /analytics/dashboard/
 Disallow: /scraper/
