@@ -288,7 +288,7 @@
                             <label for="calc-other" class="label">Lender and Other Fees</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
-                                <input type="number" id="calc-other" data-calc-input="otherCosts" value="4000" min="0" step="100" class="input pl-8">
+                                <input type="number" id="calc-other" data-calc-input="otherCosts" value="{{ affordability.otherCosts }}" min="0" step="100" class="input pl-8">
                             </div>
                             <p class="text-xs text-charcoal-500 mt-1">Origination, appraisal, survey, inspections and recording. A starting guess; your Loan Estimate has the real figures.</p>
                         </div>
@@ -652,47 +652,27 @@
 {{ block.super }}
 {% if affordability %}<script src="{% static 'js/dist/affordability.bundle.js' %}"></script>{% endif %}
 <script>
-    function toggleSave(parcelId) {
-        const saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+    // The saved list itself lives in common.js, which also keeps the
+    // "Saved" link in the header pointing at the compare page.
+    function showSaved(isSaved) {
         const btn = document.getElementById('save-btn');
-        const icon = btn.querySelector('svg');
-        const label = btn.querySelector('span');
-        const idx = saved.indexOf(parcelId);
-
-        if (idx === -1) {
-            saved.push(parcelId);
-            icon.setAttribute('fill', 'currentColor');
-            label.textContent = 'Saved';
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-coral');
-            showToast('Property saved to your list');
-        } else {
-            saved.splice(idx, 1);
-            icon.setAttribute('fill', 'none');
-            label.textContent = 'Save Property';
-            btn.classList.remove('btn-coral');
-            btn.classList.add('btn-primary');
-            showToast('Property removed from your list');
+        if (!btn) {
+            return;
         }
-        localStorage.setItem('savedProperties', JSON.stringify(saved));
+        btn.querySelector('svg').setAttribute('fill', isSaved ? 'currentColor' : 'none');
+        btn.querySelector('span').textContent = isSaved ? 'Saved' : 'Save Property';
+        btn.classList.toggle('btn-primary', !isSaved);
+        btn.classList.toggle('btn-coral', isSaved);
+    }
+
+    function toggleSave(parcelId) {
+        const isSaved = window.HomeFinder.toggleSavedHome(parcelId);
+        showSaved(isSaved);
+        showToast(isSaved ? 'Saved. Find it under Saved at the top of the page.' : 'Property removed from your list');
     }
 
     // Restore saved state on load
-    (function() {
-        const saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
-        const parcelId = '{{ property.parcel_id }}';
-        if (saved.includes(parcelId)) {
-            const btn = document.getElementById('save-btn');
-            if (btn) {
-                const icon = btn.querySelector('svg');
-                const label = btn.querySelector('span');
-                icon.setAttribute('fill', 'currentColor');
-                label.textContent = 'Saved';
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-coral');
-            }
-        }
-    })();
+    showSaved(window.HomeFinder.readSavedHomes().includes('{{ property.parcel_id }}'));
 
     function shareProperty() {
         if (navigator.share) {

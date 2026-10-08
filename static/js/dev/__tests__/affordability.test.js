@@ -5,6 +5,7 @@ const {
   formatDollars,
   initBudgetSearch,
   initCalculator,
+  initCompare,
   loanNotes,
   maxPriceForBudget,
   monthlyCost,
@@ -33,6 +34,7 @@ const config = {
   rateAsOf: 'Oct 8, 2026',
   insuranceRatePct: 1.0,
   budgetTaxRatePct: 1.8,
+  otherCosts: 4000,
   lending,
 };
 
@@ -376,5 +378,101 @@ describe('budget search', () => {
   test('does nothing on pages without the budget field', () => {
     document.body.innerHTML = '';
     expect(initBudgetSearch(document)).toBeNull();
+  });
+});
+
+describe('compare page', () => {
+  const house = { price: 282885, taxHomestead: 4777, taxNoHomestead: 5635 };
+  const condo = { price: 500000, taxHomestead: null, taxNoHomestead: 9960 };
+
+  function render(homes = [house, null, condo]) {
+    const cells = homes
+      .map((home, index) =>
+        home
+          ? `<span data-compare-home="${index}" data-compare-output="monthly"></span>
+             <span data-compare-home="${index}" data-compare-output="cashToClose"></span>`
+          : ''
+      )
+      .join('');
+    document.body.innerHTML = `
+      <div id="compare-homes">
+        <input data-calc-input="downPct" value="20">
+        <select data-calc-input="loanType">
+          <option value="conventional">Conventional</option><option value="fha">FHA</option>
+        </select>
+        <input data-calc-input="ratePct" value="7.40">
+        <input type="checkbox" data-calc-input="homestead" checked>
+        ${cells}
+      </div>
+      <script id="affordability-data" type="application/json">${JSON.stringify({ ...config, homes })}</script>`;
+    return initCompare(document);
+  }
+
+  const cell = (index, name) =>
+    document.querySelector(`[data-compare-home="${index}"][data-compare-output="${name}"]`).textContent;
+  const change = (name, apply) => {
+    const field = document.querySelector(`[data-calc-input="${name}"]`);
+    apply(field);
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  test('prices each home with the same math as the parcel page', () => {
+    const results = render();
+    const expected = monthlyCost({
+      price: 282885,
+      downPct: 20,
+      ratePct: 7.4,
+      annualTax: 4777,
+      annualInsurance: 2828.85,
+      lending,
+    });
+    expect(results[0].cost.total).toBeCloseTo(expected.total, 6);
+    expect(cell(0, 'monthly')).toBe(`${formatDollars(expected.total)}/mo`);
+    expect(cell(0, 'cashToClose')).toBe(
+      formatDollars(cashToClose(expected, { price: 282885, annualTax: 4777, annualInsurance: 2828.85, otherCosts: 4000 }).total)
+    );
+  });
+
+  test('skips homes with no tax estimate', () => {
+    expect(render()[1]).toBeNull();
+  });
+
+  test('homestead applies only where the home can take it', () => {
+    const [withHomestead, , condoBefore] = render();
+    expect(condoBefore.cost.tax).toBeCloseTo(9960 / 12, 6);
+
+    change('homestead', (field) => {
+      field.checked = false;
+    });
+    const rental = monthlyCost({
+      price: 282885,
+      downPct: 20,
+      ratePct: 7.4,
+      annualTax: 5635,
+      annualInsurance: 2828.85,
+      lending,
+    });
+    expect(rental.total).toBeGreaterThan(withHomestead.cost.total);
+    expect(cell(0, 'monthly')).toBe(`${formatDollars(rental.total)}/mo`);
+    expect(cell(2, 'monthly')).toBe(`${formatDollars(condoBefore.cost.total)}/mo`);
+  });
+
+  test('changing the loan reprices every home', () => {
+    render();
+    const before = [cell(0, 'monthly'), cell(2, 'monthly')];
+    change('loanType', (field) => {
+      field.value = 'fha';
+    });
+    expect(document.querySelector('[data-calc-input="downPct"]').value).toBe('3.5');
+    expect(cell(0, 'monthly')).not.toBe(before[0]);
+    expect(cell(2, 'monthly')).not.toBe(before[1]);
+  });
+
+  test('does nothing away from the compare page', () => {
+    document.body.innerHTML = `<script id="affordability-data" type="application/json">${JSON.stringify(config)}</script>`;
+    expect(initCompare(document)).toBeNull();
+    document.body.innerHTML = `<div id="compare-homes"></div>
+      <script id="affordability-data" type="application/json">${JSON.stringify(config)}</script>`;
+    expect(initCompare(document)).toBeNull();
   });
 });

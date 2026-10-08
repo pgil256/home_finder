@@ -9,6 +9,11 @@ const {
   LoadingButton,
   smoothScrollTo,
   debounce,
+  readSavedHomes,
+  compareUrl,
+  updateSavedLinks,
+  toggleSavedHome,
+  initComparePage,
 } = require('../common.js');
 
 describe('ToastManager', () => {
@@ -263,5 +268,104 @@ describe('smoothScrollTo', () => {
 
     smoothScrollTo(target);
     expect(window.scrollTo).toHaveBeenCalled();
+  });
+});
+
+describe('saved homes', () => {
+  const HOUSE = '36-30-16-78588-003-0060';
+  const CONDO = '07-31-15-00000-000-0010';
+  const save = (ids) => window.localStorage.setItem('savedProperties', JSON.stringify(ids));
+
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  test('reads the list the Save button writes', () => {
+    expect(readSavedHomes()).toEqual([]);
+    save([HOUSE, CONDO]);
+    expect(readSavedHomes()).toEqual([HOUSE, CONDO]);
+  });
+
+  test('treats unreadable storage as an empty list', () => {
+    window.localStorage.setItem('savedProperties', '{not json');
+    expect(readSavedHomes()).toEqual([]);
+    window.localStorage.setItem('savedProperties', '{"a": 1}');
+    expect(readSavedHomes()).toEqual([]);
+    save([HOUSE, 7, null, '']);
+    expect(readSavedHomes()).toEqual([HOUSE]);
+  });
+
+  test('builds the compare link from the list', () => {
+    expect(compareUrl('/analytics/compare/', [])).toBe('/analytics/compare/');
+    expect(compareUrl('/analytics/compare/', [HOUSE, CONDO])).toBe(`/analytics/compare/?ids=${HOUSE},${CONDO}`);
+    expect(compareUrl('/analytics/compare/', ['a&b'])).toBe('/analytics/compare/?ids=a%26b');
+  });
+
+  test('saving and removing a home updates the header link', () => {
+    document.body.innerHTML =
+      '<a href="/analytics/compare/" data-saved-link="/analytics/compare/">Saved<span data-saved-count></span></a>';
+    const link = document.querySelector('a');
+
+    updateSavedLinks();
+    expect(link.textContent).toBe('Saved');
+
+    expect(toggleSavedHome(HOUSE)).toBe(true);
+    expect(toggleSavedHome(CONDO)).toBe(true);
+    expect(link.textContent).toBe('Saved (2)');
+    expect(link.getAttribute('href')).toBe(`/analytics/compare/?ids=${HOUSE},${CONDO}`);
+
+    expect(toggleSavedHome(HOUSE)).toBe(false);
+    expect(readSavedHomes()).toEqual([CONDO]);
+    expect(link.textContent).toBe('Saved (1)');
+    expect(link.getAttribute('href')).toBe(`/analytics/compare/?ids=${CONDO}`);
+  });
+
+  describe('compare page', () => {
+    const page = (inner) => {
+      document.body.innerHTML = `<div data-compare-url="/analytics/compare/">${inner}</div>`;
+    };
+
+    test('an empty page loads this browser\'s saved homes', () => {
+      save([HOUSE, CONDO]);
+      page('<div data-compare-empty></div>');
+      const navigate = jest.fn();
+      initComparePage(navigate);
+      expect(navigate).toHaveBeenCalledWith(`/analytics/compare/?ids=${HOUSE},${CONDO}`);
+    });
+
+    test('an empty page stays put when nothing is saved', () => {
+      page('<div data-compare-empty></div>');
+      const navigate = jest.fn();
+      initComparePage(navigate);
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    test('a page of unknown homes does not reload itself', () => {
+      save([HOUSE]);
+      page('<div>These homes are gone</div>');
+      const navigate = jest.fn();
+      initComparePage(navigate);
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    test('Remove forgets the home and keeps the other columns', () => {
+      save([HOUSE, CONDO, 'not-on-this-page']);
+      page(`<button data-unsave="${HOUSE}"></button><button data-unsave="${CONDO}"></button>`);
+      const navigate = jest.fn();
+      initComparePage(navigate);
+
+      document.querySelector(`[data-unsave="${HOUSE}"]`).click();
+
+      expect(readSavedHomes()).toEqual([CONDO, 'not-on-this-page']);
+      expect(navigate).toHaveBeenCalledWith(`/analytics/compare/?ids=${CONDO}`);
+    });
+
+    test('does nothing on other pages', () => {
+      save([HOUSE]);
+      document.body.innerHTML = '<div data-compare-empty></div>';
+      const navigate = jest.fn();
+      initComparePage(navigate);
+      expect(navigate).not.toHaveBeenCalled();
+    });
   });
 });

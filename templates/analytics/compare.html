@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load property_filters %}
+
+{% block title %}Saved Homes - Pinellas Market Lens{% endblock %}
+{% block meta_description %}Compare the Pinellas County homes you've saved side by side: value, property taxes if you buy, monthly cost and what to check first.{% endblock %}
+{% block head_extra %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl space-y-6" id="compare-homes" data-compare-url="{% url 'compare' %}">
+    <div>
+        <h1 class="font-display text-display-sm text-charcoal-900">Saved homes</h1>
+        <p class="mt-2 text-charcoal-600">Your saved homes side by side. The list is kept in this browser, not in an account, and this page's link shows the same homes to anyone you send it to.</p>
+    </div>
+
+    {% if comparison.missing and homes %}
+    <p class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-charcoal-700" role="status">
+        {{ comparison.missing }} saved home{{ comparison.missing|pluralize:" isn't,s aren't" }} in the county record any more, so {{ comparison.missing|pluralize:"it isn't,they aren't" }} shown. The county may have retired or renumbered the parcel.
+    </p>
+    {% endif %}
+    {% if comparison.left_out %}
+    <p class="rounded-lg border border-charcoal-200 bg-white px-4 py-3 text-sm text-charcoal-700" role="status">
+        Showing the first {{ compare_limit }} of {{ comparison.requested }} saved homes. Remove one to make room for the next.
+    </p>
+    {% endif %}
+
+    {% if homes %}
+    {% if affordability %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="font-display font-semibold text-charcoal-800">Your loan</h2>
+            <p class="text-sm text-charcoal-500 mt-1">Used for every home's monthly payment and cash to close below.</p>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                    <label for="compare-down" class="label">Down Payment (%)</label>
+                    <input type="number" id="compare-down" data-calc-input="downPct" value="20" min="0" max="100" step="0.5" class="input">
+                </div>
+                <div>
+                    <label for="compare-loan-type" class="label">Loan Type</label>
+                    <select id="compare-loan-type" data-calc-input="loanType" class="select">
+                        <option value="conventional">Conventional</option>
+                        <option value="fha">FHA</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="compare-rate" class="label">Interest Rate (%)</label>
+                    <input type="number" id="compare-rate" data-calc-input="ratePct" value="{{ affordability.rate|floatformat:'2u' }}" min="0" max="25" step="0.01" class="input">
+                    <p class="text-xs text-charcoal-500 mt-1">Freddie Mac's 30-year average for the week of {{ affordability.rateAsOf }}.</p>
+                </div>
+            </div>
+            <label class="flex cursor-pointer items-center gap-2 mt-4">
+                <input type="checkbox" data-calc-input="homestead" checked class="checkbox">
+                <span class="text-sm text-charcoal-600">I'll live in the home and file for homestead</span>
+            </label>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-sm">
+                <caption class="sr-only">Saved homes compared</caption>
+                <thead>
+                    <tr class="border-b border-charcoal-100 align-top">
+                        <td class="sticky left-0 z-10 w-36 min-w-[9rem] bg-white px-4 py-4"></td>
+                        {% for home in homes %}
+                        <th scope="col" class="min-w-[13rem] px-4 py-4 font-normal">
+                            <a href="{% url 'property-detail' home.listing.parcel_id %}" class="font-semibold text-primary-600 hover:text-primary-700">{{ home.listing.address|default:"No street address on record" }}</a>
+                            <p class="mt-1 text-charcoal-500">{{ home.listing.city }}{% if home.listing.zip_code %} {{ home.listing.zip_code }}{% endif %}</p>
+                            <button type="button" data-unsave="{{ home.listing.parcel_id }}" class="mt-2 text-xs font-medium text-charcoal-500 underline hover:text-danger-600">Remove</button>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-charcoal-100">
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">Type</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 text-charcoal-800">{{ home.listing.property_type|clean_property_type }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">Just value</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 font-semibold text-charcoal-900">{% if home.listing.market_value %}{{ home.listing.market_value|dollars }}{% else %}<span class="font-normal text-charcoal-400">Not listed</span>{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">Living area</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 text-charcoal-800">
+                            {% if home.listing.building_sqft %}{{ home.listing.building_sqft|floatformat:"0g" }} sqft{% if home.listing.price_per_sqft %} <span class="text-charcoal-500">({{ home.listing.price_per_sqft|dollars }}/sqft)</span>{% endif %}{% else %}<span class="text-charcoal-400">Not on record</span>{% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">Year built</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 text-charcoal-800">{% if home.listing.year_built %}{{ home.listing.year_built }}{% else %}<span class="text-charcoal-400">Not on record</span>{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr class="bg-charcoal-50">
+                        <th scope="rowgroup" colspan="{{ homes|length|add:1 }}" class="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-charcoal-500">Property tax each year</th>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">Current owner pays</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 text-charcoal-800">{% if home.tax_outlook and home.tax_outlook.current_owner is not None %}{{ home.tax_outlook.current_owner|dollars }}{% else %}<span class="text-charcoal-400">Unknown</span>{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">You, living there</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 font-semibold text-charcoal-900">
+                            {% if not home.tax_outlook %}<span class="font-normal text-charcoal-400">No estimate</span>
+                            {% elif home.tax_outlook.homestead is None %}<span class="font-normal text-charcoal-500">Can't be homesteaded</span>
+                            {% else %}{{ home.tax_outlook.homestead|dollars }}{% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">As a rental or second home</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 text-charcoal-800">{% if home.tax_outlook %}{{ home.tax_outlook.no_homestead|dollars }}{% else %}<span class="text-charcoal-400">No estimate</span>{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+
+                    {% if affordability %}
+                    <tr class="bg-charcoal-50">
+                        <th scope="rowgroup" colspan="{{ homes|length|add:1 }}" class="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-charcoal-500">Cost to buy at just value</th>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">Monthly payment</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 font-semibold text-charcoal-900">
+                            {% if home.tax_outlook %}<span data-compare-home="{{ forloop.counter0 }}" data-compare-output="monthly">&mdash;</span>
+                            {% else %}<span class="font-normal text-charcoal-400">No estimate</span>{% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">Cash to close</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 text-charcoal-800">
+                            {% if home.tax_outlook %}<span data-compare-home="{{ forloop.counter0 }}" data-compare-output="cashToClose">&mdash;</span>
+                            {% else %}<span class="text-charcoal-400">No estimate</span>{% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endif %}
+
+                    <tr class="bg-charcoal-50">
+                        <th scope="rowgroup" colspan="{{ homes|length|add:1 }}" class="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-charcoal-500">What to check before you buy</th>
+                    </tr>
+                    <tr class="align-top">
+                        <th scope="row" class="sticky left-0 z-10 bg-white px-4 py-3 font-medium text-charcoal-600">From the county record</th>
+                        {% for home in homes %}
+                        <td class="px-4 py-3 text-charcoal-800">
+                            {% if home.risk_flags %}
+                            <ul class="space-y-2">
+                                {% for flag in home.risk_flags %}
+                                <li class="flex items-start gap-2">
+                                    <span class="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full {% if flag.level == 'high' %}bg-danger-500{% elif flag.level == 'medium' %}bg-warning-500{% elif flag.level == 'good' %}bg-success-500{% else %}bg-charcoal-300{% endif %}" aria-hidden="true"></span>
+                                    <span>{% if flag.level == 'high' %}<span class="font-semibold text-danger-700">Check first:</span> {% endif %}{{ flag.title }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <a href="{% url 'property-detail' home.listing.parcel_id %}#risks" class="mt-2 inline-block text-xs font-medium text-primary-600 hover:text-primary-700">What to ask about each</a>
+                            {% elif home.has_risk_data %}
+                            <span class="text-charcoal-600">Nothing flagged</span>
+                            {% else %}
+                            <span class="text-charcoal-400">Not in the record yet</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="text-xs text-charcoal-500 leading-relaxed">
+        Just value is the county's January 1 estimate, not an asking price, and often runs below recent sale prices.
+        {% if affordability %}
+        Monthly payment covers principal, interest, property tax, mortgage insurance where it applies, and homeowners insurance at a placeholder {{ affordability.insuranceRatePct }}% of the price a year, on a 30-year loan. It leaves out HOA or condo fees and flood insurance.
+        Cash to close adds Florida's mortgage taxes, first-year insurance, three months of escrow and ${{ affordability.otherCosts|floatformat:"0g" }} in lender fees to the down payment.
+        Open a home to enter its list price and your own quotes.
+        {% endif %}
+        The flags are prompts for your inspections and insurance quotes, not findings.
+    </p>
+    {% if homes|length == 1 %}
+    <p class="text-sm text-charcoal-600">Save another home to see them side by side. <a href="{% url 'lookup' %}" class="font-semibold text-primary-600 hover:text-primary-700">Look up a home <span aria-hidden="true">&rarr;</span></a></p>
+    {% endif %}
+
+    {% else %}
+    <div class="rounded-lg border border-charcoal-100 bg-white p-6 shadow-soft-sm" role="status"{% if not comparison.requested %} data-compare-empty{% endif %}>
+        {% if comparison.requested %}
+        <h2 class="font-display text-lg font-semibold text-charcoal-800">These homes aren't in the county record any more</h2>
+        <p class="mt-2 text-sm text-charcoal-600">The county may have retired or renumbered the parcels. Look the address up again to find the current record.</p>
+        {% else %}
+        <h2 class="font-display text-lg font-semibold text-charcoal-800">No saved homes yet</h2>
+        <p class="mt-2 text-sm text-charcoal-600">Open a home and choose Save Property. Saved homes show up here, side by side, with what each would cost you.</p>
+        {% endif %}
+        <p class="mt-4 text-sm">
+            <a href="{% url 'lookup' %}" class="font-semibold text-primary-600 hover:text-primary-700">Look up a home <span aria-hidden="true">&rarr;</span></a>
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% if affordability %}{{ affordability|json_script:"affordability-data" }}{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+{% if affordability %}<script src="{% static 'js/dist/affordability.bundle.js' %}"></script>{% endif %}
+{% endblock %}

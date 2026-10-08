@@ -264,6 +264,13 @@ function readConfig(documentRef) {
   }
 }
 
+// FHA's selling point is the low down payment, so start there.
+function startFhaAtMinimumDown(fields, lending) {
+  if (fields.loanType.value === 'fha' && toNumber(fields.downPct.value) >= 20) {
+    fields.downPct.value = lending.fhaMinDownPct;
+  }
+}
+
 function initCalculator(documentRef = document) {
   const root = documentRef.getElementById('cost-calculator');
   const config = readConfig(documentRef);
@@ -366,12 +373,56 @@ function initCalculator(documentRef = document) {
       edited.tax = false;
     });
   }
-  fields.loanType.addEventListener('change', () => {
-    // FHA's selling point is the low down payment, so start there.
-    if (fields.loanType.value === 'fha' && toNumber(fields.downPct.value) >= 20) {
-      fields.downPct.value = lending.fhaMinDownPct;
-    }
-  });
+  fields.loanType.addEventListener('change', () => startFhaAtMinimumDown(fields, lending));
+  root.addEventListener('input', update);
+  root.addEventListener('change', update);
+  return update();
+}
+
+// The compare page: one set of loan terms, applied to each saved home at its
+// just value. `config.homes` lines up with the table's columns, and a home
+// with no tax estimate is null.
+function initCompare(documentRef = document) {
+  const root = documentRef.getElementById('compare-homes');
+  const config = readConfig(documentRef);
+  if (!root || !config || !Array.isArray(config.homes)) {
+    return null;
+  }
+  const { lending } = config;
+  const field = (name) => root.querySelector(`[data-calc-input="${name}"]`);
+  const fields = {
+    downPct: field('downPct'),
+    loanType: field('loanType'),
+    ratePct: field('ratePct'),
+    homestead: field('homestead'),
+  };
+
+  function update() {
+    return config.homes.map((home, index) => {
+      if (!home) {
+        return null;
+      }
+      const inputs = {
+        price: home.price,
+        downPct: toNumber(fields.downPct.value),
+        ratePct: toNumber(fields.ratePct.value),
+        loanType: fields.loanType.value,
+        annualTax: fields.homestead.checked && home.taxHomestead !== null ? home.taxHomestead : home.taxNoHomestead,
+        annualInsurance: (home.price * config.insuranceRatePct) / 100,
+        otherCosts: config.otherCosts,
+        lending,
+      };
+      const cost = monthlyCost(inputs);
+      const cash = cashToClose(cost, inputs);
+      const outputs = { monthly: `${formatDollars(cost.total)}/mo`, cashToClose: formatDollars(cash.total) };
+      root.querySelectorAll(`[data-compare-home="${index}"]`).forEach((node) => {
+        node.textContent = outputs[node.getAttribute('data-compare-output')];
+      });
+      return { cost, cash };
+    });
+  }
+
+  fields.loanType.addEventListener('change', () => startFhaAtMinimumDown(fields, lending));
   root.addEventListener('input', update);
   root.addEventListener('change', update);
   return update();
@@ -423,6 +474,7 @@ function initBudgetSearch(documentRef = document) {
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     initCalculator(document);
+    initCompare(document);
     initBudgetSearch(document);
   });
 }
@@ -435,6 +487,7 @@ if (typeof module !== 'undefined' && module.exports) {
     formatDollars,
     initBudgetSearch,
     initCalculator,
+    initCompare,
     loanNotes,
     maxPriceForBudget,
     monthlyCost,

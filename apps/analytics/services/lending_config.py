@@ -53,6 +53,9 @@ BUDGET_TAX_RATE_PCT = 1.8
 # A placeholder: Florida premiums vary widely with roof age, construction and
 # distance from the water, and flood cover is separate.
 INSURANCE_RATE_PCT = 1.0
+# Origination, appraisal, survey, inspections and recording. A starting guess
+# for cash to close; the buyer's Loan Estimate has the real figures.
+DEFAULT_OTHER_COSTS = 4_000
 
 
 @dataclass(frozen=True)
@@ -97,6 +100,7 @@ def affordability_config(today: date | None = None) -> dict:
         'rateAsOf': f'{quote.as_of:%b} {quote.as_of.day}, {quote.as_of.year}',
         'insuranceRatePct': INSURANCE_RATE_PCT,
         'budgetTaxRatePct': BUDGET_TAX_RATE_PCT,
+        'otherCosts': DEFAULT_OTHER_COSTS,
         'lending': {
             'limitsYear': limits_year,
             'conformingLimit': limits['conforming'],

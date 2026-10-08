@@ -326,6 +326,91 @@ function debounce(func, wait = 300) {
 }
 
 // ============================================
+// Saved Homes
+// ============================================
+
+// The Save button on a parcel page keeps parcel IDs in this browser. There
+// are no accounts, so the compare page gets the list in its query string.
+const SAVED_HOMES_KEY = 'savedProperties';
+
+function readSavedHomes() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(SAVED_HOMES_KEY) || '[]');
+    return Array.isArray(saved) ? saved.filter((id) => typeof id === 'string' && id) : [];
+  } catch (error) {
+    // Storage is blocked (private browsing) or holds something unreadable.
+    return [];
+  }
+}
+
+function writeSavedHomes(ids) {
+  try {
+    window.localStorage.setItem(SAVED_HOMES_KEY, JSON.stringify(ids));
+  } catch (error) {
+    // Nothing to do: the list just won't outlive the page.
+  }
+}
+
+function compareUrl(baseUrl, ids) {
+  return ids.length ? `${baseUrl}?ids=${ids.map(encodeURIComponent).join(',')}` : baseUrl;
+}
+
+// Point every "Saved" link at the compare page for the current list.
+function updateSavedLinks() {
+  const ids = readSavedHomes();
+  document.querySelectorAll('[data-saved-link]').forEach((link) => {
+    link.setAttribute('href', compareUrl(link.getAttribute('data-saved-link'), ids));
+    const count = link.querySelector('[data-saved-count]');
+    if (count) {
+      count.textContent = ids.length ? ` (${ids.length})` : '';
+    }
+  });
+  return ids;
+}
+
+// Returns true if the home is saved after the call.
+function toggleSavedHome(parcelId) {
+  const ids = readSavedHomes();
+  const index = ids.indexOf(parcelId);
+  if (index === -1) {
+    ids.push(parcelId);
+  } else {
+    ids.splice(index, 1);
+  }
+  writeSavedHomes(ids);
+  updateSavedLinks();
+  return index === -1;
+}
+
+function initComparePage(navigate = (url) => window.location.replace(url)) {
+  const page = document.querySelector('[data-compare-url]');
+  if (!page) {
+    return;
+  }
+  const baseUrl = page.getAttribute('data-compare-url');
+
+  // Reached without a list (a typed URL, or a link from before anything was
+  // saved): go to this browser's saved homes.
+  const saved = readSavedHomes();
+  if (page.querySelector('[data-compare-empty]') && saved.length) {
+    navigate(compareUrl(baseUrl, saved));
+    return;
+  }
+
+  const buttons = Array.from(page.querySelectorAll('[data-unsave]'));
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const parcelId = button.getAttribute('data-unsave');
+      writeSavedHomes(readSavedHomes().filter((id) => id !== parcelId));
+      // Keep the other columns as they are. The page may be someone else's
+      // shared link, so they aren't necessarily this browser's saved homes.
+      const remaining = buttons.map((other) => other.getAttribute('data-unsave')).filter((id) => id !== parcelId);
+      navigate(compareUrl(baseUrl, remaining));
+    });
+  });
+}
+
+// ============================================
 // Initialize Everything
 // ============================================
 
@@ -338,6 +423,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize form enhancements
   initFormEnhancements();
+
+  // Saved homes: nav link count and the compare page
+  updateSavedLinks();
+  initComparePage();
 
   // Legacy support for learn more button
   const learnMoreButton = document.getElementById('learnMoreButton');
@@ -365,7 +454,12 @@ if (typeof module !== 'undefined' && module.exports) {
     LoadingButton,
     smoothScrollTo,
     copyToClipboard,
-    debounce
+    debounce,
+    readSavedHomes,
+    compareUrl,
+    updateSavedLinks,
+    toggleSavedHome,
+    initComparePage
   };
 }
 
@@ -376,5 +470,7 @@ window.HomeFinder = {
   LoadingButton: LoadingButton,
   smoothScrollTo: smoothScrollTo,
   copyToClipboard: copyToClipboard,
-  debounce: debounce
+  debounce: debounce,
+  readSavedHomes: readSavedHomes,
+  toggleSavedHome: toggleSavedHome
 };
