@@ -142,6 +142,33 @@
                     <span class="text-sm font-medium text-primary-600" id="price-range-display">$0 - $2,000,000+</span>
                 </div>
 
+                <!-- Monthly budget -->
+                <div class="rounded-lg border border-charcoal-100 bg-charcoal-50 p-4 mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="budget-monthly" class="label">Or Start From a Monthly Budget</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number" id="budget-monthly" class="input pl-8" placeholder="e.g., 2800" min="0" step="50">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="budget-down-pct" class="label">Down Payment</label>
+                            <select id="budget-down-pct" class="select">
+                                <option value="3.5">3.5% (FHA)</option>
+                                <option value="5">5%</option>
+                                <option value="10" selected>10%</option>
+                                <option value="20">20%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="text-sm text-primary-700 font-medium mt-3" id="budget-result" aria-live="polite"></p>
+                    <p class="text-xs text-charcoal-500 mt-1">
+                        Covers the mortgage, mortgage insurance, property tax at about {{ affordability.budgetTaxRatePct }}% of the price a year and homeowners insurance at about {{ affordability.insuranceRatePct }}%, with no HOA fee.
+                        Market value is the county's estimate, and asking prices often run higher.
+                    </p>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="min_value" class="label">Minimum Market Value</label>
@@ -380,6 +407,8 @@
 
 {% block scripts %}
 {{ block.super }}
+{{ affordability|json_script:"affordability-data" }}
+<script src="{% static 'js/dist/affordability.bundle.js' %}"></script>
 <script>
     // Price display update with inline validation
     function updatePriceDisplay() {
@@ -453,6 +482,7 @@
 
         // Reset price display
         document.getElementById('price-range-display').textContent = '$0 - No limit';
+        document.getElementById('budget-result').textContent = '';
 
         // Hide advanced filters
         document.getElementById('advanced-filters').classList.add('hidden');

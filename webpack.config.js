@@ -9,6 +9,7 @@ module.exports = {
     common: "./static/js/dev/common.js",
     mobile: "./static/js/dev/mobile.js",
     marketInsights: "./static/js/dev/marketInsights.js",
+    affordability: "./static/js/dev/affordability.js",
   },
   output: {
     filename: "[name].bundle.js",
