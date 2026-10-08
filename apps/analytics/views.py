@@ -7,10 +7,14 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpRequest, HttpResponse, QueryDict
+from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict
+from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET, require_POST
+
+from home_finder.caching import cdn_cache
 
 from .models import PropertyListing, TaxDistrictMillage
 from .services.address_lookup import LOOKUP_LIMIT, lookup_parcels
@@ -47,8 +51,6 @@ logger = logging.getLogger(__name__)
 
 # Form fields whose names already match the dashboard's apply_filters params.
 # property_type is handled separately because it's multi-value.
-SEARCH_SESSION_KEY = 'last_property_search'
-
 SEARCH_FIELDS = (
     'q',
     'city',
@@ -95,20 +97,14 @@ def _search_params_from_values(values: dict[str, str | list[str]]) -> list[tuple
     return params
 
 
-def _initial_search_values(request) -> dict[str, str | list[str]]:
-    if any(field in request.GET for field in (*SEARCH_FIELDS, 'property_type')):
-        values = _search_values_from_querydict(request.GET)
-        request.session[SEARCH_SESSION_KEY] = values
-        return values
+def _cache_busted(url: str, param: str) -> str:
+    """Add a timestamp so a redirect lands on a page the CDN hasn't cached.
 
-    stored = request.session.get(SEARCH_SESSION_KEY, {})
-    values = _empty_search_values()
-    for field in SEARCH_FIELDS:
-        stored_value = stored.get(field, '')
-        values[field] = stored_value if isinstance(stored_value, str) else ''
-    property_types = stored.get('property_type', [])
-    values['property_type'] = property_types if isinstance(property_types, list) else []
-    return values
+    A flash message only shows if Django renders the page, and the page after
+    a refresh has to show the new values, not yesterday's cached copy.
+    """
+    separator = '&' if '?' in url else '?'
+    return f'{url}{separator}{param}={int(time.time())}'
 
 
 def _search_url_from_values(values: dict[str, str | list[str]]) -> str:
@@ -205,7 +201,6 @@ def web_scraper_view(request):
     """
     if request.method == 'POST':
         search_values = _search_values_from_querydict(request.POST)
-        request.session[SEARCH_SESSION_KEY] = search_values
         params = _search_params_from_values(search_values)
 
         url = reverse('insights')
@@ -213,7 +208,9 @@ def web_scraper_view(request):
             url += '?' + urlencode(params)
         return redirect(url)
 
-    search_values = _initial_search_values(request)
+    # With no filters in the URL, the page's script restores the last search
+    # from the browser's localStorage.
+    search_values = _search_values_from_querydict(request.GET)
     return render(
         request,
         'analytics/search.html',
@@ -227,6 +224,7 @@ def web_scraper_view(request):
     )
 
 
+@cdn_cache
 def address_lookup(request):
     """Find a home by street address or parcel ID."""
     result = lookup_parcels(request.GET.get('q'))
@@ -253,6 +251,7 @@ def property_dashboard(request):
     return redirect(target)
 
 
+@cdn_cache
 def insights_dashboard(request):
     """Market insights dashboard with filters, KPIs, charts, and drilldowns."""
     properties, selected_types, defaulted_to_residential = apply_filters(request)
@@ -266,9 +265,6 @@ def insights_dashboard(request):
         search_criteria['city'] = city
     if selected_types:
         search_criteria['property_types'] = selected_types
-
-    if request.GET:
-        request.session[SEARCH_SESSION_KEY] = _search_values_from_querydict(request.GET)
 
     filter_values = _search_values_from_querydict(request.GET)
     dashboard_qs = _dashboard_querydict(request)
@@ -296,6 +292,7 @@ def insights_dashboard(request):
             'filter_values': filter_values,
             'active_filter_chips': _active_filter_chips(request),
             'modify_search_url': _search_url_from_values(filter_values),
+            'search_querystring': urlencode(_search_params_from_values(filter_values)),
             'insights_url': reverse('insights'),
             'evac_filter_choices': EVAC_FILTER_CHOICES,
         },
@@ -316,6 +313,7 @@ def _parcel_affordability(tax_outlook) -> dict | None:
     return config
 
 
+@cdn_cache
 def property_detail(request, parcel_id: str):
     """Single property detail view."""
     property_obj = get_object_or_404(PropertyListing, parcel_id=parcel_id)
@@ -382,6 +380,7 @@ def _compare_affordability(homes: list[ComparedHome]) -> dict | None:
     return config
 
 
+@cdn_cache
 def compare_homes(request):
     """Saved homes side by side. The browser keeps the list and sends it as `?ids=`."""
     comparison = build_comparison(request.GET.get('ids'))
@@ -397,6 +396,17 @@ def compare_homes(request):
     )
 
 
+@require_GET
+@never_cache
+def csrf_token(request):
+    """Hand out a CSRF token on request.
+
+    Cached pages can't carry one: rendering it sets a cookie, which would keep
+    the page out of the CDN. Forms on those pages fetch it here when submitted.
+    """
+    return JsonResponse({'csrfToken': get_token(request)})
+
+
 @require_POST
 def property_refresh(request, parcel_id: str):
     """Re-scrape one parcel from PCPAO and update its row in Neon.
@@ -407,7 +417,7 @@ def property_refresh(request, parcel_id: str):
     """
     from .tasks.scrape_data import ParcelNotFoundError, refresh_one_parcel
 
-    detail_url = reverse('property-detail', args=[parcel_id])
+    detail_url = _cache_busted(reverse('property-detail', args=[parcel_id]), 'refreshed')
     rate_key = f'parcel_refresh:{parcel_id}'
 
     # Rate-limit per parcel — 60 seconds between refresh attempts for the
@@ -459,7 +469,7 @@ def _rate_limited_export(
     wait = check_rate_limit(client_ip, bucket=bucket, window_seconds=EXPORT_RATE_LIMIT_SECONDS)
     if wait is not None:
         messages.warning(request, f'Please wait {wait} seconds before downloading another {label}.')
-        return redirect(reverse('insights'))
+        return redirect(_cache_busted(reverse('insights'), 'rate_limited'))
     return generate(request)
 
 

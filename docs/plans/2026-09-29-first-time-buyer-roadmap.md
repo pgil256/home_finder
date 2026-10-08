@@ -5,7 +5,7 @@
 
 ## Status (2026-10-08)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search) and PR 5 (saved homes and compare) are built. Still to do: PR 6 before any traffic push, then PR 7–11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching) is built. Still to do: PR 7–11.
 
 What changed around the roadmap:
 
@@ -17,7 +17,7 @@ Standing follow-ups:
 
 1. After the November 3 vote, set `AMENDMENT_3_STATUS` in `apps/analytics/services/tax_estimate.py` to `'passed'` or `'failed'`. Once the Department of Revenue publishes the 2027 inflation-adjusted exemption, add it to `CURRENT_LAW`.
 2. A full refresh reads every existing row, roughly 200 MB of the 5 GB monthly data-transfer allowance. Don't run it casually.
-3. Filtered pages still set a session cookie on GET, so PR 6's work to make them CDN-cacheable remains.
+3. Pages are cached at Vercel's edge for a day (PR 6), so a monthly import can take up to a day to show, or longer for a page nobody has visited since. Redeploying purges the cache.
 4. FHFA and HUD publish 2027 loan limits in late November 2026. Add them to `LOAN_LIMITS` in `apps/analytics/services/lending_config.py`.
 
 ### Findings from the live county files (downloaded 2026-09-30)
@@ -322,7 +322,9 @@ One PR per step. Each step ships something visible and keeps CI green.
 - `GET /analytics/compare/?ids=…`: cap at 6 IDs, reuse the tax, risk and calculator services, and render a side-by-side table.
 - Nav link "Saved (n)" reads `localStorage['savedProperties']` and builds the compare URL.
 
-### PR 6 — CDN caching (M)
+### PR 6 — CDN caching (M) — built
+
+*As built:* `home_finder/caching.py` defines `cdn_cache` (`public, max-age=0, s-maxage=86400, stale-while-revalidate=604800`), applied to the home, about, help, robots, lookup, insights, parcel and compare views. Nothing public writes to the session any more. The insights page hands its filters to the browser, which keeps the last search in `localStorage['lastSearch']`; the filter builder reloads itself with that search when opened without one. The Refresh form fetches its token from `/analytics/csrf/` on submit. Redirects that carry a flash message (after a refresh, or a rate-limited export) add a timestamp parameter so they land on a page the CDN hasn't stored. `PrivateWhenPersonalMiddleware` is the safety net: any response that opted in to caching but ends up setting a cookie or varying on `Cookie` (a page showing a flash message, for example) is sent as `private, no-store` instead. The filter builder itself is not cached, because its POST form renders a CSRF token; it makes no database queries. The deploy hook is not wired up.
 
 - Stop writing `request.session[SEARCH_SESSION_KEY]` on GET in `insights_dashboard` and `_initial_search_values`. Keep "last search" in `localStorage` or the URL.
 - Replace `{% csrf_token %}` on the detail page with a token fetched from an uncached `/analytics/csrf/` endpoint when Refresh is clicked. After a refresh, redirect to `?refreshed=<timestamp>` so the visitor doesn't get the cached pre-refresh page.

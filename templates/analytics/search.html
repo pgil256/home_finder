@@ -37,7 +37,7 @@
     {% endif %}
 
     <!-- Filter Form Card -->
-    <form method="post" action="{% url 'scraper' %}" id="search-form" data-loading-form class="card shadow-soft-xl max-w-4xl mx-auto">
+    <form method="post" action="{% url 'scraper' %}" id="search-form" data-loading-form data-restore-search="{% url 'scraper' %}" class="card shadow-soft-xl max-w-4xl mx-auto">
         {% csrf_token %}
 
         <!-- Form Header -->
@@ -468,6 +468,7 @@
     // Reset form
     function resetForm() {
         const form = document.getElementById('search-form');
+        window.HomeFinder.forgetLastSearch();
         form.querySelectorAll('input').forEach((input) => {
             if (input.type === 'hidden' || input.name === 'csrfmiddlewaretoken') return;
             if (input.type === 'checkbox' || input.type === 'radio') {

@@ -478,8 +478,7 @@
                     <!-- Last Updated + Refresh -->
                     <div class="flex items-center justify-between gap-3 text-xs text-charcoal-500">
                         <span>Last updated: {{ property.last_scraped|date:"M j, Y" }}</span>
-                        <form method="post" action="{% url 'property-refresh' property.parcel_id %}" data-loading-form>
-                            {% csrf_token %}
+                        <form method="post" action="{% url 'property-refresh' property.parcel_id %}" data-loading-form data-csrf-url="{% url 'csrf-token' %}">
                             <button type="submit"
                                     class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 font-medium"
                                     data-loading-text="Refreshing..."

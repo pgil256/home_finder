@@ -6,6 +6,7 @@ import logging
 
 from django.db.utils import InterfaceError, OperationalError
 from django.http import HttpRequest, HttpResponse
+from django.utils.cache import has_vary_header
 
 logger = logging.getLogger(__name__)
 
@@ -64,4 +65,26 @@ class DatabaseUnavailableMiddleware:
             content_type='text/html; charset=utf-8',
         )
         response['Retry-After'] = str(RETRY_AFTER_SECONDS)
+        return response
+
+
+class PrivateWhenPersonalMiddleware:
+    """Keep a response out of the CDN when it turned out to be for one visitor.
+
+    Views opt in to CDN caching with ``cdn_cache``, but whether a response is
+    really the same for everyone is only known after the session, CSRF and
+    messages middleware have run: a flash message being shown, or a cookie
+    being set, makes it personal. This sits first in MIDDLEWARE so it sees the
+    finished response, and withdraws the public caching in those cases.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        response = self.get_response(request)
+        if 'public' not in response.get('Cache-Control', ''):
+            return response
+        if response.cookies or has_vary_header(response, 'Cookie'):
+            response['Cache-Control'] = 'private, no-store'
         return response

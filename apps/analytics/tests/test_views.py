@@ -357,12 +357,20 @@ class TestSessionsStayOutOfTheDatabase:
         assert response.status_code == 200
         assert Session.objects.count() == 0
 
-    def test_last_search_still_prefills_the_filter_builder(self, client, sample_property):
+    def test_insights_hands_its_filters_to_the_browser_to_remember(self, client, sample_property):
+        """The last search is kept in localStorage, not in a session cookie."""
+        response = client.get('/insights/', {'city': 'Clearwater', 'min_price': '100000', 'sort': 'city'})
+
+        assert 'data-remember-search="city=Clearwater&amp;min_price=100000"' in response.content.decode()
+        assert not response.cookies
+
+    def test_filter_builder_asks_the_browser_for_the_last_search(self, client, sample_property):
         client.get('/insights/', {'city': 'Clearwater', 'min_price': '100000'})
 
         html = client.get('/analytics/').content.decode()
 
-        assert 'value="100000"' in html
+        assert 'data-restore-search="/analytics/"' in html
+        assert 'value="100000"' not in html
 
 
 class TestCrawlerHygiene:

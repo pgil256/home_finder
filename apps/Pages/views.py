@@ -6,6 +6,8 @@ from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 
+from home_finder.caching import cdn_cache
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,18 +25,22 @@ Disallow: /admin/
 """
 
 
+@cdn_cache
 def robots_txt(request):
     return HttpResponse(ROBOTS_TXT, content_type='text/plain')
 
 
+@cdn_cache
 def home(request):
     return render(request, 'Pages/home.html')
 
 
+@cdn_cache
 def about(request):
     return render(request, 'Pages/about.html')
 
 
+@cdn_cache
 def help(request):
     return render(request, 'Pages/help.html')
 

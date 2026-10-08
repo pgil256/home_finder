@@ -411,6 +411,96 @@ function initComparePage(navigate = (url) => window.location.replace(url)) {
 }
 
 // ============================================
+// Last Search
+// ============================================
+
+// The filter builder reopens with the visitor's last search. It lives in this
+// browser rather than a server session, because a session cookie would keep
+// every page out of the CDN cache.
+const LAST_SEARCH_KEY = 'lastSearch';
+
+function readLastSearch() {
+  try {
+    return window.localStorage.getItem(LAST_SEARCH_KEY) || '';
+  } catch (error) {
+    return '';
+  }
+}
+
+function forgetLastSearch() {
+  try {
+    window.localStorage.removeItem(LAST_SEARCH_KEY);
+  } catch (error) {
+    // Nothing stored, nothing to forget.
+  }
+}
+
+function initLastSearch(navigate = (url) => window.location.replace(url), currentQuery = window.location.search) {
+  // The insights page carries its filters as a query string: remember them.
+  const results = document.querySelector('[data-remember-search]');
+  const query = results ? results.getAttribute('data-remember-search') : '';
+  if (query) {
+    try {
+      window.localStorage.setItem(LAST_SEARCH_KEY, query);
+    } catch (error) {
+      // Storage is blocked: the builder just opens empty next time.
+    }
+  }
+
+  // The filter builder opened without filters: reload it with the last search.
+  const builder = document.querySelector('[data-restore-search]');
+  const saved = readLastSearch();
+  if (builder && saved && !currentQuery) {
+    navigate(`${builder.getAttribute('data-restore-search')}?${saved}`);
+  }
+}
+
+// ============================================
+// CSRF Token On Demand
+// ============================================
+
+// Cached pages can't carry a CSRF token, so a form marked with data-csrf-url
+// fetches one when it is submitted and then submits for real.
+function submitWithCsrfToken(form, fetchImpl = window.fetch) {
+  return fetchImpl(form.getAttribute('data-csrf-url'), {
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`CSRF token request failed: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'csrfmiddlewaretoken';
+      input.value = data.csrfToken;
+      form.appendChild(input);
+      form.submit();
+    })
+    .catch(() => {
+      LoadingButton.stop(form.querySelector('[type="submit"]'));
+      if (window.Toast) {
+        window.Toast.error('Could not reach the server. Please try again.');
+      }
+    });
+}
+
+function initCsrfOnDemand() {
+  document.querySelectorAll('form[data-csrf-url]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      if (form.querySelector('input[name="csrfmiddlewaretoken"]')) {
+        return;
+      }
+      event.preventDefault();
+      submitWithCsrfToken(form);
+    });
+  });
+}
+
+// ============================================
 // Initialize Everything
 // ============================================
 
@@ -423,10 +513,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize form enhancements
   initFormEnhancements();
+  initCsrfOnDemand();
 
   // Saved homes: nav link count and the compare page
   updateSavedLinks();
   initComparePage();
+
+  // Last search: remembered on the insights page, restored on the builder
+  initLastSearch();
 
   // Legacy support for learn more button
   const learnMoreButton = document.getElementById('learnMoreButton');
@@ -459,7 +553,11 @@ if (typeof module !== 'undefined' && module.exports) {
     compareUrl,
     updateSavedLinks,
     toggleSavedHome,
-    initComparePage
+    initComparePage,
+    readLastSearch,
+    forgetLastSearch,
+    initLastSearch,
+    submitWithCsrfToken
   };
 }
 
@@ -472,5 +570,6 @@ window.HomeFinder = {
   copyToClipboard: copyToClipboard,
   debounce: debounce,
   readSavedHomes: readSavedHomes,
-  toggleSavedHome: toggleSavedHome
+  toggleSavedHome: toggleSavedHome,
+  forgetLastSearch: forgetLastSearch
 };

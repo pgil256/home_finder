@@ -14,6 +14,10 @@ const {
   updateSavedLinks,
   toggleSavedHome,
   initComparePage,
+  readLastSearch,
+  forgetLastSearch,
+  initLastSearch,
+  submitWithCsrfToken,
 } = require('../common.js');
 
 describe('ToastManager', () => {
@@ -367,5 +371,97 @@ describe('saved homes', () => {
       initComparePage(navigate);
       expect(navigate).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('last search', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  test('the insights page remembers its filters', () => {
+    document.body.innerHTML = '<div data-remember-search="city=Dunedin&amp;max_price=400000"></div>';
+    const navigate = jest.fn();
+
+    initLastSearch(navigate, '?city=Dunedin&max_price=400000');
+
+    expect(readLastSearch()).toBe('city=Dunedin&max_price=400000');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  test('an unfiltered insights page keeps the previous search', () => {
+    window.localStorage.setItem('lastSearch', 'city=Dunedin');
+    document.body.innerHTML = '<div data-remember-search=""></div>';
+
+    initLastSearch(jest.fn(), '');
+
+    expect(readLastSearch()).toBe('city=Dunedin');
+  });
+
+  test('the filter builder reopens with the last search', () => {
+    window.localStorage.setItem('lastSearch', 'city=Dunedin');
+    document.body.innerHTML = '<form data-restore-search="/analytics/"></form>';
+    const navigate = jest.fn();
+
+    initLastSearch(navigate, '');
+
+    expect(navigate).toHaveBeenCalledWith('/analytics/?city=Dunedin');
+  });
+
+  test('the filter builder leaves a URL that already has filters alone', () => {
+    window.localStorage.setItem('lastSearch', 'city=Dunedin');
+    document.body.innerHTML = '<form data-restore-search="/analytics/"></form>';
+    const navigate = jest.fn();
+
+    initLastSearch(navigate, '?city=Largo');
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  test('nothing happens on a first visit or after a reset', () => {
+    document.body.innerHTML = '<form data-restore-search="/analytics/"></form>';
+    const navigate = jest.fn();
+
+    initLastSearch(navigate, '');
+    window.localStorage.setItem('lastSearch', 'city=Dunedin');
+    forgetLastSearch();
+    initLastSearch(navigate, '');
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('CSRF token on demand', () => {
+  let form;
+
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <form method="post" action="/analytics/property/1/refresh/" data-csrf-url="/analytics/csrf/">
+        <button type="submit">Refresh</button>
+      </form>`;
+    form = document.querySelector('form');
+    form.submit = jest.fn();
+    window.Toast = { error: jest.fn() };
+  });
+
+  test('fetches a token, adds it to the form and submits', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ csrfToken: 'abc123' }) });
+
+    await submitWithCsrfToken(form, fetchImpl);
+
+    expect(fetchImpl).toHaveBeenCalledWith('/analytics/csrf/', expect.objectContaining({ credentials: 'same-origin' }));
+    expect(form.querySelector('input[name="csrfmiddlewaretoken"]').value).toBe('abc123');
+    expect(form.submit).toHaveBeenCalledTimes(1);
+  });
+
+  test('re-enables the button and says so when the token cannot be fetched', async () => {
+    const button = form.querySelector('button');
+    LoadingButton.start(button);
+
+    await submitWithCsrfToken(form, jest.fn().mockResolvedValue({ ok: false, status: 503 }));
+
+    expect(form.submit).not.toHaveBeenCalled();
+    expect(button.disabled).toBe(false);
+    expect(window.Toast.error).toHaveBeenCalled();
   });
 });
