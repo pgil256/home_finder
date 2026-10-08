@@ -60,7 +60,7 @@
 {% block content %}
 {{ charts|json_script:"market-insights-charts" }}
 
-<div class="space-y-6">
+<div class="space-y-6" data-remember-search="{{ search_querystring }}">
     {% if defaulted_to_residential %}
     <div class="flex flex-col gap-3 rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-charcoal-700 sm:flex-row sm:items-center">
         <div class="flex items-center gap-2">

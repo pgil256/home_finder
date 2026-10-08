@@ -100,6 +100,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # First in the list, so it sees the response after every other middleware
+    # has had the chance to set a cookie on it.
+    'home_finder.middleware.PrivateWhenPersonalMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -220,11 +223,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # X frame config
 X_FRAME_OPTIONS = 'DENY'
 
-# Sessions live in a signed cookie, not the database. Every filtered insights
-# request saves the last search to the session, and crawlers that don't keep
-# cookies created a new django_session row each time: database writes, egress,
-# and rows nothing ever deleted. Session data here is only the last search and
-# the admin login, so it fits in a cookie.
+# Sessions live in a signed cookie, not the database. Public pages don't use
+# the session at all (a cookie would keep them out of the CDN cache), so the
+# only session data is the admin login, which fits in a cookie.
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
 # Cache: database-backed (works on Vercel without an external cache service).
