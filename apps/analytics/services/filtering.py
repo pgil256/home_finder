@@ -146,9 +146,12 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
     exclude_subsidence = request.GET.get('exclude_subsidence')
     max_est_tax = request.GET.get('max_est_tax')
 
-    if q:
-        q = q.strip()
-        properties = properties.filter(Q(address__icontains=q) | Q(city__icontains=q) | Q(zip_code__icontains=q))
+    if q and q.strip():
+        # Imported here because address_lookup reads PINELLAS_CITIES from this module.
+        from .address_lookup import keyword_q
+
+        keyword = keyword_q(q)
+        properties = properties.filter(keyword) if keyword is not None else properties.none()
 
     if city:
         properties = properties.filter(city__iexact=city)

@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta_description %}Analyze 437,000+ Pinellas County property records with market KPIs, distributions, outliers, and segment comparisons.{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Look up any Pinellas County home by address to see what it would really cost you in property taxes, and what to check before you buy.{% endblock %}">
     <title>{% block title %}Pinellas Market Lens{% endblock %}</title>
 
     <!-- Favicon -->
@@ -14,13 +14,13 @@
 
     <!-- Open Graph / social previews -->
     <meta property="og:title" content="{% block og_title %}Pinellas Market Lens{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Explore Pinellas County parcel records with data-science market insights and downloadable analysis briefs.{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}What will this home really cost me, and what's the catch? Look up any Pinellas County address for new-owner property taxes and risk flags from official records.{% endblock %}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://homefinder.patbuilds.dev{{ request.path }}">
     <meta property="og:image" content="https://homefinder.patbuilds.dev{% static 'img/house.jpg' %}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}Pinellas Market Lens{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Analyze Pinellas County property market signals from official public records.{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Look up any Pinellas County home for new-owner property taxes and risk flags from official records.{% endblock %}">
     <meta name="twitter:image" content="https://homefinder.patbuilds.dev{% static 'img/house.jpg' %}">
 
     <!-- Stylesheet -->
@@ -57,25 +57,17 @@
 
                 <!-- Desktop Navigation -->
                 <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
-                    <a href="{% url 'home' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'home' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
-                        Home
+                    <a href="{% url 'lookup' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'lookup' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
+                        Look up a home
+                    </a>
+                    <a href="{% url 'insights' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'insights' or request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
+                        Explore the market
                     </a>
                     <a href="{% url 'about' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'about' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         About
                     </a>
                     <a href="{% url 'help' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'help' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                         Help
-                    </a>
-                    <a href="{% url 'insights' %}" class="nav-link px-4 py-2 rounded-lg hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'insights' or request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
-                        Insights
-                    </a>
-
-                    <!-- Prominent CTA Button -->
-                    <a href="{% url 'insights' %}" class="btn btn-primary ml-4 group">
-                        <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5m0 14h16M8 16V9m4 7V7m4 9v-4" />
-                        </svg>
-                        <span>Analyze Market</span>
                     </a>
                 </nav>
 
@@ -102,8 +94,11 @@
         <!-- Mobile Navigation Menu -->
         <nav id="mobile-menu" class="md:hidden hidden border-t border-charcoal-100 bg-white" aria-label="Mobile navigation">
             <div class="container-app py-4 space-y-1">
-                <a href="{% url 'home' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'home' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
-                    Home
+                <a href="{% url 'lookup' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'lookup' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
+                    Look up a home
+                </a>
+                <a href="{% url 'insights' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'insights' or request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
+                    Explore the market
                 </a>
                 <a href="{% url 'about' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'about' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     About
@@ -111,17 +106,6 @@
                 <a href="{% url 'help' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'help' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
                     Help
                 </a>
-                <a href="{% url 'insights' %}" class="block nav-link px-4 py-3 rounded-xl hover:bg-charcoal-50 transition-all duration-200 {% if request.resolver_match.url_name == 'insights' or request.resolver_match.url_name == 'dashboard' %}text-primary-600 font-semibold bg-primary-50{% endif %}">
-                    Market Insights
-                </a>
-                <div class="pt-3">
-                    <a href="{% url 'insights' %}" class="btn btn-primary w-full justify-center">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5m0 14h16M8 16V9m4 7V7m4 9v-4" />
-                        </svg>
-                        <span>Analyze Market</span>
-                    </a>
-                </div>
             </div>
         </nav>
     </header>
@@ -181,7 +165,7 @@
                         <span class="font-display text-xl font-bold">Pinellas Market Lens</span>
                     </div>
                     <p class="text-charcoal-400 text-sm leading-relaxed">
-                        A data-science dashboard for exploring Pinellas County property market signals from official public records.
+                        What a Pinellas County home would really cost you, and what to check before you buy, from official public records.
                     </p>
                 </div>
 
@@ -192,8 +176,13 @@
                     </h4>
                     <ul class="space-y-2">
                         <li>
+                            <a href="{% url 'lookup' %}" class="text-charcoal-300 hover:text-primary-400 transition-colors duration-200">
+                                Look up a home
+                            </a>
+                        </li>
+                        <li>
                             <a href="{% url 'insights' %}" class="text-charcoal-300 hover:text-primary-400 transition-colors duration-200">
-                                Market Insights
+                                Explore the market
                             </a>
                         </li>
                         <li>

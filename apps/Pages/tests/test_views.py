@@ -12,6 +12,24 @@ class TestPagesViews:
         assert response.status_code == 200
         assert b'Pinellas Market Lens' in response.content
 
+    def test_home_page_leads_with_the_address_lookup(self, client):
+        html = client.get('/').content.decode()
+
+        assert 'What will this home really cost me' in html
+        assert 'action="/lookup/"' in html
+        assert 'name="q"' in html
+        assert 'Not a listing search' not in html
+        # The address box comes before the engineering section.
+        assert html.index('action="/lookup/"') < html.index('Engineering proof at a glance')
+
+    def test_nav_puts_lookup_before_the_dashboard(self, client):
+        html = client.get('/').content.decode()
+
+        assert html.index('Look up a home') < html.index('Explore the market')
+
+    def test_robots_keeps_crawlers_off_lookup_queries(self, client):
+        assert b'Disallow: /lookup/?' in client.get('/robots.txt').content
+
     def test_home_page_surfaces_portfolio_proof_and_source(self, client):
         response = client.get('/')
 

@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .models import PropertyListing, TaxDistrictMillage
+from .services.address_lookup import LOOKUP_LIMIT, lookup_parcels
 from .services.exports import generate_excel_response, generate_pdf_response
 from .services.filtering import (
     PINELLAS_CITIES,
@@ -219,6 +220,23 @@ def web_scraper_view(request):
             'property_types': PROPERTY_TYPES,
             'search_values': search_values,
             'evac_filter_choices': EVAC_FILTER_CHOICES,
+        },
+    )
+
+
+def address_lookup(request):
+    """Find a home by street address or parcel ID."""
+    result = lookup_parcels(request.GET.get('q'))
+    if result.parcel_id:
+        return redirect('property-detail', parcel_id=result.parcel_id)
+    return render(
+        request,
+        'analytics/lookup.html',
+        {
+            'query': result.query,
+            'parcels': result.parcels,
+            'truncated': result.truncated,
+            'lookup_limit': LOOKUP_LIMIT,
         },
     )
 

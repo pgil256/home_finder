@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load property_filters %}
+
+{% block title %}{% if query %}{{ query }} - {% endif %}Look Up a Home - Pinellas Market Lens{% endblock %}
+{% block meta_description %}Look up any Pinellas County home by street address to see what the property taxes would be if you bought it and what to check first.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl space-y-6">
+    <div>
+        <h1 class="font-display text-display-sm text-charcoal-900">Look up a home</h1>
+        <p class="mt-2 text-charcoal-600">Type the address from a listing to see the county's record for it: value, taxes if you buy, and what to check first.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% include 'analytics/partials/lookup-form.html' with autofocus=True %}
+        </div>
+    </div>
+
+    {% if parcels %}
+    <section aria-labelledby="lookup-results-heading">
+        <h2 id="lookup-results-heading" class="font-display text-lg font-semibold text-charcoal-800">
+            {% if truncated %}First {{ lookup_limit }} matches{% else %}{{ parcels|length }} match{{ parcels|length|pluralize:"es" }}{% endif %} for &ldquo;{{ query }}&rdquo;
+        </h2>
+        {% if truncated %}
+        <p class="mt-1 text-sm text-charcoal-500">There are more. Add the house number, street type or unit number to narrow it down.</p>
+        {% endif %}
+
+        <ul class="mt-4 divide-y divide-charcoal-100 overflow-hidden rounded-lg border border-charcoal-100 bg-white shadow-soft-sm">
+            {% for parcel in parcels %}
+            <li>
+                <a href="{% url 'property-detail' parcel.parcel_id %}" class="flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-charcoal-50 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
+                        <p class="font-medium text-charcoal-900">{{ parcel.address|default:"No street address on record" }}</p>
+                        <p class="mt-1 text-sm text-charcoal-500">
+                            {% if parcel.city %}{{ parcel.city }}{% endif %}{% if parcel.zip_code %} {{ parcel.zip_code }}{% endif %}
+                            &middot; {{ parcel.property_type|clean_property_type }}
+                        </p>
+                    </div>
+                    <dl class="flex flex-shrink-0 gap-6 text-sm sm:text-right">
+                        <div>
+                            <dt class="text-charcoal-500">Just value</dt>
+                            <dd class="font-semibold text-charcoal-900">{% if parcel.market_value %}{{ parcel.market_value|dollars }}{% else %}Not listed{% endif %}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-charcoal-500">Est. tax if you buy</dt>
+                            <dd class="font-semibold text-charcoal-900">
+                                {% if parcel.est_tax_homestead is not None %}{{ parcel.est_tax_homestead|dollars }}/yr
+                                {% elif parcel.est_tax_no_homestead is not None %}{{ parcel.est_tax_no_homestead|dollars }}/yr
+                                {% else %}Not available{% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        <p class="mt-3 text-xs text-charcoal-500">Just value is the county's January 1 estimate, not an asking price. The tax estimate assumes you live there and file for homestead where the property allows it.</p>
+    </section>
+    {% elif query %}
+    <div class="rounded-lg border border-charcoal-100 bg-white p-6 shadow-soft-sm" role="status">
+        <h2 class="font-display text-lg font-semibold text-charcoal-800">No match for &ldquo;{{ query }}&rdquo;</h2>
+        <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-charcoal-600">
+            <li>Try just the house number and street name, like <span class="font-medium text-charcoal-800">1700 Gulf</span>.</li>
+            <li>Leave off the city, state and ZIP.</li>
+            <li>Only Pinellas County, Florida properties are here.</li>
+        </ul>
+        <p class="mt-4 text-sm">
+            <a href="{% url 'insights' %}" class="font-semibold text-primary-600 hover:text-primary-700">Explore the market instead <span aria-hidden="true">&rarr;</span></a>
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
