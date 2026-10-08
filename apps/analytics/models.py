@@ -113,3 +113,18 @@ class TaxDistrictMillage(models.Model):
 
     def __str__(self):
         return f'{self.district_code} {self.rate_description}: {self.total_mills} mills'
+
+
+class MortgageRate(models.Model):
+    """The latest 30-year fixed average, kept as a single row (pk=1).
+
+    Written weekly by the refresh_mortgage_rate command; the calculator falls
+    back to a constant in services/lending_config.py when the row is missing.
+    """
+
+    rate = models.DecimalField(max_digits=5, decimal_places=2)  # percent, e.g. 7.40
+    as_of = models.DateField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.rate}% as of {self.as_of}'

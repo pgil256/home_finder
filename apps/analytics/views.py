@@ -21,6 +21,7 @@ from .services.filtering import (
     apply_filters,
     apply_sorting,
 )
+from .services.lending_config import affordability_config
 from .services.market_insights import build_market_insights
 from .services.risk_flags import (
     EVAC_FILTER_CHOICES,
@@ -220,6 +221,7 @@ def web_scraper_view(request):
             'property_types': PROPERTY_TYPES,
             'search_values': search_values,
             'evac_filter_choices': EVAC_FILTER_CHOICES,
+            'affordability': affordability_config(),
         },
     )
 
@@ -299,6 +301,20 @@ def insights_dashboard(request):
     )
 
 
+def _parcel_affordability(tax_outlook) -> dict | None:
+    """Seed data for the monthly cost calculator, or None without a tax estimate."""
+    if tax_outlook is None:
+        return None
+    config = affordability_config()
+    config['parcel'] = {
+        'price': float(tax_outlook.just_value),
+        'taxHomestead': tax_outlook.homestead,
+        'taxNoHomestead': tax_outlook.no_homestead,
+        'millsTotal': float(tax_outlook.millage.total),
+    }
+    return config
+
+
 def property_detail(request, parcel_id: str):
     """Single property detail view."""
     property_obj = get_object_or_404(PropertyListing, parcel_id=parcel_id)
@@ -328,13 +344,16 @@ def property_detail(request, parcel_id: str):
             TaxDistrictMillage.objects.filter(district_code=property_obj.tax_district).order_by('-tax_year').first()
         )
 
+    tax_outlook = build_tax_outlook(property_obj, district_millage)
+
     return render(
         request,
         'analytics/property-detail.html',
         {
             'property': property_obj,
             'similar_properties': similar_properties,
-            'tax_outlook': build_tax_outlook(property_obj, district_millage),
+            'tax_outlook': tax_outlook,
+            'affordability': _parcel_affordability(tax_outlook),
             'risk_flags': build_risk_flags(property_obj),
             'has_risk_data': has_risk_data(property_obj),
         },

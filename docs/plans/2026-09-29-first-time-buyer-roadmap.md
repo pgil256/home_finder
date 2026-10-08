@@ -3,9 +3,9 @@
 **Date:** 2026-09-29
 **Goal:** Make Pinellas Market Lens genuinely useful to a first-time homebuyer without adding paid APIs or meaningful hosting cost.
 
-## Status (2026-10-06)
+## Status (2026-10-08)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5) and PR 4 (risk flags). Still to do: PR 3 and PR 5, then PR 6 before any traffic push, then PR 7–11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search) is built. Still to do: PR 5, then PR 6 before any traffic push, then PR 7–11.
 
 What changed around the roadmap:
 
@@ -18,6 +18,7 @@ Standing follow-ups:
 1. After the November 3 vote, set `AMENDMENT_3_STATUS` in `apps/analytics/services/tax_estimate.py` to `'passed'` or `'failed'`. Once the Department of Revenue publishes the 2027 inflation-adjusted exemption, add it to `CURRENT_LAW`.
 2. A full refresh reads every existing row, roughly 200 MB of the 5 GB monthly data-transfer allowance. Don't run it casually.
 3. Filtered pages still set a session cookie on GET, so PR 6's work to make them CDN-cacheable remains.
+4. FHFA and HUD publish 2027 loan limits in late November 2026. Add them to `LOAN_LIMITS` in `apps/analytics/services/lending_config.py`.
 
 ### Findings from the live county files (downloaded 2026-09-30)
 
@@ -293,7 +294,9 @@ One PR per step. Each step ships something visible and keeps CI green.
 - `property-detail.html`: "Your estimated taxes" card showing seller's bill vs. yours, with the March 1 homestead filing reminder. Relabel the current "Annual Tax" (it is `TAX_AMOUNT_NO_EX`).
 - Tests: table-driven cases with hand-computed expected values, including just value under $50k, between $50k and $75k, and above $75k.
 
-### PR 3 — Monthly cost calculator + budget search (M)
+### PR 3 — Monthly cost calculator + budget search (M) — built
+
+*As built:* the rate comes from FRED's public CSV download (`fredgraph.csv?id=MORTGAGE30US`), which needs no API key, so there is no secret to manage. `refresh_mortgage_rate` keeps it in a one-row `MortgageRate` table (migration `0011`), and `lending_config.py` holds a fallback rate for when the row or the table is missing. Property tax in the calculator follows the price: the estimate at just value, plus the full millage on the difference. Homeowners insurance starts at a placeholder 1% of the price, and lender fees at $4,000; both are editable and labeled as guesses. Cash to close assumes the seller pays for the owner's title policy (the Pinellas custom, with a checkbox for the other case) and that the lender collects the first year of insurance plus three months of escrow. PMI uses rough loan-to-value bands for good credit. The budget field needs a rate and typical costs, so the search view passes the same config; it assumes tax at 1.8% and insurance at 1% of price a year, and prices 3.5% down as FHA. Deploys don't run migrations, so run the "Refresh mortgage rate" workflow once after merging.
 
 - `static/js/dev/affordability.js`, pure functions:
   - `monthlyPI`, `pmi`, `fhaMip`

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PropertyListing
+from .models import MortgageRate, PropertyListing
 
 
 class PropertyListingAdmin(admin.ModelAdmin):
@@ -23,3 +23,4 @@ class PropertyListingAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PropertyListing, PropertyListingAdmin)
+admin.site.register(MortgageRate)

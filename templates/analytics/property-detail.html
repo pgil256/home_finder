@@ -186,6 +186,133 @@
             </div>
             {% endif %}
 
+            <!-- Monthly cost and cash to close -->
+            {% if affordability %}
+            <div class="card" id="cost-calculator">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">What This Home Would Cost Each Month</h2>
+                    <p class="text-sm text-charcoal-500 mt-1">Starts from the county's just value, which is not the asking price. Enter the list price or your offer.</p>
+                </div>
+                <div class="card-body space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="calc-price" class="label">Purchase Price</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number" id="calc-price" data-calc-input="price" value="{{ affordability.parcel.price|floatformat:'0u' }}" min="0" step="1000" class="input pl-8">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="calc-down" class="label">Down Payment (%)</label>
+                            <input type="number" id="calc-down" data-calc-input="downPct" value="20" min="0" max="100" step="0.5" class="input">
+                        </div>
+                        <div>
+                            <label for="calc-loan-type" class="label">Loan Type</label>
+                            <select id="calc-loan-type" data-calc-input="loanType" class="select">
+                                <option value="conventional">Conventional</option>
+                                <option value="fha">FHA</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="calc-term" class="label">Term</label>
+                            <select id="calc-term" data-calc-input="termYears" class="select">
+                                <option value="30">30 years</option>
+                                <option value="15">15 years</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="calc-rate" class="label">Interest Rate (%)</label>
+                            <input type="number" id="calc-rate" data-calc-input="ratePct" value="{{ affordability.rate|floatformat:'2u' }}" min="0" max="25" step="0.01" class="input">
+                            <p class="text-xs text-charcoal-500 mt-1">Freddie Mac's 30-year average for the week of {{ affordability.rateAsOf }}. Use your lender's quote if you have one.</p>
+                        </div>
+                        <div>
+                            <label for="calc-tax" class="label">Property Tax per Year</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number" id="calc-tax" data-calc-input="tax" min="0" step="50" class="input pl-8">
+                            </div>
+                            {% if affordability.parcel.taxHomestead is not None %}
+                            <label class="flex cursor-pointer items-center gap-2 mt-2">
+                                <input type="checkbox" data-calc-input="homestead" checked class="checkbox">
+                                <span class="text-xs text-charcoal-600">I'll live here and file for homestead</span>
+                            </label>
+                            {% endif %}
+                            <p class="text-xs text-charcoal-500 mt-1">From <a href="#taxes" class="text-primary-600 hover:text-primary-700 font-medium">the estimate above</a>, adjusted as you change the price.</p>
+                        </div>
+                        <div>
+                            <label for="calc-insurance" class="label">Homeowners Insurance per Year</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number" id="calc-insurance" data-calc-input="insurance" min="0" step="50" class="input pl-8">
+                            </div>
+                            <p class="text-xs text-charcoal-500 mt-1">A placeholder of {{ affordability.insuranceRatePct }}% of the price. Florida premiums vary a lot with roof age and distance from the water, and flood cover is separate. Get a quote before you offer.</p>
+                        </div>
+                        <div>
+                            <label for="calc-hoa" class="label">HOA or Condo Fee per Month</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number" id="calc-hoa" data-calc-input="hoa" value="0" min="0" step="10" class="input pl-8">
+                            </div>
+                            <p class="text-xs text-charcoal-500 mt-1">The county doesn't record this. It's on the listing.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
+                            <p class="text-sm font-medium text-primary-700">Monthly payment</p>
+                            <p class="text-2xl font-semibold text-charcoal-900 mt-1"><span data-calc-output="total"></span><span class="text-sm font-normal text-charcoal-500">/mo</span></p>
+                            <dl class="mt-3 space-y-1 text-sm text-charcoal-700">
+                                <div class="flex justify-between"><dt>Principal and interest</dt><dd data-calc-output="principalAndInterest"></dd></div>
+                                <div class="flex justify-between"><dt>Property tax</dt><dd data-calc-output="tax"></dd></div>
+                                <div class="flex justify-between"><dt>Homeowners insurance</dt><dd data-calc-output="insurance"></dd></div>
+                                <div class="flex justify-between" data-calc-row="mortgageInsurance"><dt data-calc-label="mortgageInsurance">PMI</dt><dd data-calc-output="mortgageInsurance"></dd></div>
+                                <div class="flex justify-between"><dt>HOA or condo fee</dt><dd data-calc-output="hoa"></dd></div>
+                            </dl>
+                        </div>
+                        <div class="rounded-lg border border-charcoal-100 p-4">
+                            <p class="text-sm text-charcoal-500">Cash to close</p>
+                            <p class="text-2xl font-semibold text-charcoal-800 mt-1" data-calc-output="cashToClose"></p>
+                            <dl class="mt-3 space-y-1 text-sm text-charcoal-700">
+                                <div class="flex justify-between"><dt>Down payment</dt><dd data-calc-output="downPayment"></dd></div>
+                                <div class="flex justify-between"><dt>Florida taxes on the mortgage</dt><dd data-calc-output="stateTaxes"></dd></div>
+                                <div class="flex justify-between"><dt>Title insurance</dt><dd data-calc-output="title"></dd></div>
+                                <div class="flex justify-between"><dt>First-year insurance and escrow</dt><dd data-calc-output="prepaids"></dd></div>
+                                <div class="flex justify-between"><dt>Lender and other fees</dt><dd data-calc-output="otherCosts"></dd></div>
+                            </dl>
+                            <p class="text-xs text-charcoal-500 mt-2">Loan amount: <span data-calc-output="loanAmount"></span></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="calc-other" class="label">Lender and Other Fees</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
+                                <input type="number" id="calc-other" data-calc-input="otherCosts" value="4000" min="0" step="100" class="input pl-8">
+                            </div>
+                            <p class="text-xs text-charcoal-500 mt-1">Origination, appraisal, survey, inspections and recording. A starting guess; your Loan Estimate has the real figures.</p>
+                        </div>
+                        <div class="sm:pt-7">
+                            <label class="flex cursor-pointer items-center gap-2">
+                                <input type="checkbox" data-calc-input="ownerTitle" class="checkbox">
+                                <span class="text-sm text-charcoal-600">I'm paying for the owner's title policy</span>
+                            </label>
+                            <p class="text-xs text-charcoal-500 mt-1">In Pinellas the seller usually pays for it, but the contract decides.</p>
+                        </div>
+                    </div>
+
+                    <ul class="list-disc space-y-1 pl-5 text-sm text-charcoal-700" data-calc-notes></ul>
+
+                    <p class="text-xs text-charcoal-500 leading-relaxed">
+                        An estimate, not a loan offer. Florida charges 35 cents per $100 in documentary stamps on the note and 0.2% intangible tax on the mortgage, and sets title insurance rates statewide.
+                        Cash to close assumes the lender collects the first year of insurance plus three months of taxes and insurance for escrow.
+                        Loan limits are for {{ affordability.lending.limitsYear }}.
+                    </p>
+                </div>
+            </div>
+            {{ affordability|json_script:"affordability-data" }}
+            {% endif %}
+
             <!-- Risk flags -->
             {% if risk_flags or has_risk_data %}
             <div class="card" id="risks">
@@ -523,6 +650,7 @@
 
 {% block scripts %}
 {{ block.super }}
+{% if affordability %}<script src="{% static 'js/dist/affordability.bundle.js' %}"></script>{% endif %}
 <script>
     function toggleSave(parcelId) {
         const saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');

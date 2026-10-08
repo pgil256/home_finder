@@ -1,0 +1,38 @@
+name: Refresh mortgage rate
+
+# Stores Freddie Mac's weekly 30-year average for the monthly cost calculator.
+# The survey comes out on Thursdays around 16:00 UTC; Friday leaves time for
+# FRED to pick it up. One small download and a one-row write.
+
+on:
+  schedule:
+    - cron: "0 14 * * 5"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    name: Fetch MORTGAGE30US
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY || 'github-actions-import-not-secret' }}
+      DEBUG: "False"
+      ALLOWED_HOSTS: "localhost"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Make sure the table exists
+        run: python manage.py migrate --noinput
+
+      - name: Store the latest rate
+        run: python manage.py refresh_mortgage_rate
