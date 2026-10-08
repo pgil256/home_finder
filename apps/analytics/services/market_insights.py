@@ -63,7 +63,7 @@ MARKET_INSIGHTS_CACHE_TTL = int(getattr(settings, 'MARKET_INSIGHTS_CACHE_TTL', 2
 
 # Bump when the payload's shape or wording changes, so deploys don't serve a
 # stale structure or stale labels to new template/export code.
-MARKET_INSIGHTS_CACHE_VERSION = 2
+MARKET_INSIGHTS_CACHE_VERSION = 3
 
 # Single-value query params that change the underlying queryset. Kept in sync
 # with apply_filters() in filtering.py -- anything read there must appear here

@@ -8,7 +8,7 @@
 
 > **Live:** [homefinder.patbuilds.dev](https://homefinder.patbuilds.dev)
 
-Pinellas Market Lens is a data-science dashboard for exploring Pinellas County, Florida parcel records. It pivots the original property-search app into an analytics-first portfolio project: official public records are ingested, cleaned, indexed, filtered, and analyzed with pandas/numpy to expose market KPIs, distributions, segment comparisons, tax burden, assessed-value gaps, and auditable outliers.
+Pinellas Market Lens answers a home buyer's question about any Pinellas County, Florida property: what will this home really cost me, and what's the catch? Type the address from a listing to see the property taxes a new owner would pay (not the seller's capped bill) and the risk flags on the county's record. Behind it, official public records are ingested, cleaned, indexed, filtered, and analyzed with pandas/numpy, and a market dashboard exposes KPIs, distributions, segment comparisons, tax burden, assessed-value gaps, and auditable outliers.
 
 > The repository is still named `home_finder` from its original property-search incarnation; it was rebuilt around the analytics workflow described below.
 
@@ -30,7 +30,8 @@ A parcel drilldown and the responsive mobile layout:
 
 | Route | Purpose |
 |---|---|
-| `/` | Product intro explaining the public-records market-analysis workflow |
+| `/` | Home page that leads with the address lookup box |
+| `/lookup/?q=<address or parcel ID>` | Address lookup: up to 25 matching parcels with just value and estimated new-owner tax; a parcel ID redirects to its parcel page |
 | `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
 | `/analytics/` | Filter-builder form that redirects into `/insights/` |
 | `/analytics/dashboard/` | Legacy URL that redirects to `/insights/` |

@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Crawlers get the default pages only.
 ROBOTS_TXT = """User-agent: *
 Disallow: /insights/?
+Disallow: /lookup/?
 Disallow: /analytics/download/
 Disallow: /analytics/dashboard/
 Disallow: /scraper/

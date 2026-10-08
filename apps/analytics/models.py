@@ -6,7 +6,8 @@ class PropertyListing(models.Model):
     # query can use an index for get one. Filters use city__iexact and
     # property_type__icontains, which a plain B-tree can't serve; the
     # similar-properties lookup (exact city + type, value range) uses
-    # idx_city_type_value.
+    # idx_city_type_value, and the address lookup (address LIKE 'PREFIX%')
+    # uses idx_address_prefix.
 
     # Property Appraiser Data
     parcel_id = models.CharField(max_length=50, unique=True)
@@ -78,6 +79,8 @@ class PropertyListing(models.Model):
         indexes = [
             # Similar properties on the detail page: exact city + type, value range.
             models.Index(fields=['city', 'property_type', 'market_value'], name='idx_city_type_value'),
+            # Address lookup: prefix match on the upper-case county address.
+            models.Index(fields=['address'], name='idx_address_prefix', opclasses=['varchar_pattern_ops']),
         ]
 
     def __str__(self):

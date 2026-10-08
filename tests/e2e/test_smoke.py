@@ -9,6 +9,9 @@ that read is the app's largest source of database egress; run them explicitly
 with `-m heavy` or via the workflow's run_exports input.
 """
 
+import re
+from urllib.parse import unquote
+
 import pytest
 
 TIMEOUT = 15
@@ -36,9 +39,33 @@ def test_S1_home_loads(client, base_url):
     r = client.get(f'{base_url}/', timeout=TIMEOUT)
     assert_ok(r)
     assert 'Pinellas Market Lens' in r.text
+    assert 'What will this home really cost me' in r.text
+    assert 'action="/lookup/"' in r.text
     assert 'Find Your Perfect Home' not in r.text
     assert 'fonts.googleapis.com' not in r.text
     assert 'fonts.gstatic.com' not in r.text
+
+
+def test_S1b_address_lookup_finds_a_parcel(client, base_url, known_parcel_id):
+    """Looking up a real parcel's address lists it, quickly."""
+    detail = client.get(f'{base_url}/analytics/property/{known_parcel_id}/', timeout=TIMEOUT)
+    assert_ok(detail)
+    match = re.search(r'openstreetmap\.org/search\?query=(\d+%20[A-Z0-9]+)', detail.text)
+    if not match:
+        pytest.skip('Known parcel has no house-number address to look up')
+    query = unquote(match.group(1))
+
+    r = client.get(f'{base_url}/lookup/', params={'q': query}, timeout=TIMEOUT)
+    assert_ok(r)
+    assert f'/analytics/property/{known_parcel_id}/' in r.text or 'First 25 matches' in r.text
+    assert r.elapsed.total_seconds() < 3, f'lookup took {r.elapsed.total_seconds():.1f}s'
+
+
+def test_S1c_address_lookup_no_match(client, base_url):
+    """A lookup that matches nothing explains how to search, without erroring."""
+    r = client.get(f'{base_url}/lookup/', params={'q': '99999 Nowhere Ln'}, timeout=TIMEOUT)
+    assert_ok(r)
+    assert 'No match for' in r.text
 
 
 def test_S2_scraper_form_loads(client, base_url):
