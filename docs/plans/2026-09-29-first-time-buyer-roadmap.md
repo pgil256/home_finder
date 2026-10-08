@@ -5,7 +5,7 @@
 
 ## Status (2026-10-08)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps) is built. Still to do: PR 8–11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps, pgil256/home_finder#14) merged the same day too. PR 8 (roof and system age) is built. Still to do: PR 9–11.
 
 What changed around the roadmap:
 
@@ -17,7 +17,8 @@ Standing follow-ups:
 
 1. After the November 3 vote, set `AMENDMENT_3_STATUS` in `apps/analytics/services/tax_estimate.py` to `'passed'` or `'failed'`. Once the Department of Revenue publishes the 2027 inflation-adjusted exemption, add it to `CURRENT_LAW`.
 2. A full refresh reads every existing row, roughly 200 MB of the 5 GB monthly data-transfer allowance. Don't run it casually.
-3. Pages are cached at Vercel's edge for a day (PR 6), so a monthly import can take up to a day to show, or longer for a page nobody has visited since. Redeploying purges the cache.4. FHFA and HUD publish 2027 loan limits in late November 2026. Add them to `LOAN_LIMITS` in `apps/analytics/services/lending_config.py`.
+3. Pages are cached at Vercel's edge for a day (PR 6), so a monthly import can take up to a day to show, or longer for a page nobody has visited since. Redeploying purges the cache.
+4. FHFA and HUD publish 2027 loan limits in late November 2026. Add them to `LOAN_LIMITS` in `apps/analytics/services/lending_config.py`.
 
 ### Findings from the live county files (downloaded 2026-09-30)
 
@@ -341,7 +342,11 @@ One PR per step. Each step ships something visible and keeps CI green.
 - `services/comps.py`: same `neighborhood_code` and type bucket, sold in the last 12 months, sqft within ±25%. Report median $/sqft × subject sqft with n and range, and hide it when n < 3. Add a flip flag (2+ qualified sales in 24 months).
 - Update `_methodology()` and the README "Limitations" section.
 
-### PR 8 — Roof and system age (S)
+### PR 8 — Roof and system age (S) — built
+
+*As built:* `RP_PERMITS` (profiled 2026-10-08) has 1,671,369 rows from every permitting agency in the county, going back to 1997. No keyword matching was needed: `PERMIT_DSCR` is one of 61 county categories, and `ROOF` (429,483 rows) and `HEAT/AIR` (287,467) are two of them. The year comes from `ISSUE_DT`, because `PERMIT_YEAR` is the assessment year and is 0 on 65,000 rows; about 660 rows with a placeholder date (1899) are skipped. `services/permits_importer.py` reads the file into a parcel → (roof year, heating/air year) lookup, and the property import writes `roof_permit_year` and `hvac_permit_year` (migration `0013`, two small integers) on each row, so the parcel and compare pages need no extra query. `import_pcpao_data` downloads permits before the properties (`--permits-file` for a local file). If the download or the file fails, the refresh carries on and keeps the years already stored; a file with no roof permits is refused. 319,088 of the 437,560 imported parcels have a year, so **the first run after the migration rewrites about three quarters of the property table**. The refresh workflow already vacuums every 10 batches.
+
+The risk card gains three flags (`_permit_flags` in `risk_flags.py`). A roof permit from the last 15 years shows as good news, with a note that a permit can be a repair: since 2015, 7% of roof permits were valued under $3,000. A house whose latest roof permit is 15 or more years old, or that is 15 or more years old with none on record, gets "worth checking", citing the 15-year inspection rule in Fla. Stat. 627.7011(5). A permit dated the year the home was built or earlier counts as the original roof. On the real data, 71% of houses (single-family and duplex to fourplex) show a recent permit, 16% an old one and 10% none. The missing-permit flag is limited to houses because permit coverage elsewhere is poor: 7% of condo units, 42% of planned-development townhomes and 36% of manufactured homes have any roof permit, mostly because the association owns the roof. Coverage is even across the larger cities (68–76% of older single-family homes have a roof permit since 2012) and lower in most beach towns (57–64%). A heating/air permit from the last 10 years shows as good news; a missing one is never flagged, because only 53% of older houses have any. `sample_permits.csv` is the fixture for the 48 sample parcels. Not done: a "roof permit since" search filter.
 
 - First, profile `RP_PERMITS` (`PERMIT_TYPE` / `PERMIT_DSCR` value counts) to choose keywords.
 - Derive `roof_permit_year` (and optionally `hvac_permit_year`) during import. Store only those columns.

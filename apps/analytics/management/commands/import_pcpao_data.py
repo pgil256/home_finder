@@ -6,6 +6,7 @@ Usage:
     python manage.py import_pcpao_data --file /path/to/RP_PROPERTY_INFO.csv
     python manage.py import_pcpao_data --file RP_PROPERTY_INFO.csv --millage-file RP_MILLAGE_RATES.csv
     python manage.py import_pcpao_data --file RP_PROPERTY_INFO.csv --sales-file RP_SALES.csv
+    python manage.py import_pcpao_data --file RP_PROPERTY_INFO.csv --permits-file RP_PERMITS.csv
     python manage.py import_pcpao_data --quiet
     python manage.py import_pcpao_data --vacuum-every 10
 """
@@ -27,6 +28,7 @@ from apps.analytics.services.pcpao_importer import (
     stored_millage,
     vacuum_property_listing_table,
 )
+from apps.analytics.services.permits_importer import PERMITS_TABLE, PermitYears, read_permit_years
 from apps.analytics.services.sales_importer import SALES_TABLE, import_sales
 from apps.analytics.services.tax_estimate import Millage
 
@@ -56,6 +58,14 @@ class Command(BaseCommand):
             help=(
                 'Path to a local RP_SALES CSV for sales history and comparable sales. With --file '
                 'and no --sales-file, the sales already in the database are kept.'
+            ),
+        )
+        parser.add_argument(
+            '--permits-file',
+            type=str,
+            help=(
+                'Path to a local RP_PERMITS CSV for roof and heating/air permit years. With --file '
+                'and no --permits-file, the permit years already in the database are kept.'
             ),
         )
         parser.add_argument(
@@ -101,22 +111,25 @@ class Command(BaseCommand):
             csv_path = options['file']
             millage_path = options.get('millage_file')
             sales_path = options.get('sales_file')
-            for path in (csv_path, millage_path, sales_path):
+            permits_path = options.get('permits_file')
+            for path in (csv_path, millage_path, sales_path, permits_path):
                 if path and not os.path.exists(path):
                     self.stderr.write(f'File not found: {path}')
                     return
             millage = import_millage_rates(millage_path) if millage_path else stored_millage()
-            self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet))
+            permits = read_permit_years(permits_path) if permits_path else None
+            self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet), permits)
             self._clear_cache()
             if sales_path:
                 self._import_sales(sales_path, quiet)
         else:
             if not quiet:
-                self.stdout.write('Downloading RP_MILLAGE_RATES.csv and RP_PROPERTY_INFO.csv...')
+                self.stdout.write(f'Downloading RP_MILLAGE_RATES.csv, {PERMITS_TABLE}.csv and RP_PROPERTY_INFO.csv...')
             with tempfile.TemporaryDirectory() as tmpdir:
                 millage = import_millage_rates(download_pcpao_file('RP_MILLAGE_RATES', tmpdir))
+                permits = self._download_permit_years(tmpdir, quiet)
                 csv_path = download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
-                self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet))
+                self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet), permits)
                 self._clear_cache()
                 # Last, so a problem with the sales file can't cost the property refresh.
                 if not quiet:
@@ -136,6 +149,18 @@ class Command(BaseCommand):
         if not quiet:
             self.stdout.write(self.style.SUCCESS(f'Loaded {count} qualified sales.'))
 
+    def _download_permit_years(self, tmpdir: str, quiet: bool) -> dict[str, PermitYears] | None:
+        # Permit years ride along on the property rows, so the file has to be
+        # read first. A problem with it must not cost the property refresh:
+        # None keeps the years already stored.
+        try:
+            return read_permit_years(download_pcpao_file(PERMITS_TABLE, tmpdir))
+        except Exception:
+            logger.exception('Could not read %s; keeping the permit years already loaded', PERMITS_TABLE)
+            if not quiet:
+                self.stdout.write(self.style.WARNING(f'Could not read {PERMITS_TABLE}; keeping existing permit years.'))
+            return None
+
     def _millage_or_none(self, millage: dict[str, Millage], quiet: bool) -> dict[str, Millage] | None:
         if millage:
             return millage
@@ -150,6 +175,7 @@ class Command(BaseCommand):
         limit: int = None,
         vacuum_every: int = None,
         millage: dict[str, Millage] | None = None,
+        permits: dict[str, PermitYears] | None = None,
     ):
         """Process CSV file and import records."""
         properties = []
@@ -160,7 +186,7 @@ class Command(BaseCommand):
         with open(csv_path, encoding=csv_encoding(csv_path)) as f:
             reader = csv.DictReader(f)
             for row in reader:
-                prop = map_csv_row_to_property(row, millage)
+                prop = map_csv_row_to_property(row, millage, permits)
                 # Need parcel_id plus required/search-critical address fields.
                 # Vacant/orphan parcels with incomplete site data are skipped.
                 if not (prop.get('parcel_id') and prop.get('address') and prop.get('city') and prop.get('zip_code')):

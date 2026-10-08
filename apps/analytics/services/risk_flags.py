@@ -13,12 +13,26 @@ Rules checked in October 2026:
   milestone structural inspection at 30 years (some coastal jurisdictions
   require it at 25), then every 10 years, plus a structural integrity reserve
   study (Fla. Stat. 553.899 and 718.112, as amended by HB 913 in 2025).
+- An insurer can't refuse a home only because its roof is old if the roof is
+  under 15 years old. From 15 years it can require an inspection, and must
+  still cover the home if the roof has five or more years of useful life left
+  (Fla. Stat. 627.7011(5), added in 2022).
+
+Permit years come from the county's RP_PERMITS file, which starts in 1997. In
+October 2026, 90% of single-family homes built before 2012 had a roof permit
+on record and 74% had one from the last 15 years. Condo units (7%), townhomes
+in planned developments (42%) and manufactured homes (36%) mostly don't,
+because the association owns the roof or the work isn't permitted per unit,
+so a missing permit is only flagged for houses. Only 53% of those houses have
+any heating/air permit, so a missing one is never flagged.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+
+from .permits_importer import PERMIT_RECORDS_START_YEAR
 
 HIGH = 'high'
 MEDIUM = 'medium'
@@ -32,6 +46,8 @@ NOT_IN_EVAC_ZONE = 'NONE'
 FLORIDA_BUILDING_CODE_YEAR = 2002
 # Flag condos a few years ahead of the earliest (25-year) inspection deadline.
 CONDO_MILESTONE_WARNING_AGE = 25
+ROOF_INSPECTION_AGE = 15
+RECENT_HVAC_AGE = 10
 
 # FRONTAGE values that name the water a waterfront parcel sits on. The county's
 # waterfront flag is the trigger; most pond-frontage lots are not flagged.
@@ -138,6 +154,9 @@ def build_risk_flags(listing, today: date | None = None) -> list[RiskFlag]:
     is_condo = 'condo' in property_type and not is_manufactured
     flags.extend(_age_flags(listing.year_built, is_condo, today or date.today()))
 
+    is_house = property_type.startswith('single family') or 'duplex' in property_type
+    flags.extend(_permit_flags(listing, is_house, today or date.today()))
+
     if listing.historic_landmark:
         flags.append(
             RiskFlag(
@@ -208,6 +227,61 @@ def _evacuation_flags(zone: str | None) -> list[RiskFlag]:
             )
         ]
     return []
+
+
+def _permit_flags(listing, is_house: bool, today: date) -> list[RiskFlag]:
+    year_built = listing.year_built
+    if not year_built:
+        return []
+
+    flags: list[RiskFlag] = []
+    # A permit from the year the home was built, or earlier, is for the
+    # original roof or a building that stood there before.
+    roof_year = listing.roof_permit_year if (listing.roof_permit_year or 0) > year_built else None
+    roof_age = today.year - (roof_year or year_built)
+    if roof_year and roof_age < ROOF_INSPECTION_AGE:
+        flags.append(
+            RiskFlag(
+                GOOD,
+                f'Roof permit in {roof_year}',
+                f"The county's record shows a roof permit issued in {roof_year}. A permit can cover a repair "
+                'as well as a new roof.',
+                'Ask the seller whether the whole roof was replaced, and for the contract or warranty. '
+                'Insurers will ask how old the roof is.',
+            )
+        )
+    elif is_house and roof_age >= ROOF_INSPECTION_AGE:
+        if roof_year:
+            title = f'Last roof permit was in {roof_year}'
+            record = f"The county's most recent roof permit for this home is from {roof_year}."
+        else:
+            title = 'No roof permit on record'
+            record = (
+                f"The county's permit records go back to {PERMIT_RECORDS_START_YEAR} and show no roof permit for "
+                f'this home, built in {year_built}.'
+            )
+        flags.append(
+            RiskFlag(
+                MEDIUM,
+                title,
+                f'{record} Florida insurers can require an inspection before covering a roof '
+                f'{ROOF_INSPECTION_AGE} years or older, and some decline older roofs.',
+                "Ask the seller for the roof's age and material, and get insurance quotes before your inspection "
+                'period ends. Tile and metal roofs last longer than shingle.',
+            )
+        )
+
+    hvac_year = listing.hvac_permit_year
+    if hvac_year and hvac_year > year_built and today.year - hvac_year < RECENT_HVAC_AGE:
+        flags.append(
+            RiskFlag(
+                GOOD,
+                f'Heating and air permit in {hvac_year}',
+                f"The county's record shows a heating or air-conditioning permit issued in {hvac_year}.",
+                'Ask what was replaced, and whether a warranty transfers to you.',
+            )
+        )
+    return flags
 
 
 def _age_flags(year_built: int | None, is_condo: bool, today: date) -> list[RiskFlag]:

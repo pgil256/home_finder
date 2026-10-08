@@ -165,6 +165,7 @@ class TestImportCommand:
     def test_download_fetches_sales_after_properties(self, tmp_path):
         files = {
             'RP_MILLAGE_RATES': str(FIXTURES / 'sample_millage_rates.csv'),
+            'RP_PERMITS': str(FIXTURES / 'sample_permits.csv'),
             'RP_PROPERTY_INFO': str(SAMPLE_PROPERTIES),
             'RP_SALES': str(SAMPLE_SALES),
         }
@@ -176,6 +177,7 @@ class TestImportCommand:
 
         assert [call.args[0] for call in download.call_args_list] == [
             'RP_MILLAGE_RATES',
+            'RP_PERMITS',
             'RP_PROPERTY_INFO',
             'RP_SALES',
         ]
