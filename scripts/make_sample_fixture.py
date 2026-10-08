@@ -6,10 +6,13 @@ subsidence, contamination, historic landmarks, capped homesteads, older
 condos, duplexes, commercial, and one row the importer skips), then blanks
 owner, mailing, and deed columns so no personal data lands in the repo.
 
-Usage:
-    python scripts/make_sample_fixture.py RP_PROPERTY_INFO.csv RP_MILLAGE_RATES.csv
+With an RP_SALES file as a third argument, it also writes every sale of the
+sampled parcels, with buyer and seller names and deed references blanked.
 
-Both inputs come from https://www.pcpao.gov/tools-data/data-downloads/raw-database-files
+Usage:
+    python scripts/make_sample_fixture.py RP_PROPERTY_INFO.csv RP_MILLAGE_RATES.csv [RP_SALES.csv]
+
+The inputs come from https://www.pcpao.gov/tools-data/data-downloads/raw-database-files
 """
 
 import csv
@@ -21,6 +24,7 @@ from pathlib import Path
 FIXTURE_DIR = Path(__file__).resolve().parent.parent / 'apps' / 'analytics' / 'fixtures'
 PROPERTY_OUT = FIXTURE_DIR / 'sample_pcpao_data.csv'
 MILLAGE_OUT = FIXTURE_DIR / 'sample_millage_rates.csv'
+SALES_OUT = FIXTURE_DIR / 'sample_sales.csv'
 SEED = 20260929
 
 REDACTED_COLUMNS = {
@@ -35,6 +39,7 @@ REDACTED_COLUMNS = {
     'LEGAL',
     'OR_BOOK_PAGE',
 }
+REDACTED_SALES_COLUMNS = {'BOOK_PAGE', 'GRANTEE', 'GRANTOR'}
 
 
 def _num(value: str) -> float:
@@ -135,6 +140,21 @@ def sample_millage(path: Path, districts: set[str]) -> tuple[list[str], list[lis
         return header, [row for row in reader if row[mill_cd] in districts]
 
 
+def sample_sales(path: Path, parcels: set[str]) -> tuple[list[str], list[list[str]]]:
+    with path.open(encoding='cp1252', newline='') as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        parcel_number = header.index('PARCEL_NUMBER')
+        redacted = [i for i, col in enumerate(header) if col in REDACTED_SALES_COLUMNS]
+        rows = []
+        for row in reader:
+            if row[parcel_number] in parcels:
+                for i in redacted:
+                    row[i] = ''
+                rows.append(row)
+    return header, sorted(rows, key=lambda r: (r[parcel_number], r[header.index('SALE_DATE')]))
+
+
 def write_csv(path: Path, header: list[str], rows: list[list[str]]) -> None:
     with path.open('w', encoding='cp1252', newline='') as f:
         writer = csv.writer(f, quoting=csv.QUOTE_ALL, lineterminator='\n')
@@ -143,7 +163,7 @@ def write_csv(path: Path, header: list[str], rows: list[list[str]]) -> None:
     print(f'Wrote {len(rows)} rows to {path}')
 
 
-def main(property_csv: str, millage_csv: str) -> None:
+def main(property_csv: str, millage_csv: str, sales_csv: str | None = None) -> None:
     header, rows = sample_properties(Path(property_csv))
     write_csv(PROPERTY_OUT, header, rows)
 
@@ -152,8 +172,12 @@ def main(property_csv: str, millage_csv: str) -> None:
     millage_header, millage_rows = sample_millage(Path(millage_csv), districts)
     write_csv(MILLAGE_OUT, millage_header, millage_rows)
 
+    if sales_csv:
+        parcels = {row[header.index('PARCEL_NUMBER')] for row in rows}
+        write_csv(SALES_OUT, *sample_sales(Path(sales_csv), parcels))
+
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(*sys.argv[1:])

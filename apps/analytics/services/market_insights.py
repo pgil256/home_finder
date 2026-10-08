@@ -689,7 +689,7 @@ def _methodology(sample_size: int, total_count: int) -> list[str]:
         'Headline KPIs use exact database aggregates and ordered medians against the filtered queryset.',
         'EDA charts and segment tables use pandas/numpy transformations over the analysis frame.',
         'Outliers use IQR or top-metric rankings and link back to parcel drilldowns for auditability.',
-        'No predictive model is used in this version because the public dataset lacks MLS sale prices and reliable beds/baths coverage.',
+        'No predictive model is used. These figures are county assessments, not sale prices; recorded sales are on each parcel page.',
     ]
     if total_count > sample_size:
         notes.append(f'Interactive EDA is capped at {_count(MAX_ANALYSIS_ROWS)} rows for responsiveness.')
