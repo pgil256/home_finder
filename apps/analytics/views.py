@@ -19,6 +19,7 @@ from home_finder.caching import cdn_cache
 from .models import PropertyListing, TaxDistrictMillage
 from .services.address_lookup import LOOKUP_LIMIT, lookup_parcels
 from .services.compare import COMPARE_LIMIT, ComparedHome, build_comparison
+from .services.comps import build_sales_outlook
 from .services.exports import generate_excel_response, generate_pdf_response
 from .services.filtering import (
     PINELLAS_CITIES,
@@ -352,6 +353,7 @@ def property_detail(request, parcel_id: str):
             'property': property_obj,
             'similar_properties': similar_properties,
             'tax_outlook': tax_outlook,
+            'sales': build_sales_outlook(property_obj),
             'affordability': _parcel_affordability(tax_outlook),
             'risk_flags': build_risk_flags(property_obj),
             'has_risk_data': has_risk_data(property_obj),

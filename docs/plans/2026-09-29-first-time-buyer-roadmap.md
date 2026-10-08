@@ -5,7 +5,7 @@
 
 ## Status (2026-10-08)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching) is built. Still to do: PR 7–11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps) is built. Still to do: PR 8–11.
 
 What changed around the roadmap:
 
@@ -17,8 +17,7 @@ Standing follow-ups:
 
 1. After the November 3 vote, set `AMENDMENT_3_STATUS` in `apps/analytics/services/tax_estimate.py` to `'passed'` or `'failed'`. Once the Department of Revenue publishes the 2027 inflation-adjusted exemption, add it to `CURRENT_LAW`.
 2. A full refresh reads every existing row, roughly 200 MB of the 5 GB monthly data-transfer allowance. Don't run it casually.
-3. Pages are cached at Vercel's edge for a day (PR 6), so a monthly import can take up to a day to show, or longer for a page nobody has visited since. Redeploying purges the cache.
-4. FHFA and HUD publish 2027 loan limits in late November 2026. Add them to `LOAN_LIMITS` in `apps/analytics/services/lending_config.py`.
+3. Pages are cached at Vercel's edge for a day (PR 6), so a monthly import can take up to a day to show, or longer for a page nobody has visited since. Redeploying purges the cache.4. FHFA and HUD publish 2027 loan limits in late November 2026. Add them to `LOAN_LIMITS` in `apps/analytics/services/lending_config.py`.
 
 ### Findings from the live county files (downloaded 2026-09-30)
 
@@ -322,7 +321,7 @@ One PR per step. Each step ships something visible and keeps CI green.
 - `GET /analytics/compare/?ids=…`: cap at 6 IDs, reuse the tax, risk and calculator services, and render a side-by-side table.
 - Nav link "Saved (n)" reads `localStorage['savedProperties']` and builds the compare URL.
 
-### PR 6 — CDN caching (M) — built
+### PR 6 — CDN caching (M) — done
 
 *As built:* `home_finder/caching.py` defines `cdn_cache` (`public, max-age=0, s-maxage=86400, stale-while-revalidate=604800`), applied to the home, about, help, robots, lookup, insights, parcel and compare views. Nothing public writes to the session any more. The insights page hands its filters to the browser, which keeps the last search in `localStorage['lastSearch']`; the filter builder reloads itself with that search when opened without one. The Refresh form fetches its token from `/analytics/csrf/` on submit. Redirects that carry a flash message (after a refresh, or a rate-limited export) add a timestamp parameter so they land on a page the CDN hasn't stored. `PrivateWhenPersonalMiddleware` is the safety net: any response that opted in to caching but ends up setting a cookie or varying on `Cookie` (a page showing a flash message, for example) is sent as `private, no-store` instead. The filter builder itself is not cached, because its POST form renders a CSRF token; it makes no database queries. The deploy hook is not wired up.
 
@@ -332,7 +331,9 @@ One PR per step. Each step ships something visible and keeps CI green.
 - Test: responses carry `s-maxage`, have no `Set-Cookie`, and have no `Vary: Cookie`. Include a template that renders `messages`, since that can touch the session.
 - Optional: call a Vercel deploy hook at the end of `refresh-data.yml` to purge the CDN right after each import.
 
-### PR 7 — Sales history + comps (M)
+### PR 7 — Sales history + comps (M) — built
+
+*As built:* `RP_SALES` (profiled 2026-10-08) has 160,815 rows going back to January 2021, with the columns guessed below. `services/sales_importer.py` keeps qualified, improved, single-parcel sales: 126,707 rows for 104,504 parcels, every one of which is in the property table. It also drops rows where `MULTI_SALES_YN` is `Y` (1,284 qualified deeds whose price covers several parcels), and where a parcel has two qualified deeds on one day it keeps the later one. The `Sale` table (migration `0012`) holds the whole file rather than 36 months, an estimated 15–20 MB with its index, so "last sold" reaches back to 2021. The last sale is read from `Sale` on the parcel page instead of being stored on `PropertyListing`: that avoids rewriting about 105,000 property rows, and nothing filters or sorts on it yet. The same migration adds the `neighborhood_code` index deferred from PR 1. `import_pcpao_data` downloads and loads sales after the properties (`--sales-file` for a local file), inside one transaction, and refuses to empty the table if a file has no qualified sales. `services/comps.py` follows the rule below, counts each home once at its latest price, leaves out the subject, and rounds the indicated value to the nearest $1,000. On a 4,000-parcel sample of the real data, comps show for 95% of single-family homes, 76% of condos and 84% of mobile homes, with a median of 19 sales behind each; the indicated value runs a median 24% above just value. About a quarter of homes have a sale on file, and 3% show a resale within 24 months (the flag compares the two most recent sales). Neighborhoods have a median of 94 parcels but the largest has 9,203, so the comps query keeps the neighbor list in the database. The parcel page tolerates a missing `Sale` table, because deploys don't run migrations: run "Refresh PCPAO data" once after merging. The 48-parcel sample fixture gets a matching `sample_sales.csv` (names and deed references blanked), which shows last-sale and resale history but is too sparse for comps. Not done: last sale on the compare page.
 
 - Stream `RP_SALES` in the Action. Keep only qualified (`QUALIFIED_FLG = 'Q'`), improved (`VACANT_IMPROVED = 'I'`) sales from the last 36 months. Drop grantee and grantor names.
 - Store `last_sale_date` and `last_sale_price` on `PropertyListing`: track the max date per parcel while streaming the whole file.

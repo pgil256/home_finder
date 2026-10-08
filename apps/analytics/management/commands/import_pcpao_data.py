@@ -5,6 +5,7 @@ Usage:
     python manage.py import_pcpao_data
     python manage.py import_pcpao_data --file /path/to/RP_PROPERTY_INFO.csv
     python manage.py import_pcpao_data --file RP_PROPERTY_INFO.csv --millage-file RP_MILLAGE_RATES.csv
+    python manage.py import_pcpao_data --file RP_PROPERTY_INFO.csv --sales-file RP_SALES.csv
     python manage.py import_pcpao_data --quiet
     python manage.py import_pcpao_data --vacuum-every 10
 """
@@ -26,6 +27,7 @@ from apps.analytics.services.pcpao_importer import (
     stored_millage,
     vacuum_property_listing_table,
 )
+from apps.analytics.services.sales_importer import SALES_TABLE, import_sales
 from apps.analytics.services.tax_estimate import Millage
 
 logger = logging.getLogger(__name__)
@@ -46,6 +48,14 @@ class Command(BaseCommand):
             help=(
                 'Path to a local RP_MILLAGE_RATES CSV for tax estimates. With --file and no '
                 '--millage-file, the millage already in the database is used.'
+            ),
+        )
+        parser.add_argument(
+            '--sales-file',
+            type=str,
+            help=(
+                'Path to a local RP_SALES CSV for sales history and comparable sales. With --file '
+                'and no --sales-file, the sales already in the database are kept.'
             ),
         )
         parser.add_argument(
@@ -90,12 +100,16 @@ class Command(BaseCommand):
         if options['file']:
             csv_path = options['file']
             millage_path = options.get('millage_file')
-            for path in (csv_path, millage_path):
+            sales_path = options.get('sales_file')
+            for path in (csv_path, millage_path, sales_path):
                 if path and not os.path.exists(path):
                     self.stderr.write(f'File not found: {path}')
                     return
             millage = import_millage_rates(millage_path) if millage_path else stored_millage()
             self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet))
+            self._clear_cache()
+            if sales_path:
+                self._import_sales(sales_path, quiet)
         else:
             if not quiet:
                 self.stdout.write('Downloading RP_MILLAGE_RATES.csv and RP_PROPERTY_INFO.csv...')
@@ -103,13 +117,24 @@ class Command(BaseCommand):
                 millage = import_millage_rates(download_pcpao_file('RP_MILLAGE_RATES', tmpdir))
                 csv_path = download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
                 self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet))
+                self._clear_cache()
+                # Last, so a problem with the sales file can't cost the property refresh.
+                if not quiet:
+                    self.stdout.write(f'Downloading {SALES_TABLE}.csv...')
+                self._import_sales(download_pcpao_file(SALES_TABLE, tmpdir), quiet)
 
+    def _clear_cache(self) -> None:
         # Cached market insights describe the old data. They live for a day
         # to save database egress, so drop them now rather than serve them.
         try:
             cache.clear()
         except Exception:
             logger.warning('Could not clear the cache after the import', exc_info=True)
+
+    def _import_sales(self, sales_path: str, quiet: bool) -> None:
+        count = import_sales(sales_path)
+        if not quiet:
+            self.stdout.write(self.style.SUCCESS(f'Loaded {count} qualified sales.'))
 
     def _millage_or_none(self, millage: dict[str, Millage], quiet: bool) -> dict[str, Millage] | None:
         if millage:

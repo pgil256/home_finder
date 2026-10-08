@@ -6,8 +6,8 @@ class PropertyListing(models.Model):
     # query can use an index for get one. Filters use city__iexact and
     # property_type__icontains, which a plain B-tree can't serve; the
     # similar-properties lookup (exact city + type, value range) uses
-    # idx_city_type_value, and the address lookup (address LIKE 'PREFIX%')
-    # uses idx_address_prefix.
+    # idx_city_type_value, the address lookup (address LIKE 'PREFIX%') uses
+    # idx_address_prefix, and comparable sales use idx_neighborhood.
 
     # Property Appraiser Data
     parcel_id = models.CharField(max_length=50, unique=True)
@@ -81,6 +81,8 @@ class PropertyListing(models.Model):
             models.Index(fields=['city', 'property_type', 'market_value'], name='idx_city_type_value'),
             # Address lookup: prefix match on the upper-case county address.
             models.Index(fields=['address'], name='idx_address_prefix', opclasses=['varchar_pattern_ops']),
+            # Comparable sales on the detail page: every home in one neighborhood.
+            models.Index(fields=['neighborhood_code'], name='idx_neighborhood'),
         ]
 
     def __str__(self):
@@ -128,3 +130,26 @@ class MortgageRate(models.Model):
 
     def __str__(self):
         return f'{self.rate}% as of {self.as_of}'
+
+
+class Sale(models.Model):
+    """One qualified sale of an improved parcel, from PCPAO's RP_SALES.
+
+    Reloaded whole by the monthly import (services/sales_importer.py), so
+    rows are never updated in place. `parcel_id` matches
+    PropertyListing.parcel_id but is not a foreign key: the county file lists
+    sales for parcels the property import skips.
+    """
+
+    parcel_id = models.CharField(max_length=50)
+    sale_date = models.DateField()
+    price = models.IntegerField()  # whole dollars
+
+    class Meta:
+        constraints = [
+            # Also the index for a parcel's sales history.
+            models.UniqueConstraint(fields=['parcel_id', 'sale_date'], name='uniq_sale_parcel_date'),
+        ]
+
+    def __str__(self):
+        return f'{self.parcel_id} sold {self.sale_date} for ${self.price:,}'

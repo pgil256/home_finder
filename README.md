@@ -8,7 +8,7 @@
 
 > **Live:** [homefinder.patbuilds.dev](https://homefinder.patbuilds.dev)
 
-Pinellas Market Lens answers a home buyer's question about any Pinellas County, Florida property: what will this home really cost me, and what's the catch? Type the address from a listing to see the property taxes a new owner would pay (not the seller's capped bill) and the risk flags on the county's record. Behind it, official public records are ingested, cleaned, indexed, filtered, and analyzed with pandas/numpy, and a market dashboard exposes KPIs, distributions, segment comparisons, tax burden, assessed-value gaps, and auditable outliers.
+Pinellas Market Lens answers a home buyer's question about any Pinellas County, Florida property: what will this home really cost me, and what's the catch? Type the address from a listing to see the property taxes a new owner would pay (not the seller's capped bill), what the home and similar homes nearby last sold for, and the risk flags on the county's record. Behind it, official public records are ingested, cleaned, indexed, filtered, and analyzed with pandas/numpy, and a market dashboard exposes KPIs, distributions, segment comparisons, tax burden, assessed-value gaps, and auditable outliers.
 
 > The repository is still named `home_finder` from its original property-search incarnation; it was rebuilt around the analytics workflow described below.
 
@@ -35,7 +35,7 @@ A parcel drilldown and the responsive mobile layout:
 | `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
 | `/analytics/` | Filter-builder form that redirects into `/insights/` |
 | `/analytics/dashboard/` | Legacy URL that redirects to `/insights/` |
-| `/analytics/property/<parcel_id>/` | Parcel drilldown used to audit sample parcels and outlier rows |
+| `/analytics/property/<parcel_id>/` | Parcel page: new-owner tax, recorded sales and comparable sales, monthly cost and risk flags. Also the drilldown for sample parcels and outlier rows |
 | `/analytics/compare/?ids=<parcel IDs>` | Saved homes side by side (up to 6): value, new-owner tax, monthly cost and risk flags. The list lives in the browser's `localStorage`; the header's Saved link builds the URL |
 | `/analytics/download/excel/` | Analysis workbook: Overview, City Segments, Property Type Segments, Outliers, Sample Parcels, Methodology |
 | `/analytics/download/pdf/` | PDF insight brief with filters, exact KPIs, takeaways, segments, outliers, and methodology |
@@ -71,7 +71,7 @@ The production architecture keeps the app cheap and understandable: Vercel serve
 - Exact database KPIs: parcel count, median/mean market value, median price per square foot, total market value, median tax rate, and assessed-vs-market gap.
 - pandas/numpy exploratory analysis: percentiles, histograms, city/type segment summaries, build-era trend lines, market-vs-assessed scatter samples, and outlier rankings.
 - Auditable outliers: high-value IQR outliers, largest assessed gaps, and highest tax-burden parcels link back to parcel drilldowns.
-- Honest methodology: v1 does not claim predictive valuation because the public dataset lacks MLS sale prices and reliable bedrooms/bathrooms coverage.
+- Honest methodology: no predictive valuation. Parcel pages show recorded qualified sales and a median price per square foot from similar nearby sales, with the count and range, and hide it when fewer than three homes sold. The dataset has no listing prices and no reliable bedrooms/bathrooms coverage.
 - Production constraints: interactive EDA is capped for responsiveness, while headline KPIs remain exact database aggregates.
 - On-demand freshness: the full dataset refreshes monthly via GitHub Actions, and any single parcel can be re-pulled from the County Property Appraiser on demand — rate-limited to one refresh per parcel per minute via the database cache.
 
@@ -99,7 +99,7 @@ pip install -r requirements.txt
 
 copy .env.example .env
 python manage.py migrate
-python manage.py import_pcpao_data --file apps/analytics/fixtures/sample_pcpao_data.csv --millage-file apps/analytics/fixtures/sample_millage_rates.csv
+python manage.py import_pcpao_data --file apps/analytics/fixtures/sample_pcpao_data.csv --millage-file apps/analytics/fixtures/sample_millage_rates.csv --sales-file apps/analytics/fixtures/sample_sales.csv
 
 npm install
 npm run build
@@ -122,7 +122,8 @@ pytest tests/e2e/browser/
 
 ## Limitations
 
-- PCPAO records are public assessment records, not MLS transactions.
+- PCPAO records are public assessment and deed records, not MLS listings. Sale prices are the county's qualified sales since 2021; there are no asking prices, and a sale can take a month or more to appear.
+- Comparable sales are a median price per square foot from the same county appraisal neighborhood, not an appraisal. They ignore condition, updates, lot and view, and the 48-parcel sample fixture is too sparse to produce any.
 - Bedrooms and bathrooms are not reliable in the bulk public dataset, so they are not used as core market signals.
 - The dashboard is exploratory analysis, not investment advice or a predictive appraisal model.
 - New-owner tax estimates assess the home at the county's just value with the latest adopted millage. A buyer who pays more than just value, or buys after millage rates change, will see a different bill.
