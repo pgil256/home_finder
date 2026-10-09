@@ -10,7 +10,7 @@ with `-m heavy` or via the workflow's run_exports input.
 """
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from urllib.parse import unquote
 
 import pytest
@@ -56,7 +56,7 @@ def test_S0_has_data(client, base_url):
     )
 
     assert status['last_updated'], f'{base_url} has no last_updated timestamp'
-    age = datetime.now(timezone.utc) - datetime.fromisoformat(status['last_updated'])
+    age = datetime.now(UTC) - datetime.fromisoformat(status['last_updated'])
     assert age <= MAX_DATA_AGE, (
         f'{base_url} data was last updated {age.days} days ago; the monthly refresh has stopped running.'
     )
@@ -116,13 +116,16 @@ def test_S1d_address_suggestions(client, base_url):
     assert r.elapsed.total_seconds() < 1, f'suggestions took {r.elapsed.total_seconds():.1f}s'
 
 
-def test_S2_scraper_form_loads(client, base_url):
-    """Filter builder renders with city + property type fields."""
-    r = client.get(f'{base_url}/analytics/', timeout=TIMEOUT)
+def test_S2_old_filter_builder_redirects_to_the_market_page(client, base_url):
+    """/analytics/ was a separate filter form; old links land on the market page, filters intact."""
+    r = client.get(f'{base_url}/analytics/', params={'city': 'Dunedin'}, timeout=TIMEOUT)
     assert_ok(r)
+    assert [hop.status_code for hop in r.history] == [301]
+    assert r.url.endswith('/insights/?city=Dunedin')
     assert 'name="city"' in r.text
     assert 'name="property_type"' in r.text
-    assert 'Build a Market Analysis' in r.text
+    # The monthly-budget search moved here with the filters.
+    assert 'id="budget-monthly"' in r.text
 
 
 def test_S3_insights_dashboard_renders(client, base_url):

@@ -7,24 +7,25 @@ from playwright.sync_api import Page, expect
 SCRAPE_NAV_TIMEOUT_MS = 60_000
 
 
-def test_B1_form_submit_navigates_to_insights(page: Page, base_url):
-    """Filling and submitting the filter builder ends up on the insights dashboard."""
-    page.goto(f'{base_url}/analytics/')
+def test_B1_filter_panel_submit_filters_the_market_page(page: Page, base_url):
+    """Choosing a city in the filter panel and submitting reloads insights with it applied."""
+    page.goto(f'{base_url}/insights/')
     page.locator('select[name="city"]').select_option('Clearwater')
 
-    submit = page.locator('button[type="submit"], input[type="submit"]').first
     with page.expect_navigation(timeout=SCRAPE_NAV_TIMEOUT_MS) as nav:
-        submit.click()
+        page.get_by_role('button', name='Show results').click()
 
-    response = nav.value
-    assert response, 'expected a navigation response'
-    assert '/insights/' in page.url, f'unexpected URL after submit: {page.url}'
+    assert nav.value, 'expected a navigation response'
+    assert '/insights/' in page.url and 'city=Clearwater' in page.url, f'unexpected URL after submit: {page.url}'
 
 
-def test_B2_form_is_wired_for_loading_state(page: Page, base_url):
-    """The compatibility form still has the data-loading-form spinner hook."""
-    page.goto(f'{base_url}/analytics/')
-    expect(page.locator('form#search-form')).to_have_attribute('data-loading-form', '')
+def test_B2_monthly_budget_fills_the_maximum_value(page: Page, base_url):
+    """Typing a monthly budget writes a maximum market value into the filter form."""
+    page.goto(f'{base_url}/insights/')
+    page.locator('#budget-monthly').fill('2800')
+
+    expect(page.locator('#max_value')).not_to_have_value('')
+    expect(page.locator('#budget-result')).to_contain_text('About $')
 
 
 def test_B3_sample_parcel_click_navigates_to_detail(page: Page, base_url):
@@ -63,6 +64,6 @@ def test_B5_empty_insights_has_no_javascript_errors(page: Page, base_url):
     page.on('pageerror', lambda exc: errors.append(str(exc)))
 
     page.goto(f'{base_url}/insights/?city=NotARealCity12345')
-    expect(page.get_by_text('No parcels match the current filters')).to_be_visible(timeout=5_000)
+    expect(page.get_by_text('No properties match these filters').first).to_be_visible(timeout=5_000)
 
     assert errors == []

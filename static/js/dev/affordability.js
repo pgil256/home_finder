@@ -1,5 +1,5 @@
 // Monthly cost and cash-to-close math for the parcel page calculator and the
-// budget field on the search form. Everything runs in the browser. Yearly
+// budget box in the market page's filters. Everything runs in the browser. Yearly
 // constants (loan limits, FHA premiums) and the default rate come from the
 // server as JSON; see apps/analytics/services/lending_config.py.
 

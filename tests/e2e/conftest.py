@@ -13,7 +13,6 @@ import requests
 DEFAULT_BASE_URL = 'https://homefinder.patbuilds.dev'
 DEFAULT_TIMEOUT = 15
 SCRAPE_TIMEOUT = 60
-CSRF_RE = re.compile(r'name="csrfmiddlewaretoken"\s+value="([^"]+)"')
 
 
 @pytest.fixture(scope='session')
@@ -56,11 +55,10 @@ def use_simple_staticfiles_storage():
 
 
 def _fetch_csrf(session: requests.Session, base_url: str) -> str:
-    r = session.get(f'{base_url}/analytics/', timeout=DEFAULT_TIMEOUT)
+    # Cached pages carry no token; forms fetch one from here before they post.
+    r = session.get(f'{base_url}/analytics/csrf/', timeout=DEFAULT_TIMEOUT)
     r.raise_for_status()
-    match = CSRF_RE.search(r.text)
-    assert match, 'CSRF token not found on /analytics/ page'
-    return match.group(1)
+    return r.json()['csrfToken']
 
 
 @pytest.fixture

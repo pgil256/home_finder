@@ -196,10 +196,13 @@ class TestCostCalculatorCard:
 
 
 class TestBudgetSearchField:
-    def test_search_form_offers_a_monthly_budget_that_is_not_submitted(self, client):
-        html = client.get('/analytics/').content.decode('utf-8', 'ignore')
+    def test_market_filters_offer_a_monthly_budget_that_is_not_submitted(self, client, db):
+        html = client.get('/insights/').content.decode('utf-8', 'ignore')
 
         budget_input = re.search(r'<input[^>]*id="budget-monthly"[^>]*>', html).group(0)
         assert 'name=' not in budget_input
+        assert 'name=' not in re.search(r'<select[^>]*id="budget-down-pct"[^>]*>', html).group(0)
+        # The budget is written into the form's own maximum value field.
+        assert re.search(r'<input[^>]*id="max_value"[^>]*name="max_price"', html)
         assert _page_config(html)['budgetTaxRatePct'] == lending_config.BUDGET_TAX_RATE_PCT
         assert 'js/dist/affordability.bundle.js' in html

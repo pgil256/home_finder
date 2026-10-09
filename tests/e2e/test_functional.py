@@ -1,31 +1,17 @@
 """Functional tests against deployed search/filter paths."""
 
-import requests
-
-from .conftest import CSRF_RE, DEFAULT_TIMEOUT
+from .conftest import DEFAULT_TIMEOUT
 
 
-def _fresh_csrf(session: requests.Session, base_url: str) -> str:
-    r = session.get(f'{base_url}/analytics/', timeout=DEFAULT_TIMEOUT)
-    r.raise_for_status()
-    return CSRF_RE.search(r.text).group(1)
-
-
-def test_F1_search_redirects_with_filters_in_query(csrf_session, base_url):
-    """POST with city + value range 302s to insights with those params in the URL."""
-    session, csrf = csrf_session
-    r = session.post(
+def test_F1_old_filter_builder_link_redirects_with_filters(client, base_url):
+    """A bookmarked filter-builder URL 301s to insights with its params in the URL."""
+    r = client.get(
         f'{base_url}/analytics/',
-        data={
-            'csrfmiddlewaretoken': csrf,
-            'city': 'Clearwater',
-            'min_price': '100000',
-            'max_price': '500000',
-        },
+        params={'city': 'Clearwater', 'min_price': '100000', 'max_price': '500000'},
         timeout=DEFAULT_TIMEOUT,
         allow_redirects=False,
     )
-    assert r.status_code == 302, f'expected 302, got {r.status_code}'
+    assert r.status_code == 301, f'expected 301, got {r.status_code}'
     location = r.headers.get('Location', '')
     assert '/insights/' in location, f'unexpected redirect: {location}'
     assert 'city=Clearwater' in location
@@ -33,48 +19,22 @@ def test_F1_search_redirects_with_filters_in_query(csrf_session, base_url):
     assert 'max_price=500000' in location
 
 
-def test_F2_search_with_property_type_passes_through(csrf_session, base_url):
-    """Multi-value property_type fields are preserved in the redirect URL."""
-    session, csrf = csrf_session
-    r = session.post(
-        f'{base_url}/analytics/',
-        data=[
-            ('csrfmiddlewaretoken', csrf),
-            ('city', 'St. Petersburg'),
-            ('property_type', 'Single Family'),
-            ('property_type', 'Condo'),
-        ],
+def test_F2_insights_keeps_repeated_property_types(client, base_url):
+    """Multi-value property_type fields filter together."""
+    r = client.get(
+        f'{base_url}/insights/',
+        params=[('city', 'St. Petersburg'), ('property_type', 'Single Family'), ('property_type', 'Condo')],
         timeout=DEFAULT_TIMEOUT,
-        allow_redirects=False,
     )
-    assert r.status_code == 302
-    location = r.headers['Location']
-    assert location.count('property_type=') == 2, f'missing property_type repetition: {location}'
+    assert r.status_code == 200
+    assert 'Type: Single Family, Condo' in r.text
 
 
-def test_F3_search_with_no_filters_redirects_to_insights(csrf_session, base_url):
-    """Empty form still redirects to the unfiltered insights dashboard."""
-    session, csrf = csrf_session
-    r = session.post(
-        f'{base_url}/analytics/',
-        data={'csrfmiddlewaretoken': csrf},
-        timeout=DEFAULT_TIMEOUT,
-        allow_redirects=False,
-    )
-    assert r.status_code == 302
-    assert '/insights/' in r.headers['Location']
-
-
-def test_F4_search_with_bogus_city_does_not_500(csrf_session, base_url):
-    """A city that isn't in the dropdown still 302s; insights handles 0 results."""
-    session, csrf = csrf_session
-    r = session.post(
-        f'{base_url}/analytics/',
-        data={'csrfmiddlewaretoken': csrf, 'city': 'NotARealCity12345'},
-        timeout=DEFAULT_TIMEOUT,
-        allow_redirects=False,
-    )
-    assert r.status_code == 302
+def test_F4_insights_with_bogus_city_does_not_500(client, base_url):
+    """A city that isn't in the dropdown renders an empty result, not an error."""
+    r = client.get(f'{base_url}/insights/', params={'city': 'NotARealCity12345'}, timeout=DEFAULT_TIMEOUT)
+    assert r.status_code == 200
+    assert 'No properties match these filters' in r.text
 
 
 def test_F5_insights_filters_chain_via_query_string(client, base_url):

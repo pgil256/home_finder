@@ -14,9 +14,6 @@ const {
   updateSavedLinks,
   toggleSavedHome,
   initComparePage,
-  readLastSearch,
-  forgetLastSearch,
-  initLastSearch,
   submitWithCsrfToken,
 } = require('../common.js');
 
@@ -371,63 +368,6 @@ describe('saved homes', () => {
       initComparePage(navigate);
       expect(navigate).not.toHaveBeenCalled();
     });
-  });
-});
-
-describe('last search', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-  });
-
-  test('the insights page remembers its filters', () => {
-    document.body.innerHTML = '<div data-remember-search="city=Dunedin&amp;max_price=400000"></div>';
-    const navigate = jest.fn();
-
-    initLastSearch(navigate, '?city=Dunedin&max_price=400000');
-
-    expect(readLastSearch()).toBe('city=Dunedin&max_price=400000');
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
-  test('an unfiltered insights page keeps the previous search', () => {
-    window.localStorage.setItem('lastSearch', 'city=Dunedin');
-    document.body.innerHTML = '<div data-remember-search=""></div>';
-
-    initLastSearch(jest.fn(), '');
-
-    expect(readLastSearch()).toBe('city=Dunedin');
-  });
-
-  test('the filter builder reopens with the last search', () => {
-    window.localStorage.setItem('lastSearch', 'city=Dunedin');
-    document.body.innerHTML = '<form data-restore-search="/analytics/"></form>';
-    const navigate = jest.fn();
-
-    initLastSearch(navigate, '');
-
-    expect(navigate).toHaveBeenCalledWith('/analytics/?city=Dunedin');
-  });
-
-  test('the filter builder leaves a URL that already has filters alone', () => {
-    window.localStorage.setItem('lastSearch', 'city=Dunedin');
-    document.body.innerHTML = '<form data-restore-search="/analytics/"></form>';
-    const navigate = jest.fn();
-
-    initLastSearch(navigate, '?city=Largo');
-
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
-  test('nothing happens on a first visit or after a reset', () => {
-    document.body.innerHTML = '<form data-restore-search="/analytics/"></form>';
-    const navigate = jest.fn();
-
-    initLastSearch(navigate, '');
-    window.localStorage.setItem('lastSearch', 'city=Dunedin');
-    forgetLastSearch();
-    initLastSearch(navigate, '');
-
-    expect(navigate).not.toHaveBeenCalled();
   });
 });
 
