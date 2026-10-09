@@ -28,6 +28,11 @@ jobs:
   smoke:
     name: Smoke (read-only)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://homefinder.patbuilds.dev' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -42,7 +47,6 @@ jobs:
 
       - name: Run smoke suite
         env:
-          E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://homefinder.patbuilds.dev' }}
           RUN_EXPORTS: ${{ github.event.inputs.run_exports || 'false' }}
         # The export tests are marked `heavy`: each one builds a workbook/PDF
         # over the whole filtered table, so they are opt-in rather than part of
@@ -55,6 +59,21 @@ jobs:
           else
             python -m pytest "${BASE_ARGS[@]}" -m "not heavy"
           fi
+
+      # The smoke failed two days running in October 2026 (the public domain
+      # was serving an empty database) and nothing told anyone.
+      - name: Open or update an issue when the smoke fails
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: >-
+          .github/scripts/report-failure.sh
+          "Production smoke failed"
+          "The read-only smoke suite failed against $E2E_BASE_URL.
+          If test_S0_has_data is the first failure, that host has no parcel data:
+          check which Vercel project and database the domain points at before
+          looking at application code."
 
   functional:
     name: Functional (write paths)

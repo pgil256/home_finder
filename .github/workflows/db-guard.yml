@@ -15,6 +15,9 @@ jobs:
     name: Rebuild if empty
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      issues: write
     env:
       DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
       SECRET_KEY: ${{ secrets.SECRET_KEY || 'github-actions-import-not-secret' }}
@@ -39,3 +42,17 @@ jobs:
 
       - name: Rebuild the property data if it is gone
         run: python manage.py guard_property_data
+
+      # This job fails on purpose after a rebuild, so say so somewhere a person
+      # will see it.
+      - name: Open or update an issue when the guard fails
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: >-
+          .github/scripts/report-failure.sh
+          "Database guard failed"
+          "The daily database guard failed. Either the property table was empty
+          and has been re-imported (the log says so), or the guard could not
+          reach the database. Find out what emptied the table before closing this."
