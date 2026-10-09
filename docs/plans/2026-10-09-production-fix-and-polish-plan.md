@@ -5,6 +5,30 @@
 
 Follows the [first-time buyer roadmap](2026-09-29-first-time-buyer-roadmap.md), which is complete. This plan came out of a review of the live site on 2026-10-09.
 
+## Status
+
+As of 2026-10-09 every code step has an open pull request with CI green. They are stacked in this order, each on the one before, and none is merged yet:
+
+| Step | Pull request |
+|---|---|
+| 1. Monitor opens an issue | pgil256/home_finder#21 |
+| 3. Address typeahead | pgil256/home_finder#23 |
+| 5. Nearby homes | pgil256/home_finder#24 |
+| 6. Comps headline | pgil256/home_finder#25 |
+| 9. Parcel page tidy-up | pgil256/home_finder#26 |
+| 10. Error pages | pgil256/home_finder#27 |
+| 4. Typo tolerance (migration 0015) | pgil256/home_finder#28 |
+| 7. One audience | pgil256/home_finder#29 |
+| 8. Retire the filter builder | pgil256/home_finder#30 |
+| 11. Trim the bundle | pgil256/home_finder#31 |
+| 2. Cloudflare purge and CDN smoke test | pgil256/home_finder#32 |
+
+Still to do by hand:
+
+- **Step 0.** The cause is narrower than this plan guessed. `homefinder.patbuilds.dev` is attached to the right Vercel project, which marks it "Invalid Configuration": the `homefinder` record in Cloudflare DNS does not point at Vercel, so Cloudflare sends the hostname to some other host running the app with an empty database (its responses have no `X-Vercel-Id` header). In Cloudflare, set the `homefinder` CNAME to `f80956fe97dc79fd.vercel-dns-017.com`, the value Vercel shows for it and the one `pinellasmarketlens.patbuilds.dev` already uses, then find and shut down whatever the old record pointed at.
+- **Step 2.** The Cloudflare Cache Rule and the two purge secrets, described in [docs/cloudflare-cache.md](../cloudflare-cache.md).
+- **After Step 4 merges.** Run the "Database guard" workflow once. It applies migration 0015 and fills the street-name table. A full data refresh is not needed.
+
 ## What was found
 
 Checked on 2026-10-09 against both hosts:
