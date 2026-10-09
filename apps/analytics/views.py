@@ -27,6 +27,7 @@ from .services.filtering import (
     apply_filters,
     apply_sorting,
 )
+from .services.flood_claims import CLAIM_RECORDS_START_YEAR, RECENT_SINCE_YEAR, zip_flood_history
 from .services.lending_config import affordability_config
 from .services.market_insights import build_market_insights
 from .services.risk_flags import (
@@ -67,6 +68,7 @@ SEARCH_FIELDS = (
     'max_tax_amount',
     'exclude_evac',
     'exclude_subsidence',
+    'outside_sfha',
     'max_est_tax',
 )
 # beds/baths intentionally excluded — PCPAO doesn't expose this data.
@@ -189,6 +191,8 @@ def _active_filter_chips(request) -> list[dict[str, str]]:
         add(evac_filter_label(get['exclude_evac']), 'exclude_evac')
     if get.get('exclude_subsidence') == '1':
         add('No subsidence on record', 'exclude_subsidence')
+    if get.get('outside_sfha') == '1':
+        add('Outside FEMA high-risk flood zones', 'outside_sfha')
     if get.get('max_est_tax'):
         add(f'New-owner tax up to ${get["max_est_tax"]}', 'max_est_tax')
     return chips
@@ -357,6 +361,9 @@ def property_detail(request, parcel_id: str):
             'affordability': _parcel_affordability(tax_outlook),
             'risk_flags': build_risk_flags(property_obj),
             'has_risk_data': has_risk_data(property_obj),
+            'flood_history': zip_flood_history(property_obj.zip_code),
+            'flood_claims_start_year': CLAIM_RECORDS_START_YEAR,
+            'flood_claims_recent_year': RECENT_SINCE_YEAR,
         },
     )
 

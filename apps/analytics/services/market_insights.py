@@ -85,6 +85,7 @@ CACHE_KEY_PARAMS = (
     'max_tax_amount',
     'exclude_evac',
     'exclude_subsidence',
+    'outside_sfha',
     'max_est_tax',
     'include_all',
 )
@@ -130,6 +131,8 @@ def summarize_filters(request) -> list[tuple[str, str]]:
         out.append(('Evacuation zone', evac_filter_label(g['exclude_evac'])))
     if g.get('exclude_subsidence') == '1':
         out.append(('Subsidence', 'None on record'))
+    if g.get('outside_sfha') == '1':
+        out.append(('Flood zone', 'Outside FEMA high-risk zones'))
     if g.get('max_est_tax'):
         out.append(('New-owner tax', _range_summary(None, g.get('max_est_tax'), '$')))
     if not out:

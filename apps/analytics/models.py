@@ -70,6 +70,11 @@ class PropertyListing(models.Model):
     roof_permit_year = models.SmallIntegerField(null=True)
     hvac_permit_year = models.SmallIntegerField(null=True)
 
+    # FEMA flood zone at the parcel's map point, written by refresh_flood_data
+    # (services/flood_zones.py) and left alone by the county import.
+    flood_zone = models.CharField(max_length=16, null=True, blank=True)  # AE, VE, X, X500, ...
+    static_bfe = models.DecimalField(max_digits=5, decimal_places=1, null=True)  # base flood elevation, feet
+
     # Metadata
     last_scraped = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -157,3 +162,20 @@ class Sale(models.Model):
 
     def __str__(self):
         return f'{self.parcel_id} sold {self.sale_date} for ${self.price:,}'
+
+
+class ZipFloodHistory(models.Model):
+    """Flood-insurance claims for one ZIP code, from OpenFEMA's NfipClaims.
+
+    Reloaded whole by refresh_flood_data (services/flood_claims.py). FEMA
+    publishes claims by ZIP, not by address, so this is context for a parcel
+    page and says nothing about a single home.
+    """
+
+    zip_code = models.CharField(max_length=5, primary_key=True)
+    claim_count = models.IntegerField()  # since records begin in 1978
+    recent_claim_count = models.IntegerField()  # losses in or after flood_claims.RECENT_SINCE_YEAR
+    median_paid = models.IntegerField(null=True)  # whole dollars, over claims that were paid
+
+    def __str__(self):
+        return f'{self.zip_code}: {self.claim_count} flood claims'

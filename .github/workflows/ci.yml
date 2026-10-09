@@ -41,7 +41,7 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest-cov
+        run: pip install -r requirements.txt -r requirements-data.txt pytest-cov
 
       - name: Run tests
         env:

@@ -150,6 +150,14 @@ class TestRiskAndTaxFilters:
 
         assert 'unknown' not in self._ids(exclude_evac='A')
 
+    def test_outside_sfha_keeps_only_parcels_known_to_be_in_zone_x(self):
+        self._parcels()
+        for parcel_id, zone in (('zone-a', 'AE'), ('zone-c', 'VE'), ('no-zone', 'X'), ('lot', 'X500')):
+            PropertyListing.objects.filter(parcel_id=parcel_id).update(flood_zone=zone)
+
+        assert self._ids(outside_sfha='1') == {'no-zone', 'lot'}
+        assert len(self._ids(outside_sfha='yes')) == 5
+
     def test_exclude_subsidence_keeps_unknowns_and_clean_parcels(self):
         self._parcels()
 

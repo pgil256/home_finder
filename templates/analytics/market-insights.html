@@ -178,6 +178,10 @@
                         <input type="checkbox" name="exclude_subsidence" value="1" {% if filter_values.exclude_subsidence == '1' %}checked{% endif %} class="checkbox">
                         <span class="text-sm text-charcoal-600">No subsidence on record</span>
                     </label>
+                    <label class="flex cursor-pointer items-center gap-3">
+                        <input type="checkbox" name="outside_sfha" value="1" {% if filter_values.outside_sfha == '1' %}checked{% endif %} class="checkbox">
+                        <span class="text-sm text-charcoal-600">Outside FEMA high-risk flood zones</span>
+                    </label>
                 </div>
                 <div class="card-footer flex items-center justify-between gap-3">
                     <a href="{% url 'insights' %}" class="btn btn-ghost btn-sm">Reset</a>

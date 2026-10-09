@@ -1,8 +1,9 @@
 """Plain-English risk flags for a parcel, built from the county record.
 
 Every flag says what the record shows, why a buyer should care, and what to
-ask or inspect. The flags come only from PCPAO columns the monthly import
-stores; they are prompts for due diligence, not findings.
+ask or inspect. The flags come from PCPAO columns the monthly import stores
+and the FEMA flood zone the flood refresh stores; they are prompts for due
+diligence, not findings.
 
 Rules checked in October 2026:
 - Pinellas evacuation zones run A to E. A is the most exposed to storm surge
@@ -25,6 +26,11 @@ in planned developments (42%) and manufactured homes (36%) mostly don't,
 because the association owns the roof or the work isn't permitted per unit,
 so a missing permit is only flagged for houses. Only 53% of those houses have
 any heating/air permit, so a missing one is never flagged.
+
+Flood zones are FEMA's, at the county's map point for the parcel
+(services/flood_zones.py). In zones A and V, the Special Flood Hazard Area, a
+federally regulated or insured lender must require flood insurance on a
+building (42 U.S.C. 4012a).
 """
 
 from __future__ import annotations
@@ -32,6 +38,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
+from .flood_zones import COASTAL_ZONES, MINIMAL_RISK, SFHA_ZONES, SHADED_X
 from .permits_importer import PERMIT_RECORDS_START_YEAR
 
 HIGH = 'high'
@@ -91,7 +98,7 @@ EVAC_FILTER_CHOICES = [(zone, evac_filter_label(zone)) for zone in EVAC_ZONES]
 
 def has_risk_data(listing) -> bool:
     """False for rows imported before the county's risk columns were stored."""
-    return listing.subsidence is not None or listing.evac_zone is not None
+    return listing.subsidence is not None or listing.evac_zone is not None or listing.flood_zone is not None
 
 
 def build_risk_flags(listing, today: date | None = None) -> list[RiskFlag]:
@@ -124,6 +131,11 @@ def build_risk_flags(listing, today: date | None = None) -> list[RiskFlag]:
 
     flags.extend(_evacuation_flags(listing.evac_zone))
 
+    # Zones A-C already carry the elevation certificate advice.
+    surge_zone = listing.evac_zone in ('A', 'B', 'C')
+    in_sfha = listing.flood_zone in SFHA_ZONES
+    flags.extend(_flood_zone_flags(listing.flood_zone, listing.static_bfe, mention_certificate=not surge_zone))
+
     is_manufactured = 'mobile home' in property_type or 'manufactured home' in property_type
     if is_manufactured:
         flags.append(
@@ -137,8 +149,7 @@ def build_risk_flags(listing, today: date | None = None) -> list[RiskFlag]:
         )
 
     if listing.waterfront:
-        # Zones A-C already carry the elevation certificate advice.
-        flags.append(_waterfront_flag(listing.frontage, mention_certificate=listing.evac_zone not in ('A', 'B', 'C')))
+        flags.append(_waterfront_flag(listing.frontage, mention_certificate=not surge_zone and not in_sfha))
 
     if listing.seawall:
         flags.append(
@@ -224,6 +235,52 @@ def _evacuation_flags(zone: str | None) -> list[RiskFlag]:
                 'Not in an evacuation zone',
                 "This parcel is outside the county's storm-surge evacuation zones.",
                 not_flood_zone,
+            )
+        ]
+    return []
+
+
+def _flood_zone_flags(zone: str | None, bfe, mention_certificate: bool) -> list[RiskFlag]:
+    if zone in SFHA_ZONES:
+        coastal = zone in COASTAL_ZONES
+        why = (
+            f"FEMA's flood map puts this parcel in zone {zone}, a Special Flood Hazard Area: at least a 1% chance "
+            'of flooding in any year'
+            + (', with wave action on top of rising water. ' if coastal else '. ')
+            + 'Lenders must require flood insurance on a mortgaged building here, and it can cost thousands of '
+            'dollars a year.'
+        )
+        if bfe:
+            why += f' The base flood elevation is {float(bfe):g} feet.'
+        return [
+            RiskFlag(
+                HIGH,
+                f'FEMA flood zone {zone}' + (' (coastal high hazard)' if coastal else ''),
+                why,
+                'Get a flood insurance quote before you make an offer, and ask the seller whether the home has '
+                'flooded or had a flood claim.' + (f' {_ELEVATION_CERTIFICATE}' if mention_certificate else ''),
+            )
+        ]
+    if zone == SHADED_X:
+        return [
+            RiskFlag(
+                INFO,
+                'Moderate flood risk (FEMA zone X, shaded)',
+                "FEMA's flood map puts this parcel between the 1% and 0.2% annual-chance flood lines. Lenders "
+                "don't require flood insurance here, but these areas do flood.",
+                "Get a flood insurance quote anyway; it usually costs less here. Homeowners insurance doesn't "
+                'cover flooding.',
+            )
+        ]
+    if zone == MINIMAL_RISK:
+        return [
+            RiskFlag(
+                GOOD,
+                "Outside FEMA's high-risk flood zones",
+                "FEMA's flood map puts this parcel in zone X, an area of minimal flood hazard, so lenders don't "
+                'require flood insurance.',
+                "Homes here can still flood in heavy rain, and homeowners insurance doesn't cover it. Ask what a "
+                'flood policy would cost.',
             )
         ]
     return []

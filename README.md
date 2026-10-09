@@ -35,7 +35,7 @@ A parcel drilldown and the responsive mobile layout:
 | `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
 | `/analytics/` | Filter-builder form that redirects into `/insights/` |
 | `/analytics/dashboard/` | Legacy URL that redirects to `/insights/` |
-| `/analytics/property/<parcel_id>/` | Parcel page: new-owner tax, recorded sales and comparable sales, monthly cost and risk flags, including the year of the last roof permit. Also the drilldown for sample parcels and outlier rows |
+| `/analytics/property/<parcel_id>/` | Parcel page: new-owner tax, recorded sales and comparable sales, monthly cost and risk flags, including the year of the last roof permit and the FEMA flood zone, plus the ZIP code's flood-claim history. Also the drilldown for sample parcels and outlier rows |
 | `/analytics/compare/?ids=<parcel IDs>` | Saved homes side by side (up to 6): value, new-owner tax, monthly cost and risk flags. The list lives in the browser's `localStorage`; the header's Saved link builds the URL |
 | `/analytics/download/excel/` | Analysis workbook: Overview, City Segments, Property Type Segments, Outliers, Sample Parcels, Methodology |
 | `/analytics/download/pdf/` | PDF insight brief with filters, exact KPIs, takeaways, segments, outliers, and methodology |
@@ -125,6 +125,7 @@ pytest tests/e2e/browser/
 - PCPAO records are public assessment and deed records, not MLS listings. Sale prices are the county's qualified sales since 2021; there are no asking prices, and a sale can take a month or more to appear.
 - Comparable sales are a median price per square foot from the same county appraisal neighborhood, not an appraisal. They ignore condition, updates, lot and view, and the 48-parcel sample fixture is too sparse to produce any.
 - Roof and heating/air years are the year of the latest county permit of that kind, back to 1997. A permit can be a repair rather than a replacement, and work done without a permit doesn't appear. A missing roof permit is only flagged for houses; condo and townhome roofs usually belong to the association.
+- Flood zones come from FEMA's National Flood Hazard Layer, read at the county's map point for each parcel and refreshed quarterly by the "Refresh flood data" workflow, so a building near a zone line can sit in a different zone, and a parcel added since the last refresh has none yet. Flood-claim counts are per ZIP code, which is as fine as FEMA publishes them; they say nothing about one home.
 - Bedrooms and bathrooms are not reliable in the bulk public dataset, so they are not used as core market signals.
 - The dashboard is exploratory analysis, not investment advice or a predictive appraisal model.
 - New-owner tax estimates assess the home at the county's just value with the latest adopted millage. A buyer who pays more than just value, or buys after millage rates change, will see a different bill.
