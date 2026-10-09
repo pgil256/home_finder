@@ -10,12 +10,17 @@ with `-m heavy` or via the workflow's run_exports input.
 """
 
 import re
+from datetime import datetime, timedelta, timezone
 from urllib.parse import unquote
 
 import pytest
 
 TIMEOUT = 15
 DOWNLOAD_TIMEOUT = 30
+
+# The county file has about 437,000 parcels and is re-imported monthly.
+MIN_PARCELS = 400_000
+MAX_DATA_AGE = timedelta(days=45)
 
 
 def assert_ok(response, expected: int = 200) -> None:
@@ -32,6 +37,29 @@ def assert_ok(response, expected: int = 200) -> None:
             'exceeded storage/data-transfer quota before looking at application code.'
         )
     assert response.status_code == expected
+
+
+def test_S0_has_data(client, base_url):
+    """The host is serving the full county dataset, and it isn't stale.
+
+    First on purpose: when the database behind a host is empty or the wrong
+    one, every later failure is a symptom of this one.
+    """
+    r = client.get(f'{base_url}/api/status/', timeout=TIMEOUT)
+    assert_ok(r)
+    status = r.json()
+
+    total = status['total_properties']
+    assert total >= MIN_PARCELS, (
+        f'{base_url} reports {total:,} parcels, expected at least {MIN_PARCELS:,}. '
+        'This host is pointed at an empty or wrong database, or the data was wiped.'
+    )
+
+    assert status['last_updated'], f'{base_url} has no last_updated timestamp'
+    age = datetime.now(timezone.utc) - datetime.fromisoformat(status['last_updated'])
+    assert age <= MAX_DATA_AGE, (
+        f'{base_url} data was last updated {age.days} days ago; the monthly refresh has stopped running.'
+    )
 
 
 def test_S1_home_loads(client, base_url):

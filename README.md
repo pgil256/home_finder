@@ -7,6 +7,8 @@
 ![numpy](https://img.shields.io/badge/numpy-2.x-013243?logo=numpy&logoColor=white)
 
 > **Live:** [homefinder.patbuilds.dev](https://homefinder.patbuilds.dev)
+>
+> The same Vercel project also answers at [homefinder-jet.vercel.app](https://homefinder-jet.vercel.app), which is the URL a push to `main` deploys to. The custom domain is a Cloudflare-proxied alias for it; if the two ever disagree (compare `/api/status/` on each), the domain is pointed at the wrong Vercel project or database. The daily smoke test checks the custom domain and opens a "Production smoke failed" issue when it fails.
 
 Pinellas Market Lens answers a home buyer's question about any Pinellas County, Florida property: what will this home really cost me, and what's the catch? Type the address from a listing to see the property taxes a new owner would pay (not the seller's capped bill), what the home and similar homes nearby last sold for, and the risk flags on the county's record. Behind it, official public records are ingested, cleaned, indexed, filtered, and analyzed with pandas/numpy, and a market dashboard exposes KPIs, distributions, segment comparisons, tax burden, assessed-value gaps, and auditable outliers.
 
