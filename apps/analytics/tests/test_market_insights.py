@@ -34,9 +34,7 @@ def test_empty_scope_returns_empty_insight_payload():
     assert insights['exact']['parcel_count'] == 0
     assert insights['city_segments'] == []
     assert insights['outliers'] == {'market_value': [], 'assessed_gap': [], 'tax_rate': []}
-    assert insights['takeaways'] == [
-        'No parcels match the current filters. Broaden the scope to generate market signals.'
-    ]
+    assert insights['takeaways'] == ['No properties match these filters. Remove one to see more.']
 
 
 def test_exact_kpis_include_medians_and_derived_rates():
@@ -63,6 +61,7 @@ def test_percentiles_and_segments_are_computed_from_analysis_frame():
     insights = build_market_insights()
 
     assert [row['label'] for row in insights['percentiles']['market_value']] == ['P10', 'P25', 'P50', 'P75', 'P90']
+    assert insights['percentiles']['market_value'][2]['plain'] == 'Half are below (the median)'
     assert len(insights['city_segments']) == 2
     assert len(insights['type_segments']) == 2
     assert insights['charts']['valueDistribution']['datasets'][0]['data']
@@ -81,8 +80,8 @@ def test_single_parcel_takeaways_use_singular_nouns():
 
     takeaways = build_market_insights()['takeaways']
 
-    assert takeaways[0].startswith('The current slice contains 1 parcel ')
-    assert 'Clearwater is the largest city segment in this slice with 1 parcel.' in takeaways
+    assert takeaways[0].startswith('1 property matches your filters, with a median county value of ')
+    assert 'Clearwater has the most of them: 1.' in takeaways
 
 
 def test_high_value_outlier_links_to_drilldown():

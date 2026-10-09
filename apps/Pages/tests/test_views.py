@@ -21,8 +21,8 @@ class TestPagesViews:
         assert 'action="/lookup/"' in html
         assert 'name="q"' in html
         assert 'Not a listing search' not in html
-        # The address box comes before the engineering section.
-        assert html.index('action="/lookup/"') < html.index('Engineering proof at a glance')
+        # The address box comes before the line about how the site is built.
+        assert html.index('action="/lookup/"') < html.index('Built on 437,000 county records')
 
     def test_nav_puts_lookup_before_the_dashboard(self, client):
         html = client.get('/').content.decode()
@@ -32,12 +32,20 @@ class TestPagesViews:
     def test_robots_keeps_crawlers_off_lookup_queries(self, client):
         assert b'Disallow: /lookup/?' in client.get('/robots.txt').content
 
-    def test_home_page_surfaces_portfolio_proof_and_source(self, client):
-        response = client.get('/')
+    def test_home_page_is_for_buyers_and_points_to_how_it_is_built(self, client):
+        html = client.get('/').content.decode()
 
-        assert b'Engineering proof at a glance' in response.content
-        assert b'437K+ parcels' in response.content
-        assert b'https://github.com/pgil256/home_finder' in response.content
+        assert 'Built on 437,000 county records, refreshed monthly' in html
+        assert 'Engineering proof at a glance' not in html
+        assert 'pandas' not in html
+        assert 'https://github.com/pgil256/home_finder' in html
+
+    def test_about_page_carries_the_engineering_story(self, client):
+        html = client.get('/about/').content.decode()
+
+        assert 'Engineering proof at a glance' in html
+        assert '437K+ parcels' in html
+        assert 'pandas + numpy' in html
 
     def test_about_page_renders(self, client):
         """Test about page returns 200."""
@@ -94,7 +102,7 @@ class TestPagesViews:
         """Test home page opens on the product intro, not the analytics dashboard."""
         response = client.get('/')
         assert 'Pages/home.html' in [t.name for t in response.templates]
-        assert b'Exact Market KPIs' not in response.content
+        assert b'The market at a glance' not in response.content
 
     def test_about_uses_correct_template(self, client):
         """Test about page uses the correct template."""

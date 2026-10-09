@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from decimal import Decimal
 from io import BytesIO
@@ -115,14 +116,14 @@ class TestInsightsDashboard:
         assert response.status_code == 200
         assert 'Pages/home.html' in [t.name for t in response.templates]
         assert b'Pinellas Market Lens' in response.content
-        assert b'Exact Market KPIs' not in response.content
+        assert b'The market at a glance' not in response.content
 
     def test_insights_route_renders_dashboard(self, client, sample_property):
         response = client.get('/insights/')
         assert response.status_code == 200
         assert response.context['insights']['brand'] == 'Pinellas Market Lens'
         assert response.context['total_count'] == 1
-        assert b'Exact Market KPIs' in response.content
+        assert b'The market at a glance' in response.content
         assert b'market-insights-charts' in response.content
         assert b'data-kpi-value="Total market value"' in response.content
         assert b'whitespace-nowrap' in response.content
@@ -164,7 +165,7 @@ class TestInsightsDashboard:
         assert response.status_code == 200
         assert response.context['total_count'] == 0
         assert response.context['insights']['takeaways'] == [
-            'No parcels match the current filters. Broaden the scope to generate market signals.'
+            'No properties match these filters. Remove one to see more.'
         ]
 
     def test_insights_links_drop_removed_filter_params(self, client):
@@ -218,6 +219,67 @@ class TestInsightsDashboard:
         response = client.get('/insights/')
         assert response.status_code == 200
         assert '/analytics/property/outlier-004/' in response.content.decode()
+
+
+class TestBuyerPagesUsePlainLanguage:
+    """The site has one audience. The analyst's vocabulary belongs on the About
+    page, in the "how these figures are worked out" section, and in the
+    explanation a reader has to open to see."""
+
+    JARGON = re.compile(r'\b(EDA|KPIs?|IQR|pandas|numpy|queryset|drilldowns?)\b', re.IGNORECASE)
+
+    def _visible_text(self, html: str) -> str:
+        html = re.sub(r'<(script|style)\b.*?</\1>', ' ', html, flags=re.DOTALL)
+        html = re.sub(r'<details\b.*?</details>', ' ', html, flags=re.DOTALL)
+        html = html.split('How these figures are worked out')[0]
+        return re.sub(r'<[^>]+>', ' ', html)
+
+    @pytest.mark.parametrize('url', ['/', '/lookup/', '/lookup/?q=nothing+here', '/help', '/insights/', 'parcel'])
+    def test_no_analyst_jargon(self, client, sample_property, url):
+        if url == 'parcel':
+            url = f'/analytics/property/{sample_property.parcel_id}/'
+
+        text = self._visible_text(client.get(url).content.decode())
+
+        assert self.JARGON.findall(text) == []
+
+    def test_insights_headings_are_plain(self, client, sample_property):
+        html = client.get('/insights/').content.decode()
+
+        for heading in (
+            'Explore the market',
+            'The market at a glance',
+            'What stands out',
+            'Where prices fall',
+            'County value vs what owners are taxed on',
+            'Homes that stand out, and why',
+            'How these figures are worked out',
+        ):
+            assert heading in html
+        for gone in (
+            'Exact Market KPIs',
+            'Analyst Takeaways',
+            'Auditable Outliers',
+            'Value Percentiles',
+            'Public records EDA',
+        ):
+            assert gone not in html
+        assert 'Half are below (the median)' in html
+        assert '>P50<' not in html
+
+    def test_iqr_is_explained_where_a_reader_can_open_it(self, client, sample_property):
+        html = client.get('/insights/').content.decode()
+
+        explanation = html[html.index('<details') : html.index('</details>')]
+        assert 'interquartile range (IQR)' in explanation
+
+    def test_insights_title_and_description_are_for_buyers(self, client, sample_property):
+        html = client.get('/insights/').content.decode()
+
+        assert '<title>Explore the Pinellas Housing Market - Pinellas Market Lens</title>' in html
+        description = html[html.index('<meta name="description"') :].split('>')[0]
+        assert 'pandas' not in description
+        assert 'What homes are worth across Pinellas County' in description
 
 
 class TestExports:

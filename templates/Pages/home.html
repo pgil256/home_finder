@@ -75,32 +75,9 @@
         </p>
     </section>
 
-    <section aria-labelledby="proof-heading">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <p class="text-sm font-semibold uppercase tracking-wide text-primary-600">How it's built</p>
-                <h2 id="proof-heading" class="mt-2 font-display text-2xl font-semibold text-charcoal-900 md:text-3xl">Engineering proof at a glance</h2>
-            </div>
-            <a href="{% url 'about' %}" class="text-sm font-semibold text-primary-600 hover:text-primary-700">Read the architecture story <span aria-hidden="true">&rarr;</span></a>
-        </div>
-        <dl class="mt-6 grid overflow-hidden rounded-2xl border border-charcoal-100 bg-white shadow-soft-sm sm:grid-cols-2 lg:grid-cols-4">
-            <div class="border-b border-charcoal-100 p-5 sm:border-r lg:border-b-0">
-                <dt class="text-sm text-charcoal-500">Production scale</dt>
-                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">437K+ parcels</dd>
-            </div>
-            <div class="border-b border-charcoal-100 p-5 lg:border-b-0 lg:border-r">
-                <dt class="text-sm text-charcoal-500">Headline metrics</dt>
-                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">Exact DB KPIs</dd>
-            </div>
-            <div class="border-b border-charcoal-100 p-5 sm:border-b-0 sm:border-r">
-                <dt class="text-sm text-charcoal-500">Exploratory layer</dt>
-                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">pandas + numpy</dd>
-            </div>
-            <div class="p-5">
-                <dt class="text-sm text-charcoal-500">Deliverables</dt>
-                <dd class="mt-1 font-display text-2xl font-bold text-charcoal-900">Excel + PDF</dd>
-            </div>
-        </dl>
-    </section>
+    <p class="text-center text-sm text-charcoal-500">
+        Built on 437,000 county records, refreshed monthly.
+        <a href="{% url 'about' %}" class="font-semibold text-primary-600 hover:text-primary-700">How it works <span aria-hidden="true">&rarr;</span></a>
+    </p>
 </div>
 {% endblock %}
