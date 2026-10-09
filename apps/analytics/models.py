@@ -86,7 +86,8 @@ class PropertyListing(models.Model):
 
     class Meta:
         indexes = [
-            # Similar properties on the detail page: exact city + type, value range.
+            # Nearby homes on the detail page, when the neighborhood is too small:
+            # exact city + type, walked outward from the parcel's value.
             models.Index(fields=['city', 'property_type', 'market_value'], name='idx_city_type_value'),
             # Address lookup: prefix match on the upper-case county address.
             models.Index(fields=['address'], name='idx_address_prefix', opclasses=['varchar_pattern_ops']),

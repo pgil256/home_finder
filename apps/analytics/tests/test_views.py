@@ -397,22 +397,107 @@ class TestCrawlerHygiene:
             start = html.index(f'href="{url}')
             assert 'rel="nofollow"' in html[start : html.index('>', start)]
 
-    def test_similar_properties_still_render(self, client, sample_property):
-        PropertyListing.objects.create(
-            parcel_id='15-29-16-12345-000-0020',
-            address='125 Main St',
-            city=sample_property.city,
-            zip_code=sample_property.zip_code,
-            property_type=sample_property.property_type,
-            market_value=Decimal('250000.00'),
-            building_sqft=1500,
-        )
 
-        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+class TestNearbyHomesCard:
+    """The subject is a $245,000 single family home in Clearwater."""
 
-        assert '125 Main St' in html
+    def _home(self, n, value, neighborhood='N100', **extra):
+        fields = {
+            'parcel_id': f'15-29-16-12345-000-{n:04d}',
+            'address': f'{n} Nearby Way',
+            'city': 'Clearwater',
+            'zip_code': '33755',
+            'property_type': 'Single Family',
+            'market_value': Decimal(value),
+            'building_sqft': 1500,
+            'year_built': 1990,
+            'neighborhood_code': neighborhood,
+        }
+        fields.update(extra)
+        return PropertyListing.objects.create(**fields)
+
+    def _shown(self, client, parcel):
+        response = client.get(f'/analytics/property/{parcel.parcel_id}/')
+        return [home.address for home in response.context['nearby_homes']]
+
+    @pytest.fixture
+    def subject(self, sample_property):
+        sample_property.neighborhood_code = 'N100'
+        sample_property.save()
+        return sample_property
+
+    def test_shows_the_four_nearest_in_value_from_the_same_neighborhood(self, client, subject):
+        self._home(101, 150000)
+        self._home(102, 240000)
+        self._home(103, 251000)
+        self._home(104, 400000)
+        self._home(105, 230000)
+        self._home(106, 262000)
+        # Closer in value than any of them, but somewhere else or something else.
+        self._home(201, 245000, neighborhood='N999')
+        self._home(202, 245500, property_type='Condominium')
+
+        assert self._shown(client, subject) == [
+            '102 Nearby Way',
+            '103 Nearby Way',
+            '105 Nearby Way',
+            '106 Nearby Way',
+        ]
+
+    def test_small_neighborhood_is_filled_from_the_city_nearest_in_value_first(self, client, subject):
+        self._home(101, 400000)
+        self._home(201, 290000, neighborhood='N999')
+        self._home(202, 244000, neighborhood='N999')
+        self._home(203, 255000, neighborhood='N999')
+        self._home(204, 210000, neighborhood='N999')
+        # Out of the 20% band, another city, another type.
+        self._home(301, 500000, neighborhood='N999')
+        self._home(302, 245000, neighborhood='N999', city='Largo')
+        self._home(303, 245000, neighborhood='N999', property_type='Condominium')
+
+        assert self._shown(client, subject) == [
+            '101 Nearby Way',
+            '202 Nearby Way',
+            '203 Nearby Way',
+            '204 Nearby Way',
+        ]
+
+    def test_parcel_without_a_neighborhood_uses_the_city(self, client, sample_property):
+        self._home(201, 250000)
+        assert self._shown(client, sample_property) == ['201 Nearby Way']
+
+    def test_parcel_without_a_value_shows_no_card(self, client, subject):
+        self._home(101, 240000)
+        subject.market_value = None
+        subject.save()
+
+        response = client.get(f'/analytics/property/{subject.parcel_id}/')
+
+        assert response.context['nearby_homes'] == []
+        assert 'Nearby homes the county values alike' not in response.content.decode()
+
+    def test_cards_show_size_year_and_value_and_say_they_are_not_sales(self, client, subject):
+        self._home(101, 250000, bedrooms=3, bathrooms=Decimal('2.0'))
+
+        html = client.get(f'/analytics/property/{subject.parcel_id}/').content.decode()
+
+        assert 'Nearby homes the county values alike' in html
+        assert 'These are not sales' in html
+        assert 'Similar Properties' not in html
+        card = html[html.index('101 Nearby Way') :]
+        assert '1,500 sqft' in card
+        assert 'Built 1990' in card
         assert '$250,000' in html
-        assert '1500 sqft' in html
+        assert '3 bd' not in html
+        assert '2 ba' not in html
+
+    def test_full_neighborhood_costs_one_query(self, subject, django_assert_num_queries):
+        from apps.analytics.services.nearby_homes import nearby_homes
+
+        for n in range(101, 106):
+            self._home(n, 240000 + n)
+        with django_assert_num_queries(1):
+            assert len(nearby_homes(subject)) == 4
 
 
 class TestTaxEstimateCard:
