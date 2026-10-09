@@ -381,6 +381,21 @@ class TestNearestStreets:
         (street,) = nearest_streets('GULF BLVD')
         assert (street.name, street.city, street.similarity) == ('GULF BLVD', 'Clearwater', 1)
 
+    def test_a_stray_spelling_on_one_parcel_does_not_outrank_the_real_street(self, county_streets):
+        """'GULF BLV' is closer to 'GULF BVLD' than 'GULF BLVD' is (0.46 against 0.43)."""
+        make_parcel(7, '1800 GULF BLV')
+        rebuild_street_names()
+
+        assert [street.name for street in nearest_streets('GULF BVLD')] == ['GULF BLVD', 'GULF BLV']
+
+    def test_a_clearly_better_spelling_still_wins_over_a_bigger_street(self, county_streets):
+        for n in range(10, 16):
+            make_parcel(n, f'{n} MANDALAY AVE')
+        make_parcel(20, '5 MANDALAY PT')
+        rebuild_street_names()
+
+        assert nearest_streets('MANDALAY PT')[0].name == 'MANDALAY PT'
+
     def test_partial_and_misspelled_name(self, county_streets):
         assert [street.name for street in nearest_streets('MIRRER LAKE')] == ['MIRROR LAKE DR N']
 
@@ -401,6 +416,12 @@ class TestNearestStreets:
         with connection.cursor() as cursor:
             constraints = connection.introspection.get_constraints(cursor, StreetName._meta.db_table)
         assert constraints['idx_street_name_trgm']['columns'] == ['name']
+
+    def test_rebuilding_twice_gives_the_same_rows(self, county_streets):
+        before = set(StreetName.objects.values_list('name', 'city', 'parcel_count'))
+
+        assert rebuild_street_names() == len(before)
+        assert set(StreetName.objects.values_list('name', 'city', 'parcel_count')) == before
 
 
 @pytest.mark.django_db
