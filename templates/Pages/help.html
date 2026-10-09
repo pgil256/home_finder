@@ -1,370 +1,195 @@
 {% extends 'base.html' %}
 
-{% block title %}Help{% endblock %}
+{% block title %}First-Time Buyer's Guide to Pinellas County - Pinellas Market Lens{% endblock %}
+{% block meta_description %}A plain-English guide to buying your first home in Pinellas County: the steps in order, what is different in Florida, down payment help, and what the terms mean.{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
+<div class="mx-auto max-w-4xl space-y-12 md:space-y-16">
 
-    <!-- Hero Section -->
-    <section class="relative py-8 md:py-16 mb-12 md:mb-20">
-        <!-- Decorative background -->
-        <div class="absolute inset-0 overflow-hidden pointer-events-none">
-            <div class="absolute top-0 right-0 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-50 translate-x-1/2 -translate-y-1/2"></div>
-        </div>
+    <header>
+        <p class="text-sm font-semibold uppercase tracking-wide text-primary-600">First-time buyer's guide</p>
+        <h1 class="mt-3 font-display text-display-sm text-charcoal-900 md:text-display-md">Buying your first home in Pinellas County</h1>
+        <p class="mt-4 max-w-3xl text-lg leading-8 text-charcoal-600">
+            The steps in order, what is different about buying in Florida, where to find help with a down payment, and what the words on this site mean.
+        </p>
+        <nav class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold" aria-label="On this page">
+            <a href="#steps" class="text-primary-600 hover:text-primary-700">The steps</a>
+            <a href="#florida" class="text-primary-600 hover:text-primary-700">What's different in Florida</a>
+            <a href="#assistance" class="text-primary-600 hover:text-primary-700">Down payment help</a>
+            <a href="#glossary" class="text-primary-600 hover:text-primary-700">Glossary</a>
+            <a href="#about-the-numbers" class="text-primary-600 hover:text-primary-700">About the numbers</a>
+        </nav>
+    </header>
 
-        <div class="relative">
-            <!-- Overline -->
-            <div class="flex items-center gap-3 mb-6">
-                <div class="h-px w-12 bg-primary-400"></div>
-                <span class="text-sm font-medium tracking-widest uppercase text-primary-600">Getting Started</span>
+    <section aria-labelledby="steps-heading" id="steps" class="scroll-mt-24">
+        <h2 id="steps-heading" class="font-display text-2xl font-semibold text-charcoal-900 md:text-3xl">The steps, in order</h2>
+        <ol class="mt-6 space-y-4">
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">1. Start from a monthly payment, not a price</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    Decide what you can pay each month for the mortgage, property tax, insurance and any association fee together. In Pinellas, tax and insurance can add a third or more on top of the loan payment.
+                    The <a href="{% url 'scraper' %}" class="font-medium text-primary-600 hover:text-primary-700">filter builder</a> turns a monthly budget into a price range.
+                </p>
+            </li>
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">2. Look into assistance before you shop</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    Most <a href="#assistance" class="font-medium text-primary-600 hover:text-primary-700">down payment programs</a> require a homebuyer class and one of their approved lenders, and some have to be in place before you sign a contract. Finding out afterward is too late.
+                </p>
+            </li>
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">3. Get pre-approved, by more than one lender</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    A pre-approval letter tells sellers you can close. Apply with two or three lenders in the same two weeks and compare their <a href="#term-loan-estimate" class="font-medium text-primary-600 hover:text-primary-700">Loan Estimates</a> line by line. Credit checks for a mortgage that are made close together count as one.
+                </p>
+            </li>
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">4. Find homes on a listing site, then look each one up here</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    This site has no listings or asking prices. <a href="{% url 'lookup' %}" class="font-medium text-primary-600 hover:text-primary-700">Type an address</a> to see the property tax you would pay as the new owner, what the home and similar ones sold for, the flood and evacuation zones, and the last roof permit. Save the ones you like to compare them side by side.
+                </p>
+            </li>
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">5. Get insurance quotes before you offer</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    Ask an insurance agent for a homeowners quote and a separate flood quote on the exact address. The agent will want the roof's age and material. For a condo or a home in an association, ask for the fee, the budget and any special assessments that are planned.
+                </p>
+            </li>
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">6. Make an offer and use the inspection period</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    Your contract gives you a set number of days to inspect and, under most contracts, to walk away. Book a home inspection straight away, along with the <a href="#term-four-point" class="font-medium text-primary-600 hover:text-primary-700">four-point and wind mitigation</a> reports your insurer will ask for. Check with the city or county that permits for recent work were closed.
+                </p>
+            </li>
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">7. Close</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    Your lender sends a Closing Disclosure at least three business days before closing. Compare it with your Loan Estimate and ask about anything that changed. Bring <a href="#term-cash-to-close" class="font-medium text-primary-600 hover:text-primary-700">cash to close</a>, which is more than the down payment. Confirm wiring instructions by phoning the title company on a number you looked up yourself, because fake wiring emails are a common fraud.
+                </p>
+            </li>
+            <li class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">8. File for homestead</h3>
+                <p class="mt-2 text-sm leading-6 text-charcoal-600">
+                    The <a href="#term-homestead" class="font-medium text-primary-600 hover:text-primary-700">homestead exemption</a> is not automatic. Apply with the Property Appraiser by March 1 of the year after you buy.
+                    <a href="https://www.pcpao.gov/homestead-exemption" target="_blank" rel="noopener" class="font-medium text-primary-600 hover:text-primary-700">How to file</a>
+                </p>
+            </li>
+        </ol>
+    </section>
+
+    <section aria-labelledby="florida-heading" id="florida" class="scroll-mt-24">
+        <h2 id="florida-heading" class="font-display text-2xl font-semibold text-charcoal-900 md:text-3xl">What's different in Florida</h2>
+        <div class="mt-6 space-y-6">
+            <div>
+                <h3 class="font-semibold text-charcoal-900">The seller's tax bill isn't yours</h3>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">
+                    Florida caps how fast a homeowner's assessed value can rise, so someone who has owned for twenty years can pay a fraction of what a new owner would. The cap ends at the sale. From the next January 1 you are taxed on the county's full <a href="#term-just-value" class="font-medium text-primary-600 hover:text-primary-700">just value</a>. The tax shown on a listing is the seller's. Each home on this site shows an estimate for you.
+                </p>
             </div>
+            <div>
+                <h3 class="font-semibold text-charcoal-900">Homestead takes an application{% if amendment_3_status == 'pending' %}, and the rules are on the ballot{% endif %}</h3>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">
+                    If you live in the home, the homestead exemption takes $25,000 off its taxable value for every levy, and about another $26,000, adjusted for inflation each year, for everything except school taxes. It also starts your own cap on yearly increases.
+                    {% if amendment_3_status == 'pending' %}
+                    Amendment 3, on the November 3, 2026 ballot, would raise the non-school exemption to $150,000 in 2027 and $250,000 in 2028 if 60% of voters approve it. People who become Florida residents after January 1, 2027 would wait five years for the larger amount. Estimates on this site show current law, with the amendment as a second figure.
+                    {% elif amendment_3_status == 'passed' %}
+                    Amendment 3, approved by voters in November 2026, raises the non-school exemption to $150,000 in 2027 and $250,000 in 2028. People who become Florida residents after January 1, 2027 wait five years for the larger amount.
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-charcoal-900">Insurance can decide whether a home is affordable</h3>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">
+                    Premiums vary widely with the roof's age, how the home is built and how close it is to the water. Insurers can require an inspection of a roof that is 15 years old or more, and some turn down older roofs. Two homes at the same price can differ by thousands of dollars a year, so quote the address before you offer.
+                </p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-charcoal-900">Flood insurance is a separate policy</h3>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">
+                    Homeowners insurance doesn't cover flooding. In a <a href="#term-flood-zone" class="font-medium text-primary-600 hover:text-primary-700">FEMA flood zone</a> starting with A or V, your lender will require a flood policy. Outside those zones it is optional and usually cheaper, and homes there flood too. Ask the seller whether the home has flooded.
+                </p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-charcoal-900">Evacuation zones are a different map</h3>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">
+                    The county's <a href="#term-evacuation-zone" class="font-medium text-primary-600 hover:text-primary-700">evacuation zones</a> are about storm surge and who is told to leave before a hurricane. A home can be in an evacuation zone without being in a FEMA flood zone, and the other way round. Mobile and manufactured homes are ordered out for any hurricane.
+                    <a href="https://pinellas.gov/services/find-your-evacuation-zone/" target="_blank" rel="noopener" class="font-medium text-primary-600 hover:text-primary-700">Find a zone on the county's site</a>
+                </p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-charcoal-900">Older condo buildings carry new costs</h3>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">
+                    Florida now requires condo buildings of three or more stories to pass a <a href="#term-milestone-inspection" class="font-medium text-primary-600 hover:text-primary-700">milestone structural inspection</a> at 30 years, or 25 in some coastal areas, and to fund reserves for structural repairs. Ask the association for the inspection report, the reserve study, the reserve balance and any pending special assessments before you offer.
+                </p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-charcoal-900">Closing costs include state taxes</h3>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">
+                    Florida charges <a href="#term-doc-stamps" class="font-medium text-primary-600 hover:text-primary-700">documentary stamps and an intangible tax</a> on a mortgage, and sets title insurance rates statewide. The calculator on each home's page includes them in cash to close.
+                </p>
+            </div>
+        </div>
+    </section>
 
-            <!-- Large hero text -->
-            <h1 class="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-charcoal-800 leading-[1.1] mb-8 max-w-4xl">
-                From filters to
-                <span class="relative inline-block">
-                    <span class="relative z-10">insights</span>
-                    <span class="absolute bottom-2 left-0 right-0 h-3 md:h-4 bg-primary-200 -z-0 -rotate-1"></span>
-                </span>
-                in minutes.
-            </h1>
+    <section aria-labelledby="assistance-heading" id="assistance" class="scroll-mt-24">
+        <h2 id="assistance-heading" class="font-display text-2xl font-semibold text-charcoal-900 md:text-3xl">Help with a down payment</h2>
+        <p class="mt-3 max-w-3xl text-sm leading-6 text-charcoal-600">
+            These programs lend money for a down payment and closing costs, usually as a second mortgage with no interest and no monthly payment. Most have income and price limits, and they open and close as funding runs out. The amounts below were checked in October 2026. Each program's own page has the current terms.
+        </p>
+        <ul class="mt-6 divide-y divide-charcoal-100 rounded-lg border border-charcoal-100 bg-white shadow-soft-sm">
+            <li class="p-5">
+                <a href="https://www.floridahousing.org/programs/homebuyer-overview-page" target="_blank" rel="noopener" class="font-semibold text-primary-600 hover:text-primary-700">Florida Housing Finance Corporation</a>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">The state's first-time buyer mortgages and down payment loans, including Florida Assist and Hometown Heroes. You apply through a participating lender, not with the state.</p>
+            </li>
+            <li class="p-5">
+                <a href="https://pinellas.gov/programs/first-time-homebuyer-program/" target="_blank" rel="noopener" class="font-semibold text-primary-600 hover:text-primary-700">Housing Finance Authority of Pinellas County</a>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">A first mortgage with a $10,000 no-interest second loan for the down payment and closing costs. For people who haven't owned a home in three years, and veterans.</p>
+            </li>
+            <li class="p-5">
+                <a href="https://pinellas.gov/programs/down-payment-assistance/" target="_blank" rel="noopener" class="font-semibold text-primary-600 hover:text-primary-700">Pinellas County Down Payment Assistance</a>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">A no-interest, deferred loan of up to $75,000 for lower-income buyers, for homes in unincorporated Pinellas and the cities the county serves. Your lender applies for you.</p>
+            </li>
+            <li class="p-5">
+                <a href="https://www.stpete.org/residents/grants___loans/purchase_assistance_program.php" target="_blank" rel="noopener" class="font-semibold text-primary-600 hover:text-primary-700">City of St. Petersburg</a>,
+                <a href="https://www.myclearwater.com/My-Neighborhood/Affordable-Housing-Programs-for-Residents/Request-Down-Payment-Assistance" target="_blank" rel="noopener" class="font-semibold text-primary-600 hover:text-primary-700">City of Clearwater</a> and
+                <a href="https://www.largo.com/services/residents/housing_assistance/index.php" target="_blank" rel="noopener" class="font-semibold text-primary-600 hover:text-primary-700">City of Largo</a>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">These three cities run their own programs for homes inside their limits, in place of the county's.</p>
+            </li>
+            <li class="p-5">
+                <a href="https://www.consumerfinance.gov/find-a-housing-counselor/" target="_blank" rel="noopener" class="font-semibold text-primary-600 hover:text-primary-700">HUD-approved housing counselors</a>
+                <p class="mt-1 text-sm leading-6 text-charcoal-600">Free or low-cost advice from nonprofits, and the homebuyer class most programs require. A counselor can tell you which programs you qualify for and whether they can be combined.</p>
+            </li>
+        </ul>
+    </section>
 
-            <!-- Subheading -->
-            <p class="text-xl md:text-2xl text-charcoal-500 max-w-2xl leading-relaxed">
-                Turn a parcel scope into KPIs, charts, segment comparisons, and downloadable analysis briefs in three simple steps.
+    <section aria-labelledby="glossary-heading" id="glossary" class="scroll-mt-24">
+        <h2 id="glossary-heading" class="font-display text-2xl font-semibold text-charcoal-900 md:text-3xl">Glossary</h2>
+        <p class="mt-3 text-sm leading-6 text-charcoal-600">The terms used on each home's page.</p>
+        <div class="mt-6 rounded-lg border border-charcoal-100 bg-white p-6 shadow-soft-sm">
+            {% include 'Pages/partials/glossary.html' %}
+        </div>
+    </section>
+
+    <section aria-labelledby="numbers-heading" id="about-the-numbers" class="scroll-mt-24">
+        <h2 id="numbers-heading" class="font-display text-2xl font-semibold text-charcoal-900 md:text-3xl">About the numbers</h2>
+        <div class="mt-4 space-y-3 text-sm leading-6 text-charcoal-600">
+            <p>
+                Values, sales, permits and parcel details come from the Pinellas County Property Appraiser's public files, refreshed monthly. Flood zones and flood claims come from FEMA. The mortgage rate is Freddie Mac's weekly average.
+            </p>
+            <p>
+                Everything here is an estimate from public records, and this guide is general information, not legal, tax, lending or insurance advice. Use it to ask better questions of your agent, lender, insurer and inspector.
+            </p>
+            <p>
+                Found a mistake, or have a question?
+                <a href="mailto:pgilhooley95@gmail.com" class="font-medium text-primary-600 hover:text-primary-700">Send an email</a>.
             </p>
         </div>
     </section>
 
-    <!-- Workflow Steps - Horizontal Timeline -->
-    <section class="mb-16 md:mb-24">
-        <div class="flex items-center gap-3 mb-12">
-            <div class="h-px w-12 bg-charcoal-300"></div>
-            <span class="text-sm font-medium tracking-widest uppercase text-charcoal-500">The Process</span>
-        </div>
-
-        <!-- Steps Container -->
-        <div class="relative">
-            <!-- Connecting line (desktop) -->
-            <div class="hidden lg:block absolute top-24 left-[calc(16.67%-20px)] right-[calc(16.67%-20px)] h-0.5 bg-gradient-to-r from-primary-300 via-coral-300 to-success-300"></div>
-
-            <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
-                <!-- Step 1 -->
-                <div class="relative group">
-                    <!-- Large step number -->
-                    <div class="relative z-10 w-12 h-12 md:w-16 md:h-16 mx-auto mb-6 lg:mb-8">
-                        <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
-                        <div class="relative w-full h-full bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-glow-primary">
-                            <span class="font-display text-2xl md:text-3xl font-bold text-white">1</span>
-                        </div>
-                    </div>
-
-                    <!-- Card -->
-                    <div class="bg-white rounded-3xl border border-charcoal-100 p-6 md:p-8 hover:shadow-soft-lg transition-all duration-300 h-full">
-                        <div class="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center mb-5">
-                            <svg class="w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59" />
-                            </svg>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-charcoal-800 mb-3">Define Scope</h3>
-                        <p class="text-charcoal-500 mb-5 leading-relaxed">
-                            Choose the cities, ZIP codes, property classes, value ranges, and physical characteristics to analyze.
-                        </p>
-
-                        <ul class="space-y-2">
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Open the insights dashboard</span>
-                            </li>
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Pick relevant market filters</span>
-                            </li>
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Keep the scope broad enough for signal</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="relative group">
-                    <!-- Large step number -->
-                    <div class="relative z-10 w-12 h-12 md:w-16 md:h-16 mx-auto mb-6 lg:mb-8">
-                        <div class="absolute inset-0 bg-gradient-to-br from-coral-400 to-coral-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
-                        <div class="relative w-full h-full bg-gradient-to-br from-coral-500 to-coral-600 rounded-2xl flex items-center justify-center" style="box-shadow: 0 0 24px -4px rgba(251, 113, 133, 0.4);">
-                            <span class="font-display text-2xl md:text-3xl font-bold text-white">2</span>
-                        </div>
-                    </div>
-
-                    <!-- Card -->
-                    <div class="bg-white rounded-3xl border border-charcoal-100 p-6 md:p-8 hover:shadow-soft-lg transition-all duration-300 h-full">
-                        <div class="w-14 h-14 rounded-2xl bg-coral-50 flex items-center justify-center mb-5">
-                            <svg class="w-7 h-7 text-coral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                            </svg>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-charcoal-800 mb-3">Run the Analysis</h3>
-                        <p class="text-charcoal-500 mb-5 leading-relaxed">
-                            The dashboard recalculates exact KPIs and pandas/numpy EDA signals for the filtered slice.
-                        </p>
-
-                        <ul class="space-y-2">
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-coral-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Compare city and property-type segments</span>
-                            </li>
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-coral-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Review distributions and trend lines</span>
-                            </li>
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-coral-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Open parcel drilldowns behind outliers</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="relative group">
-                    <!-- Large step number -->
-                    <div class="relative z-10 w-12 h-12 md:w-16 md:h-16 mx-auto mb-6 lg:mb-8">
-                        <div class="absolute inset-0 bg-gradient-to-br from-success-400 to-success-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
-                        <div class="relative w-full h-full bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center" style="box-shadow: 0 0 24px -4px rgba(16, 185, 129, 0.4);">
-                            <span class="font-display text-2xl md:text-3xl font-bold text-white">3</span>
-                        </div>
-                    </div>
-
-                    <!-- Card -->
-                    <div class="bg-white rounded-3xl border border-charcoal-100 p-6 md:p-8 hover:shadow-soft-lg transition-all duration-300 h-full">
-                        <div class="w-14 h-14 rounded-2xl bg-success-50 flex items-center justify-center mb-5">
-                            <svg class="w-7 h-7 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
-                        </div>
-                        <h3 class="font-display text-xl font-bold text-charcoal-800 mb-3">Export the Brief</h3>
-                        <p class="text-charcoal-500 mb-5 leading-relaxed">
-                            Download a workbook or PDF brief that preserves the filters, segment tables, outliers, and methodology notes.
-                        </p>
-
-                        <ul class="space-y-2">
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Visual market analysis charts</span>
-                            </li>
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>PDF market insight brief</span>
-                            </li>
-                            <li class="flex items-start gap-2 text-sm text-charcoal-600">
-                                <svg class="w-4 h-4 text-success-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                <span>Excel workbook with analysis sheets</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- What You'll Get - Bold visual cards -->
-    <section class="mb-16 md:mb-24">
-        <div class="flex items-center gap-3 mb-8">
-            <div class="h-px w-12 bg-charcoal-300"></div>
-            <span class="text-sm font-medium tracking-widest uppercase text-charcoal-500">Your Exports</span>
-        </div>
-
-        <h2 class="font-display text-3xl md:text-4xl font-bold text-charcoal-800 mb-10 max-w-xl">
-            Analysis outputs, ready for review.
-        </h2>
-
-        <div class="grid md:grid-cols-3 gap-4 md:gap-6">
-            <!-- Market Visuals Card -->
-            <div class="group relative bg-gradient-to-br from-violet-500 to-violet-600 rounded-3xl p-6 md:p-8 text-white overflow-hidden">
-                <!-- Decorative element -->
-                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
-                <div class="absolute bottom-0 left-0 w-24 h-24 bg-violet-400/30 rounded-full blur-xl -translate-x-1/2 translate-y-1/2"></div>
-
-                <div class="relative">
-                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                        </svg>
-                    </div>
-
-                    <div class="text-xs font-medium uppercase tracking-wider text-violet-200 mb-2">Visualization</div>
-                    <h3 class="font-display text-2xl font-bold mb-3">Market Visuals</h3>
-                    <p class="text-violet-100 text-sm leading-relaxed">
-                        Charts and graphs showing price distributions, property counts, and market trends for your search area.
-                    </p>
-                </div>
-            </div>
-
-            <!-- PDF Report Card -->
-            <div class="group relative bg-gradient-to-br from-rose-500 to-rose-600 rounded-3xl p-6 md:p-8 text-white overflow-hidden">
-                <!-- Decorative element -->
-                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
-                <div class="absolute bottom-0 left-0 w-24 h-24 bg-rose-400/30 rounded-full blur-xl -translate-x-1/2 translate-y-1/2"></div>
-
-                <div class="relative">
-                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                    </div>
-
-                    <div class="text-xs font-medium uppercase tracking-wider text-rose-200 mb-2">Document</div>
-                    <h3 class="font-display text-2xl font-bold mb-3">PDF Report</h3>
-                    <p class="text-rose-100 text-sm leading-relaxed">
-                        A formatted brief with headline KPIs, segment tables, outliers, and methodology notes.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Excel Card -->
-            <div class="group relative bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 md:p-8 text-white overflow-hidden">
-                <!-- Decorative element -->
-                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
-                <div class="absolute bottom-0 left-0 w-24 h-24 bg-emerald-400/30 rounded-full blur-xl -translate-x-1/2 translate-y-1/2"></div>
-
-                <div class="relative">
-                    <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
-                        </svg>
-                    </div>
-
-                    <div class="text-xs font-medium uppercase tracking-wider text-emerald-200 mb-2">Spreadsheet</div>
-                    <h3 class="font-display text-2xl font-bold mb-3">Excel Data</h3>
-                    <p class="text-emerald-100 text-sm leading-relaxed">
-                        Overview, city segments, property type segments, outliers, sample parcels, and methodology sheets.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Data Sources Info -->
-    <section class="mb-16 md:mb-24">
-        <div class="grid md:grid-cols-2 gap-6 items-center">
-            <!-- Content -->
-            <div>
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="h-px w-12 bg-charcoal-300"></div>
-                    <span class="text-sm font-medium tracking-widest uppercase text-charcoal-500">Data Sources</span>
-                </div>
-
-                <h2 class="font-display text-3xl md:text-4xl font-bold text-charcoal-800 mb-6">
-                    Powered by official county records.
-                </h2>
-
-                <p class="text-charcoal-600 text-lg leading-relaxed mb-8">
-                    All property information is sourced directly from official Pinellas County government websites, ensuring accuracy and reliability.
-                </p>
-
-                <div class="space-y-4">
-                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-charcoal-100">
-                        <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-display font-semibold text-charcoal-800">Property Appraiser</p>
-                            <p class="text-sm text-charcoal-500">Values, ownership, building details</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border border-charcoal-100">
-                        <div class="w-10 h-10 rounded-xl bg-coral-100 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-coral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-display font-semibold text-charcoal-800">Tax Collector</p>
-                            <p class="text-sm text-charcoal-500">Tax amounts, payment status</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Visual -->
-            <div class="relative hidden md:block">
-                <div class="aspect-square rounded-3xl bg-gradient-to-br from-charcoal-100 to-charcoal-50 p-8 flex items-center justify-center relative overflow-hidden">
-                    <!-- Decorative pattern -->
-                    <div class="absolute inset-0 opacity-30">
-                        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <defs>
-                                <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse">
-                                    <circle cx="4" cy="4" r="1" fill="currentColor" class="text-charcoal-400"/>
-                                </pattern>
-                            </defs>
-                            <rect width="100%" height="100%" fill="url(#dots)"/>
-                        </svg>
-                    </div>
-
-                    <div class="relative text-center">
-                        <div class="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white shadow-soft flex items-center justify-center">
-                            <svg class="w-10 h-10 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                            </svg>
-                        </div>
-                        <div class="font-display text-xl font-bold text-charcoal-800 mb-2">Verified Data</div>
-                        <p class="text-charcoal-500 text-sm">Direct from official sources</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Support CTA -->
-    <section class="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-        <div class="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-3xl overflow-hidden relative">
-            <!-- Decorative -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                <div class="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
-                <div class="absolute bottom-0 left-0 w-64 h-64 bg-coral-500/10 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
-            </div>
-
-            <div class="relative py-12 md:py-16 px-6 md:px-12">
-                <div class="max-w-3xl mx-auto text-center">
-                    <h2 class="font-display text-3xl md:text-4xl font-bold text-white mb-4">
-                        Still have questions?
-                    </h2>
-                    <p class="text-primary-100 text-lg mb-8 max-w-lg mx-auto">
-                        Have questions, found a bug, or want to suggest a feature? I'm happy to help.
-                    </p>
-
-                    <a href="mailto:pgilhooley95@gmail.com"
-                       class="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-white rounded-2xl text-primary-700 font-semibold hover:bg-charcoal-50 transition-all duration-200 hover:scale-105 shadow-soft">
-                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                        </svg>
-                        <span>Send an Email</span>
-                    </a>
-                </div>
-            </div>
+    <section class="rounded-lg border border-primary-200 bg-primary-50 p-6" aria-labelledby="guide-lookup-heading">
+        <h2 id="guide-lookup-heading" class="font-display text-xl font-semibold text-charcoal-900">Have an address in mind?</h2>
+        <div class="mt-4 max-w-2xl">
+            {% include 'analytics/partials/lookup-form.html' %}
         </div>
     </section>
 

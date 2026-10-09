@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from home_finder import settings
@@ -46,6 +48,47 @@ class TestPagesViews:
         """Test help page returns 200."""
         response = client.get('/help')
         assert response.status_code == 200
+
+    def test_help_page_is_the_first_time_buyer_guide(self, client):
+        html = client.get('/help').content.decode()
+
+        assert 'Buying your first home in Pinellas County' in html
+        for section in ('steps', 'florida', 'assistance', 'glossary'):
+            assert f'id="{section}"' in html
+        assert 'https://www.floridahousing.org/' in html
+        assert 'action="/lookup/"' in html
+        assert 'From filters to' not in html
+
+    def test_guide_describes_amendment_3_by_its_status(self, client, monkeypatch):
+        from apps.Pages import views
+
+        assert 'on the November 3, 2026 ballot' in client.get('/help').content.decode()
+
+        monkeypatch.setattr(views, 'AMENDMENT_3_STATUS', 'passed')
+        assert 'approved by voters' in client.get('/help').content.decode()
+
+        monkeypatch.setattr(views, 'AMENDMENT_3_STATUS', 'failed')
+        html = client.get('/help').content.decode()
+        assert 'Amendment 3' not in html
+
+    def test_parcel_page_glossary_links_have_a_definition(self):
+        parcel_page = (settings.BASE_DIR / 'templates/analytics/property-detail.html').read_text()
+        glossary = (settings.BASE_DIR / 'templates/Pages/partials/glossary.html').read_text()
+
+        linked = set(re.findall(r"\{% url 'help' %\}#term-([a-z-]+)", parcel_page))
+        defined = set(re.findall(r'id="term-([a-z-]+)"', glossary))
+
+        assert len(linked) >= 10
+        assert linked <= defined
+
+    def test_home_page_links_to_the_guide(self, client):
+        html = client.get('/').content.decode()
+
+        assert 'href="/help"' in html
+        assert "Read the buyer's guide" in html
+
+    def test_nav_names_the_guide(self, client):
+        assert "Buyer's guide" in client.get('/').content.decode()
 
     def test_home_uses_home_template(self, client):
         """Test home page opens on the product intro, not the analytics dashboard."""

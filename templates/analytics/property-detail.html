@@ -2,7 +2,7 @@
 {% load static %}
 {% load property_filters %}
 
-{% block title %}{{ property.address }} - Pinellas Market Lens Parcel Drilldown{% endblock %}
+{% block title %}{{ property.address }}: Taxes, Costs and Risks - Pinellas Market Lens{% endblock %}
 
 {% block hero-image-content %}
 <!-- Property Header -->
@@ -167,7 +167,7 @@
                             <p class="text-sm text-charcoal-500">Current owner pays</p>
                             {% if tax_outlook.current_owner is not None %}
                             <p class="text-2xl font-semibold text-charcoal-800 mt-1">{{ tax_outlook.current_owner|dollars }}<span class="text-sm font-normal text-charcoal-500">/yr</span></p>
-                            <p class="text-xs text-charcoal-500 mt-1">{% if property.homestead_cap %}With their homestead exemption and Save Our Homes cap{% else %}At today's taxable value{% endif %}</p>
+                            <p class="text-xs text-charcoal-500 mt-1">{% if property.homestead_cap %}With their homestead exemption and <a href="{% url 'help' %}#term-save-our-homes" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Save Our Homes cap</a>{% else %}At today's taxable value{% endif %}</p>
                             {% else %}
                             <p class="text-2xl font-semibold text-charcoal-400 mt-1">Unknown</p>
                             {% endif %}
@@ -201,7 +201,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <p>
-                            <span class="font-semibold">Homestead isn't automatic.</span>
+                            <span class="font-semibold"><a href="{% url 'help' %}#term-homestead" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Homestead</a> isn't automatic.</span>
                             File with the Property Appraiser by March 1 of the year after you close.
                             <a href="https://www.pcpao.gov/homestead-exemption" target="_blank" rel="noopener" class="text-primary-600 hover:text-primary-700 font-medium">How to file</a>
                         </p>
@@ -209,8 +209,8 @@
                     {% endif %}
 
                     <p class="text-xs text-charcoal-500 leading-relaxed">
-                        Estimated {{ tax_outlook.tax_year }} bill. Assessed at the county's {% if property.roll_year %}{{ property.roll_year }} {% endif %}just value of {{ tax_outlook.just_value|dollars }},
-                        using {{ tax_outlook.millage_description|lower }} millage for tax district {{ property.tax_district }} ({{ tax_outlook.millage.total|floatformat:4 }} mills){% if tax_outlook.special_assessment %}, plus {{ tax_outlook.special_assessment|dollars }} in non-ad valorem assessments{% endif %}.
+                        Estimated {{ tax_outlook.tax_year }} bill. Assessed at the county's {% if property.roll_year %}{{ property.roll_year }} {% endif %}<a href="{% url 'help' %}#term-just-value" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">just value</a> of {{ tax_outlook.just_value|dollars }},
+                        using {{ tax_outlook.millage_description|lower }} <a href="{% url 'help' %}#term-millage" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">millage</a> for tax district {{ property.tax_district }} ({{ tax_outlook.millage.total|floatformat:4 }} mills){% if tax_outlook.special_assessment %}, plus {{ tax_outlook.special_assessment|dollars }} in <a href="{% url 'help' %}#term-non-ad-valorem" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">non-ad valorem assessments</a>{% endif %}.
                         Just value is the county's January 1 estimate and often runs below recent sale prices. If you pay more, expect a higher bill.
                     </p>
                 </div>
@@ -310,7 +310,7 @@
                     {% endif %}
 
                     <p class="text-xs text-charcoal-500 leading-relaxed">
-                        Only sales the county marked as qualified, meaning an arm's-length sale between unrelated parties. Family transfers, foreclosures and deals covering several parcels are left out.
+                        Only sales the county marked as <a href="{% url 'help' %}#term-qualified-sale" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">qualified</a>, meaning an arm's-length sale between unrelated parties. Family transfers, foreclosures and deals covering several parcels are left out.
                         Similar homes are the same kind of home in the same county appraisal neighborhood, within 25% of this home's living area.
                         A median of a few sales is a starting point for an offer, and condition, updates and the lot can move a price a long way from it.
                     </p>
@@ -323,7 +323,7 @@
             <div class="card" id="cost-calculator">
                 <div class="card-header">
                     <h2 class="font-display font-semibold text-charcoal-800">What This Home Would Cost Each Month</h2>
-                    <p class="text-sm text-charcoal-500 mt-1">Starts from the county's just value, which is not the asking price. Enter the list price or your offer.</p>
+                    <p class="text-sm text-charcoal-500 mt-1">Starts from the county's <a href="{% url 'help' %}#term-just-value" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">just value</a>, which is not the asking price. Enter the list price or your offer.</p>
                 </div>
                 <div class="card-body space-y-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -397,18 +397,18 @@
                                 <div class="flex justify-between"><dt>Principal and interest</dt><dd data-calc-output="principalAndInterest"></dd></div>
                                 <div class="flex justify-between"><dt>Property tax</dt><dd data-calc-output="tax"></dd></div>
                                 <div class="flex justify-between"><dt>Homeowners insurance</dt><dd data-calc-output="insurance"></dd></div>
-                                <div class="flex justify-between" data-calc-row="mortgageInsurance"><dt data-calc-label="mortgageInsurance">PMI</dt><dd data-calc-output="mortgageInsurance"></dd></div>
+                                <div class="flex justify-between" data-calc-row="mortgageInsurance"><dt><span data-calc-label="mortgageInsurance">PMI</span> <a href="{% url 'help' %}#term-pmi" class="text-xs text-primary-600 hover:text-primary-700">What's this?</a></dt><dd data-calc-output="mortgageInsurance"></dd></div>
                                 <div class="flex justify-between"><dt>HOA or condo fee</dt><dd data-calc-output="hoa"></dd></div>
                             </dl>
                         </div>
                         <div class="rounded-lg border border-charcoal-100 p-4">
-                            <p class="text-sm text-charcoal-500">Cash to close</p>
+                            <p class="text-sm text-charcoal-500"><a href="{% url 'help' %}#term-cash-to-close" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Cash to close</a></p>
                             <p class="text-2xl font-semibold text-charcoal-800 mt-1" data-calc-output="cashToClose"></p>
                             <dl class="mt-3 space-y-1 text-sm text-charcoal-700">
                                 <div class="flex justify-between"><dt>Down payment</dt><dd data-calc-output="downPayment"></dd></div>
-                                <div class="flex justify-between"><dt>Florida taxes on the mortgage</dt><dd data-calc-output="stateTaxes"></dd></div>
-                                <div class="flex justify-between"><dt>Title insurance</dt><dd data-calc-output="title"></dd></div>
-                                <div class="flex justify-between"><dt>First-year insurance and escrow</dt><dd data-calc-output="prepaids"></dd></div>
+                                <div class="flex justify-between"><dt><a href="{% url 'help' %}#term-doc-stamps" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Florida taxes on the mortgage</a></dt><dd data-calc-output="stateTaxes"></dd></div>
+                                <div class="flex justify-between"><dt><a href="{% url 'help' %}#term-title-insurance" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Title insurance</a></dt><dd data-calc-output="title"></dd></div>
+                                <div class="flex justify-between"><dt>First-year insurance and <a href="{% url 'help' %}#term-escrow" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">escrow</a></dt><dd data-calc-output="prepaids"></dd></div>
                                 <div class="flex justify-between"><dt>Lender and other fees</dt><dd data-calc-output="otherCosts"></dd></div>
                             </dl>
                             <p class="text-xs text-charcoal-500 mt-2">Loan amount: <span data-calc-output="loanAmount"></span></p>
@@ -422,7 +422,7 @@
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-400">$</span>
                                 <input type="number" id="calc-other" data-calc-input="otherCosts" value="{{ affordability.otherCosts }}" min="0" step="100" class="input pl-8">
                             </div>
-                            <p class="text-xs text-charcoal-500 mt-1">Origination, appraisal, survey, inspections and recording. A starting guess; your Loan Estimate has the real figures.</p>
+                            <p class="text-xs text-charcoal-500 mt-1">Origination, appraisal, survey, inspections and recording. A starting guess; your <a href="{% url 'help' %}#term-loan-estimate" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Loan Estimate</a> has the real figures.</p>
                         </div>
                         <div class="sm:pt-7">
                             <label class="flex cursor-pointer items-center gap-2">
@@ -450,7 +450,7 @@
             <div class="card" id="risks">
                 <div class="card-header">
                     <h2 class="font-display font-semibold text-charcoal-800">What to Check Before You Buy</h2>
-                    <p class="text-sm text-charcoal-500 mt-1">From the county's parcel and permit records{% if property.flood_zone %} and FEMA's flood map{% endif %}. These are prompts for your inspections and insurance quotes, not findings.</p>
+                    <p class="text-sm text-charcoal-500 mt-1">From the county's parcel and permit records{% if property.flood_zone %} and FEMA's flood map{% endif %}. These are prompts for your inspections and insurance quotes, not findings. <a href="{% url 'help' %}#florida" class="text-primary-600 hover:text-primary-700 font-medium">What these mean for a Florida buyer</a></p>
                 </div>
                 <div class="card-body">
                     {% if risk_flags %}
@@ -508,11 +508,11 @@
                             <h3 class="text-sm font-semibold text-charcoal-600 uppercase tracking-wider">Property Values</h3>
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
-                                    <span class="text-charcoal-600">Market Value</span>
+                                    <span class="text-charcoal-600"><a href="{% url 'help' %}#term-just-value" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Market Value</a></span>
                                     <span class="font-semibold text-charcoal-800">{{ property.market_value|format_price }}</span>
                                 </div>
                                 <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
-                                    <span class="text-charcoal-600">Assessed Value</span>
+                                    <span class="text-charcoal-600"><a href="{% url 'help' %}#term-assessed-value" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">Assessed Value</a></span>
                                     <span class="font-semibold text-charcoal-800">{{ property.assessed_value|format_price }}</span>
                                 </div>
                                 {% if property.land_size %}

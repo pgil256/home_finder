@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Pinellas Market Lens - What Will This Home Really Cost?{% endblock %}
-{% block meta_description %}Look up any Pinellas County home by address. See what the property taxes would be if you bought it, and the evacuation-zone, waterfront and sinkhole flags to check first. Built on official county records.{% endblock %}
+{% block meta_description %}Look up any Pinellas County home by address. See the property taxes and monthly payment if you bought it, what similar homes sold for, and the flood, roof and evacuation-zone flags to check first. Built on official county records.{% endblock %}
 
 {% block hero-image-content %}
 <section class="relative isolate flex min-h-[62vh] items-center overflow-hidden bg-charcoal-900 text-white"
@@ -12,13 +12,14 @@
             <p class="text-sm font-semibold uppercase tracking-wide text-primary-100">For Pinellas County home buyers</p>
             <h1 class="mt-4 font-display text-display-lg text-white md:text-display-xl">What will this home really cost me, and what's the catch?</h1>
             <p class="mt-5 max-w-2xl text-lg leading-8 text-charcoal-100 md:text-xl">
-                Type the address from a listing. See the property taxes you would pay as the new owner, not the seller's bill, plus the risks on the county's record.
+                Type the address from a listing. See the property taxes you would pay as the new owner, not the seller's bill, the monthly payment and cash to close, and the risks on the public record.
             </p>
             <div class="mt-8 max-w-2xl">
                 {% include 'analytics/partials/lookup-form.html' with label_class='block text-sm font-semibold text-white' %}
                 <p class="mt-4 text-sm text-charcoal-100">
                     Not looking at a specific home yet?
                     <a href="{% url 'insights' %}" class="font-semibold text-white underline hover:text-primary-100">Explore the market</a>
+                    or read the <a href="{% url 'help' %}" class="font-semibold text-white underline hover:text-primary-100">first-time buyer's guide</a>.
                 </p>
             </div>
         </div>
@@ -36,7 +37,7 @@
                 </svg>
             </div>
             <h2 class="font-display text-xl font-semibold text-charcoal-900">Your tax bill, not the seller's</h2>
-            <p class="mt-2 text-sm leading-6 text-charcoal-600">A long-time owner's taxes are capped. Yours reset when you buy. Each home shows an estimate for a new owner, with and without the homestead exemption.</p>
+            <p class="mt-2 text-sm leading-6 text-charcoal-600">A long-time owner's taxes are capped. Yours reset when you buy. Each home shows an estimate for a new owner, with and without the homestead exemption, and a calculator for the monthly payment and cash to close.</p>
         </div>
         <div class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
             <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-coral-50 text-coral-600">
@@ -45,7 +46,7 @@
                 </svg>
             </div>
             <h2 class="font-display text-xl font-semibold text-charcoal-900">What to check before you offer</h2>
-            <p class="mt-2 text-sm leading-6 text-charcoal-600">Evacuation zone, waterfront and seawall, recorded sinkhole activity and contamination, taken from the county's own record for that parcel.</p>
+            <p class="mt-2 text-sm leading-6 text-charcoal-600">FEMA flood zone, evacuation zone, the last roof permit, seawalls, and recorded sinkhole activity or contamination, from county and FEMA records for that parcel.</p>
         </div>
         <div class="rounded-lg border border-charcoal-100 bg-white p-5 shadow-soft-sm">
             <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-success-50 text-success-600">
@@ -54,15 +55,23 @@
                 </svg>
             </div>
             <h2 class="font-display text-xl font-semibold text-charcoal-900">How it compares</h2>
-            <p class="mt-2 text-sm leading-6 text-charcoal-600">Filter the county by city, price, size and new-owner tax to see what is typical, then open any home from the results.</p>
+            <p class="mt-2 text-sm leading-6 text-charcoal-600">See what the home and similar ones nearby sold for, save homes to compare side by side, or filter the county by city, price, size and new-owner tax.</p>
             <a href="{% url 'insights' %}" class="mt-3 inline-block text-sm font-semibold text-primary-600 hover:text-primary-700">Explore the market <span aria-hidden="true">&rarr;</span></a>
         </div>
+    </section>
+
+    <section class="flex flex-col gap-4 rounded-lg border border-primary-200 bg-primary-50 p-6 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="guide-heading">
+        <div>
+            <h2 id="guide-heading" class="font-display text-lg font-semibold text-charcoal-900">Buying for the first time?</h2>
+            <p class="mt-1 max-w-2xl text-sm leading-6 text-charcoal-600">The guide covers the steps in order, what is different about buying in Florida, where to find down payment help, and what the terms mean.</p>
+        </div>
+        <a href="{% url 'help' %}" class="btn btn-primary flex-shrink-0">Read the buyer's guide</a>
     </section>
 
     <section class="rounded-lg border border-charcoal-100 bg-white p-6 shadow-soft-sm" aria-labelledby="limits-heading">
         <h2 id="limits-heading" class="font-display text-lg font-semibold text-charcoal-900">What this is, and isn't</h2>
         <p class="mt-2 max-w-3xl text-sm leading-6 text-charcoal-600">
-            Every figure comes from Pinellas County Property Appraiser public records, refreshed monthly. It is not a listing site: there are no asking prices, and the county's value for a home often runs below what it sells for. Treat the numbers as a starting point for questions to your agent, lender and insurer, not as advice.
+            The figures come from Pinellas County Property Appraiser public records, refreshed monthly, and FEMA's flood data. It is not a listing site: there are no asking prices, and the county's value for a home often runs below what it sells for. Treat the numbers as a starting point for questions to your agent, lender and insurer, not as advice.
         </p>
     </section>
 

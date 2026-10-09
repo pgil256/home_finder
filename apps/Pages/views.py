@@ -6,6 +6,7 @@ from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 
+from apps.analytics.services.tax_estimate import AMENDMENT_3_STATUS
 from home_finder.caching import cdn_cache
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def about(request):
 
 @cdn_cache
 def help(request):
-    return render(request, 'Pages/help.html')
+    return render(request, 'Pages/help.html', {'amendment_3_status': AMENDMENT_3_STATUS})
 
 
 def health_check(request):

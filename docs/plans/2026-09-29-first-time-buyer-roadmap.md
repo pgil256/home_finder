@@ -5,7 +5,7 @@
 
 ## Status (2026-10-09)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps, pgil256/home_finder#14) merged the same day too. PR 8 (roof and system age, pgil256/home_finder#15) and PR 9 (flood zone and flood-claim history, pgil256/home_finder#16) merged on 2026-10-09. PR 10 (map) is built. Still to do: PR 11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps, pgil256/home_finder#14) merged the same day too. PR 8 (roof and system age, pgil256/home_finder#15) and PR 9 (flood zone and flood-claim history, pgil256/home_finder#16) merged on 2026-10-09. PR 10 (map, pgil256/home_finder#17) merged the same day, along with a fix to the flood refresh (pgil256/home_finder#18), which then stored a FEMA flood zone on 437,189 parcels. PR 11 (buyer's guide and glossary) is built. That is the last PR in the plan.
 
 What changed around the roadmap:
 

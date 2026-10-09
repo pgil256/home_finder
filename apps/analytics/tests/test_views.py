@@ -468,7 +468,8 @@ class TestTaxEstimateCard:
         assert 'Est. taxes if you buy: $4,777/yr' in html
         assert 'by March 1' in html
         assert 'Estimated 2027 bill' in html
-        assert '2025 final millage for tax district SP (19.9197 mills)' in html
+        assert 'using 2025 final <a href="/help#term-millage"' in html
+        assert 'millage</a> for tax district SP (19.9197 mills)' in html
 
     def test_shows_amendment_3_scenario_while_vote_is_pending(self, client, capped_home):
         html = self._html(client, capped_home)
