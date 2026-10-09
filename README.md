@@ -97,7 +97,7 @@ cd home_finder
 
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 copy .env.example .env
 python manage.py migrate

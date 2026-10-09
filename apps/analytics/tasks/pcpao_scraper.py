@@ -14,15 +14,30 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+
+# Selenium is not installed where the web app is deployed (see
+# requirements.txt). The per-parcel refresh only uses the requests-based
+# methods of this class, so the module has to import without it.
+try:
+    from selenium import webdriver
+    from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.common.keys import Keys
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.support.ui import WebDriverWait
+    from webdriver_manager.chrome import ChromeDriverManager
+
+    SELENIUM_AVAILABLE = True
+except ImportError:
+    SELENIUM_AVAILABLE = False
+    webdriver = Options = Service = By = Keys = EC = WebDriverWait = ChromeDriverManager = None
+
+    class _SeleniumNotInstalled(Exception):
+        """Stands in for Selenium's exceptions in `except` clauses. Never raised."""
+
+    NoSuchElementException = StaleElementReferenceException = TimeoutException = _SeleniumNotInstalled
 
 from apps.analytics.services.property_photos import sanitize_county_photo_url
 
@@ -96,6 +111,11 @@ class PCPAOScraper:
         self.wait = None
 
     def setup_driver(self):
+        if not SELENIUM_AVAILABLE:
+            raise RuntimeError(
+                'The browser-driven scraper needs Selenium: pip install -r requirements-scrape.txt. '
+                'The per-parcel refresh does not use it.'
+            )
         options = Options()
         if os.path.exists(CHROME_BINARY):
             options.binary_location = CHROME_BINARY

@@ -1,0 +1,6 @@
+# The browser-driven PCPAO and Tax Collector scrapers in apps/analytics/tasks.
+# They predate the monthly bulk import and are kept for local use; nothing in
+# the deployed app drives a browser. On top of requirements.txt.
+selenium==4.44.0
+webdriver-manager==4.1.1
+chardet==5.2.0

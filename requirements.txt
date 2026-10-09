@@ -1,25 +1,19 @@
+# What the web app needs to serve requests. Vercel installs this file and
+# nothing else, so every package here ships in the serverless function.
+# Scraping, data jobs and test tools have their own files:
+#   requirements-scrape.txt  the Selenium scraper (local use only)
+#   requirements-data.txt    scheduled data jobs in GitHub Actions
+#   requirements-dev.txt     tests and linting; installs all of the above
 Django==5.2.14
-djangorestframework==3.17.1
 pandas==2.3.3
 openpyxl==3.1.5
 reportlab==4.5.1
-chardet==5.2.0
 python-decouple==3.8
 requests==2.34.2
-selenium==4.44.0
+# The per-parcel Refresh button reads the Property Appraiser's page with
+# requests and parses it with this. It does not use Selenium.
 beautifulsoup4==4.14.3
-webdriver-manager==4.1.1
 gunicorn==26.0.0
 whitenoise==6.12.0
 dj-database-url==3.1.2
 psycopg2-binary==2.9.12
-
-# Testing
-pytest>=7.4.0
-pytest-django>=4.5.0
-pytest-cov>=4.1.0
-pytest-mock>=3.11.0
-factory-boy>=3.3.0
-responses>=0.23.0
-freezegun>=1.2.0
-ruff==0.15.15
