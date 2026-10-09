@@ -29,6 +29,9 @@ COMP_WINDOW_MONTHS = 12
 COMP_SQFT_TOLERANCE = 0.25
 # Fewer sales than this and a median says more about one house than the market.
 MIN_COMPS = 3
+# From this many, the median is steady enough to lead with. Below it the page
+# leads with the range the sales covered, and the median comes second.
+CONFIDENT_COMPS = 5
 COMPS_SHOWN = 5
 FLIP_WINDOW_MONTHS = 24
 
@@ -64,6 +67,10 @@ class CompSummary:
     subject_sqft: int
     # The most recent few, newest first.
     shown: list[Comp]
+
+    @property
+    def confident(self) -> bool:
+        return self.count >= CONFIDENT_COMPS
 
 
 @dataclass(frozen=True)

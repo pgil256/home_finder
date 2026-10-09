@@ -274,6 +274,14 @@ class TestComparableSales:
         assert comps.indicated_value == 375000
         assert comps.subject_sqft == 1500
 
+    @pytest.mark.parametrize(('sales', 'confident'), [(3, False), (4, False), (5, True), (8, True)])
+    def test_a_median_is_only_trusted_from_five_sales(self, sales, confident):
+        home = _home(SUBJECT)
+        for n in range(1, sales + 1):
+            _neighbor_sale(n, 300000 + n * 1000)
+
+        assert build_sales_outlook(home, TODAY).comps.confident is confident
+
     def test_indicated_value_is_rounded_to_the_nearest_thousand(self):
         home = _home(SUBJECT, building_sqft=1437)
         for n, price in enumerate((301000, 305500, 312250), start=1):
@@ -363,10 +371,34 @@ class TestParcelPage:
         assert 'December 2025' in html
         assert 'Resold after 15 months:' in html
         assert 'often follows a renovation' in html
-        assert '$220<span' in html  # 330,000 / 1,500 sqft
-        assert 'The middle of 3 sales' in html
-        assert 'that is about $330,000' in html
         assert reverse('property-detail', args=[neighbor.parcel_id]) in html
+
+    def test_few_comps_lead_with_the_range_not_a_price(self, client):
+        _home(SUBJECT)
+        _neighbor_sale(1, 300000, sale_date=self.RECENT)  # $200/sqft at 1,500 sqft
+        _neighbor_sale(2, 330000, sale_date=self.RECENT)
+        _neighbor_sale(3, 360000, sale_date=self.RECENT)  # $240/sqft
+
+        html = self._get(client).content.decode()
+
+        assert '$200 to $240<span' in html
+        assert 'Only 3 sales in the last 12 months' in html
+        assert 'The middle one was $220/sqft, which would put this home around $330,000' in html
+        assert html.index('$200 to $240') < html.index('$330,000')
+        assert 'The middle of 3 sales' not in html
+
+    def test_five_comps_lead_with_the_median(self, client):
+        _home(SUBJECT)
+        for n, price in enumerate((300000, 315000, 330000, 345000, 360000), start=1):
+            _neighbor_sale(n, price, sale_date=self.RECENT)
+
+        html = self._get(client).content.decode()
+
+        assert '$220<span' in html  # 330,000 / 1,500 sqft
+        assert 'The middle of 5 sales' in html
+        assert 'which ran from $200 to $240' in html
+        assert 'that is about $330,000' in html
+        assert 'Only 5 sales' not in html
 
     def test_resale_at_a_lower_price_does_not_suggest_a_renovation(self, client):
         _home(SUBJECT)
@@ -397,7 +429,7 @@ class TestParcelPage:
         html = self._get(client).content.decode()
 
         assert 'No recent sale' in html
-        assert 'The middle of 3 sales' in html
+        assert 'Only 3 sales in the last 12 months' in html
 
     def test_no_card_without_sales_or_comps(self, client):
         _home(SUBJECT)
