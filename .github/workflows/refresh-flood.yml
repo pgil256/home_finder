@@ -52,3 +52,9 @@ jobs:
 
       - name: Store flood zones and claim history
         run: python manage.py refresh_flood_data --zones-file nfhl-pinellas.geojson --vacuum-every 10
+
+      - name: Purge Cloudflare's cached pages
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_PURGE_TOKEN: ${{ secrets.CLOUDFLARE_PURGE_TOKEN }}
+        run: .github/scripts/purge-cdn.sh homefinder.patbuilds.dev

@@ -49,6 +49,8 @@ def assert_cdn_cacheable(response):
     assert 's-maxage=86400' in cache_control
     assert 'stale-while-revalidate=604800' in cache_control
     assert 'max-age=0' in cache_control
+    # For a CDN in front of Vercel, which strips s-maxage from Cache-Control.
+    assert response['CDN-Cache-Control'] == 'public, s-maxage=86400, stale-while-revalidate=604800'
     assert not response.cookies
     assert not has_vary_header(response, 'Cookie')
 
@@ -57,6 +59,7 @@ def assert_not_cdn_cacheable(response):
     cache_control = response.get('Cache-Control', '')
     assert 'public' not in cache_control
     assert 's-maxage' not in cache_control
+    assert 'CDN-Cache-Control' not in response
 
 
 class TestPublicPagesAreCdnCacheable:

@@ -62,6 +62,30 @@ def test_S0_has_data(client, base_url):
     )
 
 
+def test_S0b_cdn_serves_html(client, base_url):
+    """Behind Cloudflare, a repeat view of a page comes from Cloudflare's cache.
+
+    Cloudflare does not cache HTML unless a Cache Rule tells it to, so without
+    one the s-maxage the app sends is ignored there. Hosts that are not behind
+    Cloudflare (the Vercel URL, a local server) are skipped.
+    """
+    first = client.get(f'{base_url}/', timeout=TIMEOUT)
+    assert_ok(first)
+    if 'cf-cache-status' not in first.headers:
+        pytest.skip(f'{base_url} is not served through Cloudflare')
+
+    second = client.get(f'{base_url}/', timeout=TIMEOUT)
+    assert_ok(second)
+    status = second.headers.get('cf-cache-status')
+    # The first request can land just as the cached copy expires; either of
+    # these means Cloudflare answered from its cache.
+    assert status in {'HIT', 'REVALIDATED', 'UPDATING', 'STALE'}, (
+        f'{base_url}/ returned cf-cache-status: {status} on a repeat request. '
+        'Cloudflare is not caching HTML: check that the Cache Rule for this host exists '
+        '(cache eligible, respect origin TTL) and is not bypassed for cookie-less requests.'
+    )
+
+
 def test_S1_home_loads(client, base_url):
     """Home page returns 200 and looks like the right app."""
     r = client.get(f'{base_url}/', timeout=TIMEOUT)
