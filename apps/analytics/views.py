@@ -404,9 +404,19 @@ def property_refresh(request, parcel_id: str):
     so this is for users who want fresh values on a specific listing
     between refreshes (e.g. after a sale).
     """
-    from .tasks.scrape_data import ParcelNotFoundError, refresh_one_parcel
-
     detail_url = _cache_busted(reverse('property-detail', args=[parcel_id]), 'refreshed')
+
+    # Imported here so the scraper's dependencies load only when someone asks
+    # for a refresh, and so a host without them says so instead of erroring.
+    try:
+        from .tasks.scrape_data import ParcelNotFoundError, refresh_one_parcel
+    except ImportError:
+        logger.exception('Parcel refresh is unavailable: the scraper could not be imported')
+        messages.warning(
+            request,
+            "Refresh isn't available on this server. The data here is updated from the county's file every month.",
+        )
+        return redirect(detail_url)
     rate_key = f'parcel_refresh:{parcel_id}'
 
     # Rate-limit per parcel — 60 seconds between refresh attempts for the

@@ -41,7 +41,7 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-data.txt pytest-cov
+        run: pip install -r requirements-dev.txt
 
       - name: Run tests
         env:
@@ -74,8 +74,10 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      # Only what Vercel installs, plus the test runner: these tests must not
+      # need the scraper or data-job packages.
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt pytest pytest-django pytest-cov
 
       - name: Run address lookup tests on Postgres
         env:
@@ -86,6 +88,7 @@ jobs:
           python -m pytest --no-cov
           apps/analytics/tests/test_address_lookup.py
           apps/analytics/tests/test_guard_property_data.py
+          apps/analytics/tests/test_web_requirements.py
 
   test-js:
     name: JavaScript Tests

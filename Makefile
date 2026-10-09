@@ -1,7 +1,11 @@
-.PHONY: help lint format test test-cov e2e-smoke dev build migrate
+.PHONY: help install lint format test test-cov e2e-smoke dev build migrate
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+install: ## Install everything needed to develop and test (the web app alone needs only requirements.txt)
+	pip install -r requirements-dev.txt
+	npm install
 
 lint: ## Run linters (Python + JS)
 	ruff check apps/ home_finder/
