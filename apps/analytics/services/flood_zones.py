@@ -34,6 +34,7 @@ from decimal import Decimal
 from typing import NamedTuple
 
 import requests
+from django.db import connection
 
 from apps.analytics.models import PropertyListing
 from apps.analytics.services.pcpao_importer import vacuum_property_listing_table
@@ -176,6 +177,18 @@ class FloodZoneIndex:
         return found
 
 
+def release_database_connection() -> None:
+    """Close the database connection; the next query opens a new one.
+
+    Neon suspends a database that has been idle for five minutes and drops
+    its connections, and Django outside a request never notices: the next
+    query fails on the dead connection. Call this before work that leaves the
+    database idle for minutes.
+    """
+    if not connection.in_atomic_block:
+        connection.close()
+
+
 def assign_flood_zones(
     index: FloodZoneIndex, batch_size: int = 5000, vacuum_every: int | None = None
 ) -> dict[str, int]:
@@ -194,6 +207,8 @@ def assign_flood_zones(
             'pk', 'longitude', 'latitude', 'flood_zone', 'static_bfe'
         )
     )
+    # The join takes minutes and never touches the database.
+    release_database_connection()
     found = index.locate([(float(longitude), float(latitude)) for _, longitude, latitude, _, _ in rows])
     matched = sum(1 for flood_zone in found if flood_zone is not None)
     if rows and matched < MIN_MATCHED_SHARE * len(rows):
