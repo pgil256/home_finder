@@ -11,6 +11,7 @@ module.exports = {
     marketInsights: "./static/js/dev/marketInsights.js",
     affordability: "./static/js/dev/affordability.js",
     parcelMap: "./static/js/dev/parcelMap.js",
+    lookup: "./static/js/dev/lookup.js",
   },
   output: {
     filename: "[name].bundle.js",

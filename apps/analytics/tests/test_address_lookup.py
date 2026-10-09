@@ -7,12 +7,14 @@ from django.test import RequestFactory
 
 from apps.analytics.models import PropertyListing
 from apps.analytics.services.address_lookup import (
+    SUGGEST_LIMIT,
     address_candidates,
     address_q,
     keyword_q,
     lookup_parcels,
     normalize_address_query,
     parcel_id_from_query,
+    suggest_parcels,
 )
 from apps.analytics.services.filtering import apply_filters
 
@@ -201,3 +203,92 @@ class TestLookupView:
         make_parcel(1, '1700 GULF BLVD')
         response = client.get('/lookup/', {'q': '1700 gulf'})
         assert not response.cookies
+
+
+@pytest.mark.django_db
+class TestSuggestParcels:
+    def test_prefix_matches_come_back_sorted(self):
+        make_parcel(2, '1029 CHAUCER RD')
+        make_parcel(1, '1029 CHARLES ST')
+        make_parcel(3, '2000 CHARLES ST')
+
+        rows = suggest_parcels('1029 cha')
+
+        assert [row['address'] for row in rows] == ['1029 CHARLES ST', '1029 CHAUCER RD']
+        assert set(rows[0]) == {'parcel_id', 'address', 'city', 'market_value'}
+
+    def test_caps_the_list(self):
+        for n in range(SUGGEST_LIMIT + 4):
+            make_parcel(n, f'1700 GULF BLVD # {n}')
+        assert len(suggest_parcels('1700 gulf')) == SUGGEST_LIMIT
+
+    def test_spelled_out_street_type_falls_back_to_the_county_abbreviation(self):
+        make_parcel(1, '1029 CHARLES ST')
+        assert [row['address'] for row in suggest_parcels('1029 Charles Street')] == ['1029 CHARLES ST']
+
+    def test_too_short_to_suggest_runs_no_queries(self, django_assert_num_queries):
+        with django_assert_num_queries(0):
+            assert suggest_parcels('10') == []
+            assert suggest_parcels('') == []
+            assert suggest_parcels(None) == []
+
+    def test_never_scans_for_a_substring(self, django_assert_num_queries):
+        make_parcel(1, '1029 CHARLES ST')
+        with django_assert_num_queries(1):
+            assert suggest_parcels('charles') == []
+
+
+@pytest.mark.django_db
+class TestSuggestView:
+    def test_returns_matches_as_json_with_parcel_urls(self, client):
+        parcel = make_parcel(1, '1029 CHARLES ST', market_value=Decimal('1032109.00'))
+        other = make_parcel(2, '1029 CHAUCER RD', market_value=None)
+
+        response = client.get('/lookup/suggest/', {'q': '1029 cha'})
+
+        assert response.status_code == 200
+        assert response.json() == {
+            'results': [
+                {
+                    'parcel_id': parcel.parcel_id,
+                    'address': '1029 CHARLES ST',
+                    'city': 'Clearwater',
+                    'market_value': 1032109,
+                    'url': f'/analytics/property/{parcel.parcel_id}/',
+                },
+                {
+                    'parcel_id': other.parcel_id,
+                    'address': '1029 CHAUCER RD',
+                    'city': 'Clearwater',
+                    'market_value': None,
+                    'url': f'/analytics/property/{other.parcel_id}/',
+                },
+            ]
+        }
+
+    def test_short_or_missing_query_is_an_empty_list(self, client):
+        assert client.get('/lookup/suggest/').json() == {'results': []}
+        assert client.get('/lookup/suggest/', {'q': '10'}).json() == {'results': []}
+
+    def test_is_cacheable_and_sets_no_cookies(self, client):
+        make_parcel(1, '1029 CHARLES ST')
+        response = client.get('/lookup/suggest/', {'q': '1029 cha'})
+        assert 's-maxage=86400' in response['Cache-Control']
+        assert not response.cookies
+
+    def test_only_answers_get(self, client):
+        assert client.post('/lookup/suggest/', {'q': '1029 cha'}).status_code == 405
+
+    def test_crawlers_are_kept_off_it(self, client):
+        assert b'Disallow: /lookup/suggest/' in client.get('/robots.txt').content
+
+
+@pytest.mark.django_db
+class TestLookupFormMarkup:
+    @pytest.mark.parametrize('url', ['/', '/lookup/'])
+    def test_form_is_wired_for_suggestions(self, client, url):
+        html = client.get(url).content.decode()
+        assert 'data-lookup-suggest="/lookup/suggest/"' in html
+        assert 'role="listbox"' in html
+        assert 'lookup.bundle.js' in html
+        assert '1700 Gulf' not in html

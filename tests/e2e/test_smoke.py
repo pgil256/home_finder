@@ -96,6 +96,16 @@ def test_S1c_address_lookup_no_match(client, base_url):
     assert 'No match for' in r.text
 
 
+def test_S1d_address_suggestions(client, base_url):
+    """Typing the start of an address lists the parcel, fast enough to feel instant."""
+    r = client.get(f'{base_url}/lookup/suggest/', params={'q': '1029 cha'}, timeout=TIMEOUT)
+    assert_ok(r)
+    addresses = [row['address'] for row in r.json()['results']]
+    assert '1029 CHARLES ST' in addresses
+    assert r.elapsed.total_seconds() < 1, f'suggestions took {r.elapsed.total_seconds():.1f}s'
+    assert 's-maxage' in r.headers.get('Cache-Control', '')
+
+
 def test_S2_scraper_form_loads(client, base_url):
     """Filter builder renders with city + property type fields."""
     r = client.get(f'{base_url}/analytics/', timeout=TIMEOUT)

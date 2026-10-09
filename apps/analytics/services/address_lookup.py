@@ -19,6 +19,11 @@ from .filtering import PINELLAS_CITIES
 
 LOOKUP_LIMIT = 25
 
+SUGGEST_LIMIT = 8
+# Shorter than this and the suggestions are a random handful of thousands of
+# matches. It also bounds how many distinct responses the CDN has to hold.
+SUGGEST_MIN_LENGTH = 3
+
 # Below this length a substring scan matches too much of the county to be
 # worth reading 437k rows for.
 CONTAINS_MIN_LENGTH = 6
@@ -211,3 +216,23 @@ def lookup_parcels(raw: str | None, limit: int = LOOKUP_LIMIT) -> LookupResult:
     result.truncated = len(rows) > limit
     result.parcels = sorted(rows[:limit], key=lambda parcel: (parcel.address or '', parcel.parcel_id))
     return result
+
+
+SUGGEST_FIELDS = ('parcel_id', 'address', 'city', 'market_value')
+
+
+def suggest_parcels(raw: str | None, limit: int = SUGGEST_LIMIT) -> list[dict]:
+    """A few addresses that start with what has been typed so far.
+
+    Prefix matches only, so every keystroke is one read of idx_address_prefix.
+    The substring scan that lookup_parcels falls back to is left for the
+    submitted form.
+    """
+    for candidate in address_candidates(raw):
+        if len(candidate) < SUGGEST_MIN_LENGTH:
+            continue
+        # No ORDER BY, for the same reason as lookup_parcels.
+        rows = list(PropertyListing.objects.filter(address__startswith=candidate).values(*SUGGEST_FIELDS)[:limit])
+        if rows:
+            return sorted(rows, key=lambda row: (row['address'] or '', row['parcel_id']))
+    return []

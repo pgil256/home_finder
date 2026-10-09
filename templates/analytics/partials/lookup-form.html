@@ -1,16 +1,27 @@
+{% load static %}
 <form method="get" action="{% url 'lookup' %}" role="search" aria-label="Look up a home">
     <label for="lookup-q" class="{{ label_class|default:'label' }}">Street address or parcel ID</label>
     <div class="mt-2 flex flex-col gap-3 sm:flex-row">
-        <input type="search"
-               id="lookup-q"
-               name="q"
-               value="{{ query }}"
-               required
-               maxlength="120"
-               autocomplete="off"
-               {% if autofocus and not query %}autofocus{% endif %}
-               placeholder="e.g., 1700 Gulf Blvd"
-               class="input flex-1 text-charcoal-900">
+        {# lookup.js lists matching addresses under the box as you type. Without it this is a plain search form. #}
+        <div class="relative flex-1" data-lookup-suggest="{% url 'lookup-suggest' %}">
+            <input type="search"
+                   id="lookup-q"
+                   name="q"
+                   value="{{ query }}"
+                   required
+                   maxlength="120"
+                   autocomplete="off"
+                   {% if autofocus and not query %}autofocus{% endif %}
+                   placeholder="e.g., 3056 Pin Oak Dr"
+                   class="input w-full text-charcoal-900">
+            <ul id="lookup-suggestions"
+                role="listbox"
+                aria-label="Matching addresses"
+                hidden
+                class="absolute left-0 right-0 top-full z-30 mt-1 max-h-96 overflow-y-auto rounded-lg border border-charcoal-200 bg-white py-1 text-left shadow-lg"></ul>
+            <p id="lookup-suggest-status" class="sr-only" role="status" aria-live="polite"></p>
+        </div>
         <button type="submit" class="btn btn-primary btn-lg">Look up</button>
     </div>
 </form>
+<script src="{% static 'js/dist/lookup.bundle.js' %}" defer></script>
