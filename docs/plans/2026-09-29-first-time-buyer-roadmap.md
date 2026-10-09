@@ -5,7 +5,7 @@
 
 ## Status (2026-10-09)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps, pgil256/home_finder#14) merged the same day too. PR 8 (roof and system age, pgil256/home_finder#15) and PR 9 (flood zone and flood-claim history) are built. Still to do: PR 10–11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps, pgil256/home_finder#14) merged the same day too. PR 8 (roof and system age, pgil256/home_finder#15) and PR 9 (flood zone and flood-claim history, pgil256/home_finder#16) merged on 2026-10-09. PR 10 (map) is built. Still to do: PR 11.
 
 What changed around the roadmap:
 
@@ -364,7 +364,10 @@ The risk card gains three flags (`_permit_flags` in `risk_flags.py`). A roof per
 - OpenFEMA `v3/NfipClaims` for county `12103`: aggregate by ZIP (claim count, claims since 2020, median paid) into a small `ZipFloodHistory` table.
 - Risk flag for Special Flood Hazard Areas (A/AE/V/VE): lenders require flood insurance. Add an "outside SFHA" filter.
 
-### PR 10 — Map (S)
+### PR 10 — Map (S) — built
+
+*As built:* a "Where It Is" card under the property details, shown when the parcel has coordinates. `static/js/dev/parcelMap.js` (its own small bundle, loaded on the parcel page only) waits until the card is within 300px of the viewport, then adds MapLibre GL's script and stylesheet from unpkg, pinned to 5.24.0 with integrity hashes. That is the last release with a plain `<script>` build: 6.x ships only as ES modules, which can't carry an integrity hash when imported from a CDN. The map uses the OpenFreeMap `liberty` style, starts at zoom 15 with a pin at the county's map point, and needs Ctrl or two fingers to zoom so that scrolling the page doesn't move it. A checkbox adds FEMA's flood hazard zones (NFHL layer 28, the layer the stored zone is read from) as a raster overlay from FEMA's `MapServer/export` endpoint; FEMA draws that layer only closer than about 1:36,000, so it appears from zoom 13. It is off by default, because FEMA's server is slow and the page shouldn't call it for visitors who don't ask. If the library can't be downloaded, the card shows a link to the same spot on OpenStreetMap. Credits for OpenFreeMap, MapLibre, OpenStreetMap contributors and FEMA are in the card text as well as on the map. Nothing here touches Django or the database. Not done: a map on the compare page, and bundling MapLibre instead of using a CDN.
+
 
 - MapLibre GL + the OpenFreeMap `liberty` style, lazy-loaded on the detail page only, with a pin from the stored coordinates.
 - Optional: FEMA NFHL flood-zone overlay as a raster source pointed at FEMA's own MapServer export endpoint. That is live flood mapping with no hosting cost.
