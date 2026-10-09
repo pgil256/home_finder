@@ -30,10 +30,14 @@ Where the result differs from the plan:
 - **Step 2 needed an app change.** Vercel removes `s-maxage` from `Cache-Control` after using it, so Cloudflare saw `max-age=0`. Cacheable pages now also send `CDN-Cache-Control`. The Cache Rule also sets Browser TTL to "Respect origin TTL"; without it Cloudflare told browsers to keep pages for four hours.
 - **Step 4 took a second pass.** The first fill of the street-name table was 4.5 MB, and a stray spelling in the county file ("GULF BLV") outranked the real street.
 
+The copy of the app on the homelab, and its hostname on the homelab tunnel, are kept on purpose (owner's decision, 2026-10-09). It no longer receives the public domain's traffic.
+
+After merge, the functional and browser E2E suites passed against `homefinder.patbuilds.dev` (11 of 11). The first request for a large never-requested filter (St. Petersburg up to $600,000) took longer than the suite's 15 s timeout before it was cached; later requests took 3 to 4 s. Cold start showed no measurable change between the deployments before and after step 11 (first uncached request 75 ms and 100 ms).
+
 Still open:
 
-- **Purge secrets.** `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_PURGE_TOKEN` are not set, so the data refresh workflows skip the Cloudflare purge and a parcel page can lag an import by up to a day (longer while stale copies are served). See [docs/cloudflare-cache.md](../cloudflare-cache.md).
-- **Homelab copy.** The homelab tunnel still has a public hostname for homefinder that gets no traffic, and the app copy there is still running.
+- **Purge secrets (deferred by the owner on 2026-10-09).** `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_PURGE_TOKEN` are not set, so the data refresh workflows skip the Cloudflare purge and a parcel page can lag an import by up to a day (longer while stale copies are served). See [docs/cloudflare-cache.md](../cloudflare-cache.md).
+- The "parcel page after a refresh shows the new value" check for step 2 waits on those secrets.
 - **README dashboard screenshot** (`docs/img/dashboard.png`) still shows the old headings. Retake it after 2026-10-10: the market page's figures are cached for a day, so until then the unfiltered page still shows the old notes under each figure ("Exact filtered count") beneath the new headings.
 
 ## What was found
