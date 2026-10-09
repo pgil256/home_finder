@@ -318,6 +318,13 @@ def _parcel_affordability(tax_outlook) -> dict | None:
     return config
 
 
+def _parcel_map(property_obj: PropertyListing) -> dict | None:
+    """Where to put the pin on the parcel page's map, or None without coordinates."""
+    if property_obj.latitude is None or property_obj.longitude is None:
+        return None
+    return {'lat': float(property_obj.latitude), 'lng': float(property_obj.longitude)}
+
+
 @cdn_cache
 def property_detail(request, parcel_id: str):
     """Single property detail view."""
@@ -359,6 +366,7 @@ def property_detail(request, parcel_id: str):
             'tax_outlook': tax_outlook,
             'sales': build_sales_outlook(property_obj),
             'affordability': _parcel_affordability(tax_outlook),
+            'parcel_map': _parcel_map(property_obj),
             'risk_flags': build_risk_flags(property_obj),
             'has_risk_data': has_risk_data(property_obj),
             'flood_history': zip_flood_history(property_obj.zip_code),

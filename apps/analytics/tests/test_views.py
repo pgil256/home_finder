@@ -567,6 +567,46 @@ class TestRiskFlagsCard:
         assert 'What to Check Before You Buy' not in html
 
 
+class TestMapOnParcelPage:
+    def _html(self, client, listing):
+        return client.get(f'/analytics/property/{listing.parcel_id}/').content.decode()
+
+    def test_map_card_gets_the_county_map_point(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(latitude='27.965853', longitude='-82.800103')
+
+        response = client.get(f'/analytics/property/{sample_property.parcel_id}/')
+        html = response.content.decode()
+
+        assert response.context['parcel_map'] == {'lat': 27.965853, 'lng': -82.800103}
+        assert 'id="parcel-map"' in html
+        assert '{"lat": 27.965853, "lng": -82.800103}' in html
+        assert 'js/dist/parcelMap.bundle.js' in html
+        assert 'mlat=27.965853&amp;mlon=-82.800103' in html
+
+    def test_map_credits_its_sources(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(latitude='27.965853', longitude='-82.800103')
+
+        html = self._html(client, sample_property)
+
+        assert 'OpenStreetMap contributors' in html
+        assert 'https://openfreemap.org' in html
+        assert 'https://maplibre.org' in html
+
+    def test_map_library_is_not_loaded_with_the_page(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(latitude='27.965853', longitude='-82.800103')
+
+        html = self._html(client, sample_property)
+
+        assert 'maplibre-gl' not in html
+        assert 'tiles.openfreemap.org' not in html
+
+    def test_no_map_without_coordinates(self, client, sample_property):
+        html = self._html(client, sample_property)
+
+        assert 'id="parcel-map"' not in html
+        assert 'parcelMap.bundle.js' not in html
+
+
 class TestFloodOnParcelPage:
     def _html(self, client, listing):
         return client.get(f'/analytics/property/{listing.parcel_id}/').content.decode()

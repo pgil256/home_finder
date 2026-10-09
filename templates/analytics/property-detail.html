@@ -123,6 +123,37 @@
                 </div>
             </div>
 
+            <!-- Map -->
+            {% if parcel_map %}
+            <div class="card" id="map">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">Where It Is</h2>
+                    <p class="text-sm text-charcoal-500 mt-1">The pin is the county's map point for this parcel, which is not always on the building.</p>
+                </div>
+                <div class="card-body space-y-3">
+                    <div id="parcel-map" class="aspect-video w-full overflow-hidden rounded-lg bg-charcoal-100" role="region" aria-label="Map showing {{ property.address }}"></div>
+                    <p id="parcel-map-fallback" class="hidden text-sm text-charcoal-600">
+                        The map could not be loaded.
+                        <a href="https://www.openstreetmap.org/?mlat={{ parcel_map.lat }}&amp;mlon={{ parcel_map.lng }}#map=17/{{ parcel_map.lat }}/{{ parcel_map.lng }}" target="_blank" rel="noopener" class="text-primary-600 hover:text-primary-700 font-medium">Open this spot on OpenStreetMap</a>.
+                    </p>
+                    <label class="flex items-start gap-2 text-sm text-charcoal-700">
+                        <input type="checkbox" id="parcel-map-flood" class="mt-0.5" disabled>
+                        <span>
+                            Show FEMA flood zones.
+                            <span class="text-charcoal-500">Blue is a high-risk zone (A or V), where lenders require flood insurance. Orange is the moderate-risk shaded X zone. They appear once you zoom in to street level, and FEMA's server can take a few seconds.</span>
+                        </span>
+                    </label>
+                    <p class="text-xs text-charcoal-500">
+                        Map from <a href="https://openfreemap.org" target="_blank" rel="noopener" class="underline">OpenFreeMap</a>,
+                        drawn with <a href="https://maplibre.org" target="_blank" rel="noopener" class="underline">MapLibre</a>.
+                        Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" class="underline">OpenStreetMap contributors</a>.
+                        Flood zones from FEMA's National Flood Hazard Layer.
+                    </p>
+                </div>
+            </div>
+            {{ parcel_map|json_script:"parcel-map-data" }}
+            {% endif %}
+
             <!-- New-owner tax estimate -->
             {% if tax_outlook %}
             <div class="card" id="taxes">
@@ -767,6 +798,7 @@
 {% block scripts %}
 {{ block.super }}
 {% if affordability %}<script src="{% static 'js/dist/affordability.bundle.js' %}"></script>{% endif %}
+{% if parcel_map %}<script src="{% static 'js/dist/parcelMap.bundle.js' %}"></script>{% endif %}
 <script>
     // The saved list itself lives in common.js, which also keeps the
     // "Saved" link in the header pointing at the compare page.
