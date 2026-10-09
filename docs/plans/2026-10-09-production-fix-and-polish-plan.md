@@ -7,27 +7,34 @@ Follows the [first-time buyer roadmap](2026-09-29-first-time-buyer-roadmap.md), 
 
 ## Status
 
-As of 2026-10-09 every code step has an open pull request with CI green. They are stacked in this order, each on the one before, and none is merged yet:
+Done and live as of 2026-10-09. Every step is merged, and the smoke suite passes against both `homefinder-jet.vercel.app` and `homefinder.patbuilds.dev`.
 
-| Step | Pull request |
-|---|---|
-| 1. Monitor opens an issue | pgil256/home_finder#21 |
-| 3. Address typeahead | pgil256/home_finder#23 |
-| 5. Nearby homes | pgil256/home_finder#24 |
-| 6. Comps headline | pgil256/home_finder#25 |
-| 9. Parcel page tidy-up | pgil256/home_finder#26 |
-| 10. Error pages | pgil256/home_finder#27 |
-| 4. Typo tolerance (migration 0015) | pgil256/home_finder#28 |
-| 7. One audience | pgil256/home_finder#29 |
-| 8. Retire the filter builder | pgil256/home_finder#30 |
-| 11. Trim the bundle | pgil256/home_finder#31 |
-| 2. Cloudflare purge and CDN smoke test | pgil256/home_finder#32 |
+| Step | Pull request | Checked on production |
+|---|---|---|
+| 0. Domain | no PR | The `homefinder` DNS record was a route to the homelab Cloudflare Tunnel, which served a copy of the app with an empty database. It is now a proxied CNAME to the Vercel project. Both hosts report 437,582 parcels |
+| 1. Monitor opens an issue | pgil256/home_finder#21 | A run against the then-empty domain opened pgil256/home_finder#22 |
+| 2. Cloudflare caching | pgil256/home_finder#32 | Cache Rule created; a repeat fetch of `/` returns `cf-cache-status: HIT`. The purge secrets are not set yet (see below) |
+| 3. Address typeahead | pgil256/home_finder#23 | `/lookup/suggest/?q=1029 cha` lists 1029 CHARLES ST |
+| 4. Typo tolerance | pgil256/home_finder#28, pgil256/home_finder#33 | "1700 Gulf Bvld" shows results for 1700 GULF BLVD; 11,859 street names in 1.70 MB with indexes |
+| 5. Nearby homes | pgil256/home_finder#24 | The $1.03M Clearwater example lists four homes valued $1.02M to $1.04M |
+| 6. Comps headline | pgil256/home_finder#25 | Same example leads with "$398 to $778/sqft", "Only 3 sales" |
+| 7. One audience | pgil256/home_finder#29 | Smoke test for the new headings passes |
+| 8. Retire the filter builder | pgil256/home_finder#30 | `/analytics/?city=Dunedin` 301s to `/insights/?city=Dunedin` |
+| 9. Parcel page tidy-up | pgil256/home_finder#26 | No owner card; "Tax Before Exemptions $19,299" |
+| 10. Error pages | pgil256/home_finder#27 | Bad parcel ID returns the styled 404 with the lookup form |
+| 11. Trim the bundle | pgil256/home_finder#31 | Vercel function 84.2 MB before, 83.5 MB after; parcel Refresh still works |
 
-Still to do by hand:
+Where the result differs from the plan:
 
-- **Step 0.** The cause is narrower than this plan guessed. `homefinder.patbuilds.dev` is attached to the right Vercel project, which marks it "Invalid Configuration": the `homefinder` record in Cloudflare DNS does not point at Vercel, so Cloudflare sends the hostname to some other host running the app with an empty database (its responses have no `X-Vercel-Id` header). In Cloudflare, set the `homefinder` CNAME to `f80956fe97dc79fd.vercel-dns-017.com`, the value Vercel shows for it and the one `pinellasmarketlens.patbuilds.dev` already uses, then find and shut down whatever the old record pointed at.
-- **Step 2.** The Cloudflare Cache Rule and the two purge secrets, described in [docs/cloudflare-cache.md](../cloudflare-cache.md).
-- **After Step 4 merges.** Run the "Database guard" workflow once. It applies migration 0015 and fills the street-name table. A full data refresh is not needed.
+- **Step 11 barely changed the function size.** Selenium and the test tools were evidently not what filled it; pandas and numpy are. The requirements split is still the right shape, but it is not a size win. Cold start was not measured.
+- **Step 2 needed an app change.** Vercel removes `s-maxage` from `Cache-Control` after using it, so Cloudflare saw `max-age=0`. Cacheable pages now also send `CDN-Cache-Control`. The Cache Rule also sets Browser TTL to "Respect origin TTL"; without it Cloudflare told browsers to keep pages for four hours.
+- **Step 4 took a second pass.** The first fill of the street-name table was 4.5 MB, and a stray spelling in the county file ("GULF BLV") outranked the real street.
+
+Still open:
+
+- **Purge secrets.** `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_PURGE_TOKEN` are not set, so the data refresh workflows skip the Cloudflare purge and a parcel page can lag an import by up to a day (longer while stale copies are served). See [docs/cloudflare-cache.md](../cloudflare-cache.md).
+- **Homelab copy.** The homelab tunnel still has a public hostname for homefinder that gets no traffic, and the app copy there is still running.
+- **README dashboard screenshot** (`docs/img/dashboard.png`) still shows the old headings. Retake it after 2026-10-10: the market page's figures are cached for a day, so until then the unfiltered page still shows the old notes under each figure ("Exact filtered count") beneath the new headings.
 
 ## What was found
 
