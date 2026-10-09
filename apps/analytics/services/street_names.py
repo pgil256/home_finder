@@ -26,6 +26,10 @@ logger = logging.getLogger(__name__)
 
 # pg_trgm similarity, 0 to 1. "GULF BVLD" against "GULF BLVD" scores 0.43.
 SIMILARITY_THRESHOLD = 0.4
+# The county's file has stray spellings of its own ("GULF BLV", on one parcel).
+# Among names this close to the best score, the street with the most parcels
+# is the one the buyer meant.
+NEAR_TIE = 0.05
 NEAREST_LIMIT = 3
 MIN_STREET_LENGTH = 3
 
@@ -97,21 +101,34 @@ def nearest_streets(street: str, limit: int = NEAREST_LIMIT) -> list[NearbyStree
         logger.warning('Could not read street names for %r', street, exc_info=True)
         return []
 
-    # The same street name in two cities is one spelling to try.
+    # The same street name in two cities is one spelling to try. Rows arrive
+    # biggest city first within a name, so that is the city it is shown with.
     nearest: dict[str, NearbyStreet] = {}
-    for name, city, similarity in rows:
+    parcels: dict[str, int] = {}
+    for name, city, similarity, parcel_count in rows:
         nearest.setdefault(name, NearbyStreet(name=name, city=city, similarity=similarity))
-    return list(nearest.values())[:limit]
+        parcels[name] = parcels.get(name, 0) + parcel_count
+    if not nearest:
+        return []
+
+    best = max(street.similarity for street in nearest.values())
+
+    def rank(street: NearbyStreet):
+        if street.similarity >= best - NEAR_TIE:
+            return (0, -parcels[street.name], -street.similarity, street.name)
+        return (1, -street.similarity, -parcels[street.name], street.name)
+
+    return sorted(nearest.values(), key=rank)[:limit]
 
 
-def _nearest_in_postgres(street: str, limit: int) -> list[tuple[str, str, float]]:
+def _nearest_in_postgres(street: str, limit: int) -> list[tuple[str, str, float, int]]:
     table = connection.ops.quote_name(StreetName._meta.db_table)
     with connection.cursor() as cursor:
         # `%%` is pg_trgm's "similar enough" operator (0.3 by default), which
         # is what lets the trigram index narrow the rows; the stricter
         # threshold is applied to what it returns.
         cursor.execute(
-            f'SELECT name, city, similarity(name, %s) AS score FROM {table} '
+            f'SELECT name, city, similarity(name, %s) AS score, parcel_count FROM {table} '
             'WHERE name %% %s AND similarity(name, %s) >= %s '
             'ORDER BY score DESC, parcel_count DESC, name, city LIMIT %s',
             [street, street, street, SIMILARITY_THRESHOLD, limit * 4],
@@ -119,7 +136,7 @@ def _nearest_in_postgres(street: str, limit: int) -> list[tuple[str, str, float]
         return cursor.fetchall()
 
 
-def _nearest_in_python(street: str) -> list[tuple[str, str, float]]:
+def _nearest_in_python(street: str) -> list[tuple[str, str, float, int]]:
     """The same ranking without pg_trgm, for SQLite in development and tests."""
     scored = [
         (trigram_similarity(name, street), parcel_count, name, city)
@@ -127,25 +144,31 @@ def _nearest_in_python(street: str) -> list[tuple[str, str, float]]:
     ]
     scored = [row for row in scored if row[0] >= SIMILARITY_THRESHOLD]
     scored.sort(key=lambda row: (-row[0], -row[1], row[2], row[3]))
-    return [(name, city, similarity) for similarity, _, name, city in scored]
+    return [(name, city, similarity, parcel_count) for similarity, parcel_count, name, city in scored]
 
 
 def rebuild_street_names() -> int:
     """Replace the street-name table with what the addresses say now. Returns the row count."""
     with transaction.atomic():
-        StreetName.objects.all().delete()
         if connection.vendor == 'postgresql':
             _rebuild_in_postgres()
         else:
+            StreetName.objects.all().delete()
             _rebuild_in_python()
     return StreetName.objects.count()
 
 
 def _rebuild_in_postgres() -> None:
-    """One statement inside the database, so no address leaves it."""
+    """Inside the database, so no address leaves it.
+
+    TRUNCATE and REINDEX rather than DELETE and plain inserts: deleted rows and
+    a trigram index filled row by row both leave the table several times the
+    size it needs to be, and this database has a storage cap.
+    """
     street_names = connection.ops.quote_name(StreetName._meta.db_table)
     listings = connection.ops.quote_name(PropertyListing._meta.db_table)
     with connection.cursor() as cursor:
+        cursor.execute(f'TRUNCATE {street_names}')
         cursor.execute(
             f'INSERT INTO {street_names} (name, city, parcel_count) '
             'SELECT street, city, COUNT(*) FROM ('
@@ -154,6 +177,7 @@ def _rebuild_in_postgres() -> None:
             ') AS streets WHERE length(street) >= %s GROUP BY street, city',
             [_UNIT_PATTERN, '', _HOUSE_NUMBER_PATTERN, '', MIN_STREET_LENGTH],
         )
+        cursor.execute(f'REINDEX TABLE {street_names}')
 
 
 def _rebuild_in_python() -> None:

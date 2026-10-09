@@ -189,17 +189,14 @@ class StreetName(models.Model):
     It exists so a mistyped street can be matched by trigram similarity
     against a few thousand names instead of 437,000 addresses. On Postgres,
     migration 0015 adds a pg_trgm GIN index on `name` (idx_street_name_trgm)
-    that Django's model state doesn't know about.
+    that Django's model state doesn't know about. One row per name and city,
+    which the rebuild's GROUP BY guarantees; there is no unique index because
+    nothing else writes here and an index would cost more than the table.
     """
 
     name = models.CharField(max_length=255)  # 'GULF BLVD', 'MIRROR LAKE DR N'
     city = models.CharField(max_length=100)
     parcel_count = models.IntegerField()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['name', 'city'], name='uniq_street_name_city'),
-        ]
 
     def __str__(self):
         return f'{self.name}, {self.city}'

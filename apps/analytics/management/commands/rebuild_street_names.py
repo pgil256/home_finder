@@ -27,8 +27,9 @@ class Command(BaseCommand):
     def _size(self) -> str:
         if connection.vendor != 'postgresql':
             return ''
+        # Quoted, because the table name has capitals in it.
+        table = connection.ops.quote_name(StreetName._meta.db_table)
         with connection.cursor() as cursor:
-            # Quoted, because the table name has capitals in it.
-            cursor.execute('SELECT pg_total_relation_size(%s)', [connection.ops.quote_name(StreetName._meta.db_table)])
-            size = cursor.fetchone()[0]
-        return f', {size / 1024 / 1024:.2f} MB with indexes'
+            cursor.execute('SELECT pg_total_relation_size(%s), pg_indexes_size(%s)', [table, table])
+            total, indexes = cursor.fetchone()
+        return f', {total / 1024 / 1024:.2f} MB with indexes ({indexes / 1024 / 1024:.2f} MB of it indexes)'
