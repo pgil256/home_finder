@@ -8,6 +8,8 @@ from django.db.utils import InterfaceError, OperationalError
 from django.http import HttpRequest, HttpResponse
 from django.utils.cache import has_vary_header
 
+from home_finder.caching import CDN_CACHE_CONTROL_HEADER
+
 logger = logging.getLogger(__name__)
 
 # How long to tell clients (and monitors) to wait before retrying.
@@ -87,4 +89,7 @@ class PrivateWhenPersonalMiddleware:
             return response
         if response.cookies or has_vary_header(response, 'Cookie'):
             response['Cache-Control'] = 'private, no-store'
+            # A CDN reads this header before Cache-Control, so it has to go too.
+            if CDN_CACHE_CONTROL_HEADER in response:
+                del response[CDN_CACHE_CONTROL_HEADER]
         return response
