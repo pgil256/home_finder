@@ -107,6 +107,6 @@ def test_F7_real_st_petersburg_analysis_returns_signals(client, base_url):
         timeout=DEFAULT_TIMEOUT,
     )
     assert r.status_code == 200
-    assert 'Exact Market KPIs' in r.text
-    assert 'Sample Parcels' in r.text
-    assert 'No parcels match the current filters' not in r.text
+    assert 'The market at a glance' in r.text
+    assert 'A few of these homes' in r.text
+    assert 'No properties match these filters' not in r.text

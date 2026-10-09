@@ -95,6 +95,16 @@ CACHE_KEY_PARAMS = (
 CACHE_KEY_MULTI_PARAMS = ('property_type',)
 
 
+# Percentile -> how the page says it to someone who has never met a percentile.
+PERCENTILE_PLAIN = {
+    10: '1 in 10 is below',
+    25: 'A quarter are below',
+    50: 'Half are below (the median)',
+    75: 'Three quarters are below',
+    90: '9 in 10 are below',
+}
+
+
 def filtered_queryset(request=None):
     if request is None:
         return PropertyListing.objects.all()
@@ -351,8 +361,11 @@ def _percentile_rows(series: pd.Series) -> list[dict[str, Any]]:
     clean = clean[clean > 0]
     if clean.empty:
         return []
-    values = np.percentile(clean, [10, 25, 50, 75, 90])
-    return [{'label': f'P{p}', 'value': _clean_number(v)} for p, v in zip([10, 25, 50, 75, 90], values, strict=False)]
+    values = np.percentile(clean, list(PERCENTILE_PLAIN))
+    return [
+        {'label': f'P{p}', 'plain': PERCENTILE_PLAIN[p], 'value': _clean_number(v)}
+        for p, v in zip(PERCENTILE_PLAIN, values, strict=True)
+    ]
 
 
 def _segments(df: pd.DataFrame, field: str, limit: int) -> list[dict[str, Any]]:
@@ -515,7 +528,7 @@ def _value_gap_scatter_payload(df: pd.DataFrame) -> dict[str, Any]:
         return _empty_chart('Market vs assessed value', len(df), len(df) - len(clean), 'Need at least two value pairs.')
     if len(clean) > 400:
         clean = clean.sample(400, random_state=7)
-        note = 'Scatterplot uses a deterministic 400-row sample for responsiveness.'
+        note = 'Shows 400 of these properties, picked at random.'
     else:
         note = None
     points = [
@@ -611,27 +624,27 @@ def _kpi_cards(exact: dict[str, Any]) -> list[dict[str, str]]:
         {
             'label': 'Parcels analyzed',
             'value': _count(exact['parcel_count']),
-            'note': 'Exact filtered count',
+            'note': 'Every property that matches your filters',
         },
         {
             'label': 'Median market value',
             'value': _money(exact['median_market_value']),
-            'note': 'Exact median over non-null values',
+            'note': 'Half are valued above this, half below',
         },
         {
             'label': 'Mean market value',
             'value': _money(exact['mean_market_value']),
-            'note': 'Exact database average',
+            'note': 'The average, pulled up by the most expensive',
         },
         {
             'label': 'Median price per sqft',
             'value': _money(exact['median_price_per_sqft']),
-            'note': 'Exact median where sqft exists',
+            'note': 'County value divided by living area',
         },
         {
             'label': 'Total market value',
             'value': _money(exact['total_market_value']),
-            'note': 'Exact filtered sum',
+            'note': 'All of them added together',
         },
         {
             'label': 'Median tax rate',
@@ -641,12 +654,12 @@ def _kpi_cards(exact: dict[str, Any]) -> list[dict[str, str]]:
         {
             'label': 'Avg assessed gap',
             'value': _money(exact['avg_assessed_gap']),
-            'note': 'Market value minus assessed value',
+            'note': 'County value minus what owners are taxed on',
         },
         {
             'label': 'Avg assessed gap %',
             'value': _percent(exact['avg_assessed_gap_pct']),
-            'note': 'Average gap as share of market value',
+            'note': 'That gap as a share of county value',
         },
     ]
 
@@ -659,30 +672,27 @@ def _takeaways(
     outliers: dict[str, list[dict[str, Any]]],
 ) -> list[str]:
     if exact['parcel_count'] == 0:
-        return ['No parcels match the current filters. Broaden the scope to generate market signals.']
+        return ['No properties match these filters. Remove one to see more.']
 
     parcel_count = exact['parcel_count']
-    parcel_label = 'parcel' if parcel_count == 1 else 'parcels'
+    parcel_label = 'property' if parcel_count == 1 else 'properties'
     takeaways = [
-        f'The current slice contains {_count(parcel_count)} {parcel_label} with a median market value of {_money(exact["median_market_value"])}.',
+        f'{_count(parcel_count)} {parcel_label} {"matches" if parcel_count == 1 else "match"} your filters, with a median county value of {_money(exact["median_market_value"])}.',
     ]
     market_percentiles = percentiles.get('market_value') or []
     p25 = _percentile_lookup(market_percentiles, 'P25')
     p75 = _percentile_lookup(market_percentiles, 'P75')
     if p25 is not None and p75 is not None:
-        takeaways.append(f'The middle 50% of recorded market values spans {_money(p25)} to {_money(p75)}.')
+        takeaways.append(f'The middle half are valued between {_money(p25)} and {_money(p75)}.')
     if city_segments:
         leader = city_segments[0]
-        leader_label = 'parcel' if leader['count'] == 1 else 'parcels'
-        takeaways.append(
-            f'{leader["name"]} is the largest city segment in this slice with {_count(leader["count"])} {leader_label}.'
-        )
+        takeaways.append(f'{leader["name"]} has the most of them: {_count(leader["count"])}.')
     if type_segments:
         leader = type_segments[0]
-        takeaways.append(f'{leader["name"]} is the most common property type represented in the filtered data.')
+        takeaways.append(f'{leader["name"]} is the most common type.')
     if outliers.get('market_value'):
-        takeaways.append('High-value IQR outliers are exposed as drilldowns so the analysis stays auditable.')
-    takeaways.append('These are exploratory public-record signals, not predictions or investment advice.')
+        takeaways.append('A few are valued far above the rest. They are listed below so you can look at each one.')
+    takeaways.append('These are patterns in public records, not predictions or investment advice.')
     return takeaways
 
 

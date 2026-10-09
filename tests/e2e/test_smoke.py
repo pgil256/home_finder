@@ -129,8 +129,9 @@ def test_S3_insights_dashboard_renders(client, base_url):
     """Insights dashboard returns 200 and renders market analysis sections."""
     r = client.get(f'{base_url}/insights/', timeout=TIMEOUT)
     assert_ok(r)
-    assert 'Exact Market KPIs' in r.text
-    assert 'Auditable Outliers' in r.text
+    assert 'The market at a glance' in r.text
+    assert 'Homes that stand out, and why' in r.text
+    assert 'Public records EDA' not in r.text
     assert 'market-insights-charts' in r.text
 
 
