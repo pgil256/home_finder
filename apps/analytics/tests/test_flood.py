@@ -129,6 +129,25 @@ class TestAssignFloodZones:
     def _assign(self, features=FEATURES, **options):
         return flood_zones.assign_flood_zones(flood_zones.FloodZoneIndex(features), **options)
 
+    def test_database_connection_is_released_before_the_join(self):
+        """The join idles the database for minutes, long enough for Neon to drop the connection."""
+        _parcel('ae', IN_AE)
+        order = []
+        locate = flood_zones.FloodZoneIndex.locate
+
+        def record_locate(index, points):
+            order.append('join')
+            return locate(index, points)
+
+        with (
+            patch.object(flood_zones, 'release_database_connection', side_effect=lambda: order.append('release')),
+            patch.object(flood_zones.FloodZoneIndex, 'locate', autospec=True, side_effect=record_locate),
+        ):
+            stats = self._assign()
+
+        assert order == ['release', 'join']
+        assert stats['updated'] == 1
+
     def test_each_parcel_gets_the_zone_its_point_falls_in(self):
         _parcel('ae', IN_AE)
         _parcel('shaded', IN_SHADED_X)
@@ -300,3 +319,17 @@ class TestRefreshFloodDataCommand:
 
         get.assert_not_called()
         assert _zone('ae') == ('AE', Decimal('10.0'))
+
+
+class TestReleaseDatabaseConnection:
+    def test_closes_an_idle_connection_so_the_next_query_reconnects(self):
+        with patch.object(flood_zones, 'connection', Mock(in_atomic_block=False)) as connection:
+            flood_zones.release_database_connection()
+
+        connection.close.assert_called_once_with()
+
+    def test_leaves_a_connection_that_is_inside_a_transaction(self):
+        with patch.object(flood_zones, 'connection', Mock(in_atomic_block=True)) as connection:
+            flood_zones.release_database_connection()
+
+        connection.close.assert_not_called()

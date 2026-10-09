@@ -22,7 +22,12 @@ from django.core.cache import cache
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.analytics.services.flood_claims import download_claims, import_flood_claims
-from apps.analytics.services.flood_zones import FloodZoneIndex, assign_flood_zones, download_flood_polygons
+from apps.analytics.services.flood_zones import (
+    FloodZoneIndex,
+    assign_flood_zones,
+    download_flood_polygons,
+    release_database_connection,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +63,11 @@ class Command(BaseCommand):
                 failed.append('flood zones')
         if not options['skip_claims']:
             try:
-                count = import_flood_claims(download_claims())
+                claims = download_claims()
+                # The download leaves the database idle, and a failed zone refresh
+                # can leave a dead connection behind.
+                release_database_connection()
+                count = import_flood_claims(claims)
                 self.stdout.write(f'Stored flood claim history for {count} ZIP codes.')
             except Exception:
                 logger.exception('Could not refresh flood claim history')
