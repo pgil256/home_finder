@@ -354,6 +354,10 @@
                         <input type="checkbox" name="exclude_subsidence" value="1" {% if search_values.exclude_subsidence == '1' %}checked{% endif %} class="checkbox">
                         <span class="text-sm text-charcoal-600">Leave out parcels with subsidence on record</span>
                     </label>
+                    <label class="flex cursor-pointer items-center gap-3">
+                        <input type="checkbox" name="outside_sfha" value="1" {% if search_values.outside_sfha == '1' %}checked{% endif %} class="checkbox">
+                        <span class="text-sm text-charcoal-600">Only homes outside FEMA's high-risk flood zones, where lenders don't require flood insurance</span>
+                    </label>
                 </div>
             </div>
 

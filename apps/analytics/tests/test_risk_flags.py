@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
@@ -31,6 +32,8 @@ def _listing(**overrides):
         'historic_landmark': False,
         'roof_permit_year': None,
         'hvac_permit_year': None,
+        'flood_zone': None,
+        'static_bfe': None,
     }
     return SimpleNamespace(**{**fields, **overrides})
 
@@ -72,6 +75,59 @@ class TestEvacuationZone:
 
     def test_unknown_zone_says_nothing(self):
         assert _flags(evac_zone=None) == []
+
+
+class TestFloodZone:
+    @pytest.mark.parametrize('zone', ['A', 'AE', 'AH', 'AO', 'VE'])
+    def test_special_flood_hazard_area_is_checked_first(self, zone):
+        (flag,) = _flags(flood_zone=zone)
+
+        assert flag.level == HIGH
+        assert f'FEMA flood zone {zone}' in flag.title
+        assert 'Lenders must require flood insurance' in flag.why
+        assert 'flood insurance quote' in flag.ask
+
+    def test_base_flood_elevation_is_given_when_known(self):
+        (with_bfe,) = _flags(flood_zone='AE', static_bfe=Decimal('10.0'))
+        (without,) = _flags(flood_zone='A')
+
+        assert 'base flood elevation is 10 feet' in with_bfe.why
+        assert 'base flood elevation' not in without.why
+
+    def test_coastal_zone_mentions_waves(self):
+        (flag,) = _flags(flood_zone='VE', static_bfe=Decimal('12.5'))
+
+        assert flag.title == 'FEMA flood zone VE (coastal high hazard)'
+        assert 'wave action' in flag.why
+        assert '12.5 feet' in flag.why
+
+    def test_shaded_x_is_good_to_know(self):
+        (flag,) = _flags(flood_zone='X500')
+
+        assert flag.level == INFO
+        assert "don't require flood insurance" in flag.why
+
+    def test_minimal_risk_is_good_news_but_not_an_all_clear(self):
+        (flag,) = _flags(flood_zone='X')
+
+        assert flag.level == GOOD
+        assert 'can still flood' in flag.ask
+
+    @pytest.mark.parametrize('zone', [None, 'OPEN WATER', 'D'])
+    def test_other_zones_say_nothing(self, zone):
+        assert _flags(flood_zone=zone) == []
+
+    def test_elevation_certificate_advice_appears_once(self):
+        surge = _flags(flood_zone='AE', evac_zone='A', waterfront=True, frontage='Gulf')
+        inland = _flags(flood_zone='AE', evac_zone='NONE', waterfront=True, frontage='Lake')
+        coast = _flags(flood_zone='VE', evac_zone='D', waterfront=True, frontage='Gulf')
+
+        for flags in (surge, inland, coast):
+            assert sum('elevation certificate' in flag.ask for flag in flags) == 1
+
+    def test_flood_zone_alone_counts_as_risk_data(self):
+        assert has_risk_data(_listing(subsidence=None, evac_zone=None, flood_zone='X'))
+        assert not has_risk_data(_listing(subsidence=None, evac_zone=None))
 
 
 class TestWaterfront:

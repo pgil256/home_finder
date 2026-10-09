@@ -3,9 +3,9 @@
 **Date:** 2026-09-29
 **Goal:** Make Pinellas Market Lens genuinely useful to a first-time homebuyer without adding paid APIs or meaningful hosting cost.
 
-## Status (2026-10-08)
+## Status (2026-10-09)
 
-Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps, pgil256/home_finder#14) merged the same day too. PR 8 (roof and system age) is built. Still to do: PR 9–11.
+Live in production: PR 0, PR 1 and PR 2 (merged together as pgil256/home_finder#5), PR 4 (risk flags) and the address lookup front door (pgil256/home_finder#10, not part of the original plan). PR 3 (monthly cost calculator and budget search, pgil256/home_finder#11) and PR 5 (saved homes and compare, pgil256/home_finder#12) merged on 2026-10-08. PR 6 (CDN caching, pgil256/home_finder#13) merged the same day. PR 7 (sales history and comps, pgil256/home_finder#14) merged the same day too. PR 8 (roof and system age, pgil256/home_finder#15) and PR 9 (flood zone and flood-claim history) are built. Still to do: PR 10–11.
 
 What changed around the roadmap:
 
@@ -352,7 +352,9 @@ The risk card gains three flags (`_permit_flags` in `risk_flags.py`). A roof per
 - Derive `roof_permit_year` (and optionally `hvac_permit_year`) during import. Store only those columns.
 - Risk flag: no roof permit in 15+ years (or none on record) → "ask for roof age; insurers will."
 
-### PR 9 — Flood zone + flood-claim history (M)
+### PR 9 — Flood zone + flood-claim history (M) — built
+
+*As built:* NFHL layer 28 (profiled 2026-10-09) is filtered by `DFIRM_ID = '12103C'` rather than a bounding box, which returns exactly the county's 5,253 polygons, about 30 MB as GeoJSON in 11 pages of 500. `services/flood_zones.py` stores `FLD_ZONE` as it comes, except that X polygons whose subtype starts "0.2 PCT" (the shaded X of a paper map) are stored as `X500`; `static_bfe` is kept where FEMA gives one. Joined to the county file, all but one of 437,196 parcels with coordinates fell in a polygon: 59% X, 9% shaded X, 30% AE, 1.2% A, 0.7% VE, so just under a third are in a Special Flood Hazard Area. Of those 138,195 parcels, 11,552 have no static elevation. The join takes about three minutes with shapely 2's vectorized `STRtree.query`. `refresh_flood_data` only updates rows whose zone changed, grouped into one `UPDATE` per zone and elevation, and vacuums every 10 batches because the first run writes almost every row. It refuses to write if FEMA returns under 1,000 polygons or under 90% of parcels match. The monthly county import never touches the two columns, so a parcel added between flood refreshes has no zone until the next one. OpenFEMA `v3/NfipClaims` has 51,779 Pinellas claims since 1978 (29,873 since 2020, 26,366 of them from 2024); `services/flood_claims.py` reads five columns in pages of 10,000 and keeps a count, a count since 2020 and the median paid claim per ZIP in `ZipFloodHistory` (migration `0014`). The risk card flags A and V zones as "check first", shaded X as "good to know" and X as good news, and under the flags shows the ZIP's claim history and a link to FEMA's map for the address. The zone is read at the county's one map point per parcel, and the page says so. `outside_sfha=1` keeps parcels in X or shaded X. `requirements-data.txt` holds shapely for the new "Refresh flood data" workflow (quarterly, or on demand) and for CI; the join tests skip where shapely isn't installed. Deploys don't run migrations and the new columns are on the property table: run "Refresh flood data" right after merging. Not done: an index on `flood_zone`, a flood column on the compare page beyond the flags, and AO depth.
 
 - New Action step, quarterly or `workflow_dispatch`:
   - Page through NFHL layer 28 for the Pinellas bounding box (`resultOffset`, GeoJSON).

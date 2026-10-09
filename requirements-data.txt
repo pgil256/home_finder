@@ -1,0 +1,3 @@
+# Only for scheduled data jobs in GitHub Actions (refresh_flood_data), on top of
+# requirements.txt. Kept out of requirements.txt so it never enters the Vercel bundle.
+shapely==2.1.2

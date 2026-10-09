@@ -6,6 +6,7 @@ from django.core.paginator import Page, Paginator
 from django.db.models import F, Q, QuerySet
 
 from ..models import PropertyListing
+from .flood_zones import OUTSIDE_SFHA_ZONES
 from .risk_flags import allowed_evac_zones
 
 logger = logging.getLogger(__name__)
@@ -144,6 +145,7 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
     max_tax_amount = request.GET.get('max_tax_amount')
     exclude_evac = request.GET.get('exclude_evac')
     exclude_subsidence = request.GET.get('exclude_subsidence')
+    outside_sfha = request.GET.get('outside_sfha')
     max_est_tax = request.GET.get('max_est_tax')
 
     if q and q.strip():
@@ -238,7 +240,7 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
         except ValueError:
             logger.warning('Invalid max_tax_amount filter value: %r', max_tax_amount)
 
-    # Risk and new-owner tax filters. Parcels whose zone or estimate is
+    # Risk and new-owner tax filters. Parcels whose zones or estimate are
     # unknown are left out rather than passed off as low-risk or cheap.
     if exclude_evac:
         zones = allowed_evac_zones(exclude_evac)
@@ -249,6 +251,9 @@ def apply_filters(request) -> tuple[QuerySet, list[str], bool]:
 
     if exclude_subsidence == '1':
         properties = properties.exclude(subsidence=True)
+
+    if outside_sfha == '1':
+        properties = properties.filter(flood_zone__in=OUTSIDE_SFHA_ZONES)
 
     if max_est_tax:
         try:

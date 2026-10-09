@@ -419,7 +419,7 @@
             <div class="card" id="risks">
                 <div class="card-header">
                     <h2 class="font-display font-semibold text-charcoal-800">What to Check Before You Buy</h2>
-                    <p class="text-sm text-charcoal-500 mt-1">From the county's parcel and permit records. These are prompts for your inspections and insurance quotes, not findings.</p>
+                    <p class="text-sm text-charcoal-500 mt-1">From the county's parcel and permit records{% if property.flood_zone %} and FEMA's flood map{% endif %}. These are prompts for your inspections and insurance quotes, not findings.</p>
                 </div>
                 <div class="card-body">
                     {% if risk_flags %}
@@ -445,6 +445,22 @@
                     </ul>
                     {% else %}
                     <p class="text-sm text-charcoal-600">Nothing is flagged in the county's record for this parcel. That isn't a clean bill of health, so still get a home inspection.</p>
+                    {% endif %}
+                    {% if property.flood_zone or flood_history %}
+                    <div class="mt-5 space-y-2 border-t border-charcoal-100 pt-4 text-sm text-charcoal-600" id="flood">
+                        {% if flood_history %}
+                        <p>
+                            Flood insurance claims in ZIP code {{ flood_history.zip_code }}: {{ flood_history.claim_count|floatformat:"0g" }} since {{ flood_claims_start_year }}{% if flood_history.recent_claim_count %}, {{ flood_history.recent_claim_count|floatformat:"0g" }} of them since {{ flood_claims_recent_year }}{% endif %}.{% if flood_history.median_paid %} The typical paid claim was {{ flood_history.median_paid|dollars }}.{% endif %}
+                            FEMA publishes claims by ZIP code, not by address, so this says nothing about this home.
+                        </p>
+                        {% endif %}
+                        {% if property.flood_zone %}
+                        <p>
+                            The flood zone is read at one point on the parcel, so a building near a zone line can sit in a different zone.
+                            <a href="https://msc.fema.gov/portal/search?AddressQuery={{ property.address|urlencode:'' }}%2C%20{{ property.city|urlencode:'' }}%2C%20FL%20{{ property.zip_code|urlencode:'' }}" target="_blank" rel="noopener" class="text-primary-600 hover:text-primary-700 font-medium">Check this address on FEMA's flood map</a>.
+                        </p>
+                        {% endif %}
+                    </div>
                     {% endif %}
                 </div>
             </div>

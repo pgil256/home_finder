@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 import openpyxl
 import pytest
 
-from apps.analytics.models import PropertyListing, TaxDistrictMillage
+from apps.analytics.models import PropertyListing, TaxDistrictMillage, ZipFloodHistory
 from apps.analytics.services import tax_estimate
 
 pytestmark = pytest.mark.django_db
@@ -567,8 +567,42 @@ class TestRiskFlagsCard:
         assert 'What to Check Before You Buy' not in html
 
 
+class TestFloodOnParcelPage:
+    def _html(self, client, listing):
+        return client.get(f'/analytics/property/{listing.parcel_id}/').content.decode()
+
+    def test_flood_zone_flag_and_fema_map_link(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(flood_zone='AE', static_bfe='10.0')
+
+        html = self._html(client, sample_property)
+
+        assert 'FEMA flood zone AE' in html
+        assert 'base flood elevation is 10 feet' in html
+        assert "and FEMA's flood map" in html
+        assert 'https://msc.fema.gov/portal/search?AddressQuery=' in html
+
+    def test_zip_claim_history_is_shown_as_neighborhood_context(self, client, sample_property):
+        PropertyListing.objects.filter(pk=sample_property.pk).update(flood_zone='X')
+        ZipFloodHistory.objects.create(
+            zip_code=sample_property.zip_code, claim_count=7626, recent_claim_count=5012, median_paid=41250
+        )
+
+        html = self._html(client, sample_property)
+
+        assert f'Flood insurance claims in ZIP code {sample_property.zip_code}: 7,626 since 1978' in html
+        assert '5,012 of them since 2020' in html
+        assert 'The typical paid claim was $41,250.' in html
+        assert 'says nothing about this home' in html
+
+    def test_nothing_about_flooding_before_the_first_flood_refresh(self, client, sample_property):
+        html = self._html(client, sample_property)
+
+        assert 'id="flood"' not in html
+        assert 'FEMA' not in html
+
+
 class TestRiskFilterPlumbing:
-    PARAMS = {'exclude_evac': 'B', 'exclude_subsidence': '1', 'max_est_tax': '6000'}
+    PARAMS = {'exclude_evac': 'B', 'exclude_subsidence': '1', 'outside_sfha': '1', 'max_est_tax': '6000'}
 
     def test_insights_filters_and_shows_removable_chips(self, client, sample_property):
         PropertyListing.objects.filter(pk=sample_property.pk).update(evac_zone='A', est_tax_homestead=3000)
@@ -577,7 +611,12 @@ class TestRiskFilterPlumbing:
         html = response.content.decode()
 
         assert response.context['total_count'] == 0
-        for label in ('Outside evacuation zones A-B', 'No subsidence on record', 'New-owner tax up to $6000'):
+        for label in (
+            'Outside evacuation zones A-B',
+            'No subsidence on record',
+            'Outside FEMA high-risk flood zones',
+            'New-owner tax up to $6000',
+        ):
             assert label in html
 
     def test_filters_survive_the_trip_through_the_search_form(self, client):
@@ -593,6 +632,7 @@ class TestRiskFilterPlumbing:
         assert '<option value="B" selected>Outside evacuation zones A-B</option>' in html
         assert 'name="max_est_tax"' in html and 'value="6000"' in html
         assert 'name="exclude_subsidence" value="1" checked' in html
+        assert 'name="outside_sfha" value="1" checked' in html
 
     def test_export_summary_names_the_risk_filters(self, client, sample_property):
         response = client.get('/analytics/download/excel/', {'include_all': '1', **self.PARAMS})
@@ -601,3 +641,4 @@ class TestRiskFilterPlumbing:
         text = ' '.join(str(cell) for sheet in workbook for row in sheet.iter_rows(values_only=True) for cell in row)
         assert 'Outside evacuation zones A-B' in text
         assert 'None on record' in text
+        assert 'Outside FEMA high-risk zones' in text
