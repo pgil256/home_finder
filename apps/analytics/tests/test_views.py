@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from io import BytesIO
 from unittest.mock import patch
@@ -6,7 +7,7 @@ from urllib.parse import parse_qs, urlparse
 import openpyxl
 import pytest
 
-from apps.analytics.models import PropertyListing, TaxDistrictMillage, ZipFloodHistory
+from apps.analytics.models import PropertyListing, Sale, TaxDistrictMillage, ZipFloodHistory
 from apps.analytics.services import tax_estimate
 
 pytestmark = pytest.mark.django_db
@@ -618,6 +619,60 @@ class TestTaxEstimateCard:
 
         assert 'Tax Before Exemptions' in html
         assert 'Annual Tax' not in html
+
+
+class TestParcelPageTidyUp:
+    def test_money_is_formatted_with_commas_and_no_cents(self, client, sample_property):
+        sample_property.tax_amount = Decimal('283608.00')
+        sample_property.tax_status = 'From PCPAO'
+        sample_property.assessed_value = Decimal('1220500.00')
+        sample_property.save()
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        assert '$283,608' in html
+        assert '283608' not in html
+        assert 'Assessed: $1,220,500' in html
+        assert '1220500' not in html
+
+    def test_owner_name_is_not_shown(self, client, sample_property):
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        assert sample_property.owner_name == 'John Doe'
+        assert 'John Doe' not in html
+        assert 'Owner Information' not in html
+
+    def test_bedrooms_and_bathrooms_leave_no_gap_when_the_county_has_none(self, client, sample_property):
+        sample_property.bedrooms = None
+        sample_property.bathrooms = None
+        sample_property.save()
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        assert 'Bedrooms' not in html
+        assert 'Bathrooms' not in html
+        assert 'Living Area' in html
+
+    def test_sections_follow_the_order_a_buyer_asks_in(self, client, sample_property):
+        TaxDistrictMillage.objects.create(
+            district_code='CW',
+            tax_year=2025,
+            rate_description='2025 Final',
+            total_mills=Decimal('19.9197'),
+            school_mills=Decimal('6.2930'),
+        )
+        PropertyListing.objects.filter(pk=sample_property.pk).update(tax_district='CW', roll_year=2026, evac_zone='A')
+        Sale.objects.create(parcel_id=sample_property.parcel_id, sale_date=date(2024, 9, 5), price=239000)
+
+        html = client.get(f'/analytics/property/{sample_property.parcel_id}/').content.decode()
+
+        order = [
+            html.index(f'id="{anchor}"') for anchor in ('taxes', 'cost-calculator', 'sales', 'risks', 'county-record')
+        ]
+        assert order == sorted(order)
+        assert "The County's Numbers" in html
+        assert 'Valuation &amp; Tax Information' not in html
+        assert 'Valuation & Tax Information' not in html
 
 
 class TestRiskFlagsCard:

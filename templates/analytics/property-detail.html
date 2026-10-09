@@ -116,7 +116,7 @@
                         {% if property.price_per_sqft %}
                         <div>
                             <p class="text-sm text-charcoal-500 mb-1">Price/sqft</p>
-                            <p class="text-lg font-semibold text-charcoal-800">${{ property.price_per_sqft|floatformat:0 }}</p>
+                            <p class="text-lg font-semibold text-charcoal-800">{{ property.price_per_sqft|dollars }}</p>
                         </div>
                         {% endif %}
                     </div>
@@ -212,117 +212,6 @@
                         Estimated {{ tax_outlook.tax_year }} bill. Assessed at the county's {% if property.roll_year %}{{ property.roll_year }} {% endif %}<a href="{% url 'help' %}#term-just-value" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">just value</a> of {{ tax_outlook.just_value|dollars }},
                         using {{ tax_outlook.millage_description|lower }} <a href="{% url 'help' %}#term-millage" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">millage</a> for tax district {{ property.tax_district }} ({{ tax_outlook.millage.total|floatformat:4 }} mills){% if tax_outlook.special_assessment %}, plus {{ tax_outlook.special_assessment|dollars }} in <a href="{% url 'help' %}#term-non-ad-valorem" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">non-ad valorem assessments</a>{% endif %}.
                         Just value is the county's January 1 estimate and often runs below recent sale prices. If you pay more, expect a higher bill.
-                    </p>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Sales history and comparable sales -->
-            {% if sales %}
-            <div class="card" id="sales">
-                <div class="card-header">
-                    <h2 class="font-display font-semibold text-charcoal-800">What It Sold For, and What Similar Homes Sell For</h2>
-                    <p class="text-sm text-charcoal-500 mt-1">Recorded sale prices from the county. They are not asking prices, and not an appraisal.</p>
-                </div>
-                <div class="card-body space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="rounded-lg border border-charcoal-100 p-4">
-                            <p class="text-sm text-charcoal-500">This home last sold for</p>
-                            {% if sales.last_sale %}
-                            <p class="text-2xl font-semibold text-charcoal-800 mt-1">{{ sales.last_sale.price|dollars }}</p>
-                            <p class="text-xs text-charcoal-500 mt-1">{{ sales.last_sale.sale_date|date:"F Y" }}</p>
-                            {% else %}
-                            <p class="text-2xl font-semibold text-charcoal-400 mt-1">No recent sale</p>
-                            <p class="text-xs text-charcoal-500 mt-1">The county's sales file goes back about five years and has no qualified sale of this home.</p>
-                            {% endif %}
-                        </div>
-                        {% if sales.comps and not sales.comps.confident %}
-                        {# A median of three or four sales can land far from any of them, so the spread leads. #}
-                        <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
-                            <p class="text-sm font-medium text-primary-700">Similar homes nearby sold for</p>
-                            <p class="text-2xl font-semibold text-charcoal-900 mt-1">${{ sales.comps.low_per_sqft|floatformat:0 }} to ${{ sales.comps.high_per_sqft|floatformat:0 }}<span class="text-sm font-normal text-charcoal-500">/sqft</span></p>
-                            <p class="text-xs text-charcoal-600 mt-1">
-                                Only {{ sales.comps.count }} sales in the last 12 months, so treat this as a range, not a price.
-                                The middle one was ${{ sales.comps.median_per_sqft|floatformat:0 }}/sqft, which would put this home around {{ sales.comps.indicated_value|dollars }} at its {{ sales.comps.subject_sqft|floatformat:"0g" }} sqft.
-                            </p>
-                        </div>
-                        {% elif sales.comps %}
-                        <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
-                            <p class="text-sm font-medium text-primary-700">Similar homes nearby sold for</p>
-                            <p class="text-2xl font-semibold text-charcoal-900 mt-1">${{ sales.comps.median_per_sqft|floatformat:0 }}<span class="text-sm font-normal text-charcoal-500">/sqft</span></p>
-                            <p class="text-xs text-charcoal-600 mt-1">
-                                The middle of {{ sales.comps.count }} sales in the last 12 months, which ran from ${{ sales.comps.low_per_sqft|floatformat:0 }} to ${{ sales.comps.high_per_sqft|floatformat:0 }}.
-                                At this home's {{ sales.comps.subject_sqft|floatformat:"0g" }} sqft, that is about {{ sales.comps.indicated_value|dollars }}.
-                            </p>
-                        </div>
-                        {% else %}
-                        <div class="rounded-lg border border-charcoal-100 p-4">
-                            <p class="text-sm text-charcoal-500">Similar homes nearby</p>
-                            <p class="text-2xl font-semibold text-charcoal-400 mt-1">Too few sales</p>
-                            <p class="text-xs text-charcoal-500 mt-1">Fewer than three similar homes in this neighborhood sold in the last 12 months, so there is no fair comparison to show.</p>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    {% if sales.flip %}
-                    <div class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-charcoal-700">
-                        <p><span class="font-semibold">Resold {{ sales.flip.resold }}:</span> {{ sales.flip.earlier.price|dollars }} in {{ sales.flip.earlier.sale_date|date:"F Y" }}, then {{ sales.flip.later.price|dollars }} in {{ sales.flip.later.sale_date|date:"F Y" }}.</p>
-                        {% if sales.flip.later.price > sales.flip.earlier.price %}
-                        <p class="text-xs text-charcoal-600 mt-1">A quick resale at a higher price often follows a renovation. Ask what work was done, and check with the city or county that permits were pulled and closed.</p>
-                        {% else %}
-                        <p class="text-xs text-charcoal-600 mt-1">It sold for no more the second time. Ask why the last owner left so soon, and what the inspection found.</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    {% if sales.history|length > 1 %}
-                    <div>
-                        <h3 class="text-sm font-semibold text-charcoal-600 uppercase tracking-wider mb-2">This Home's Sales</h3>
-                        <ul class="divide-y divide-charcoal-100 text-sm">
-                            {% for sale in sales.history %}
-                            <li class="flex justify-between py-2">
-                                <span class="text-charcoal-600">{{ sale.sale_date|date:"M j, Y" }}</span>
-                                <span class="font-semibold text-charcoal-800">{{ sale.price|dollars }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
-
-                    {% if sales.comps %}
-                    <div>
-                        <h3 class="text-sm font-semibold text-charcoal-600 uppercase tracking-wider mb-2">{% if sales.comps.count > sales.comps.shown|length %}Most Recent Similar Sales{% else %}Similar Sales{% endif %}</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="text-left text-xs text-charcoal-500">
-                                        <th scope="col" class="py-2 pr-4 font-medium">Address</th>
-                                        <th scope="col" class="py-2 pr-4 font-medium">Sold</th>
-                                        <th scope="col" class="py-2 pr-4 font-medium text-right">Price</th>
-                                        <th scope="col" class="py-2 pr-4 font-medium text-right">Sqft</th>
-                                        <th scope="col" class="py-2 font-medium text-right">$/sqft</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-charcoal-100">
-                                    {% for comp in sales.comps.shown %}
-                                    <tr>
-                                        <td class="py-2 pr-4"><a href="{% url 'property-detail' comp.parcel_id %}" class="text-primary-600 hover:text-primary-700 font-medium">{{ comp.address }}</a></td>
-                                        <td class="py-2 pr-4 text-charcoal-600 whitespace-nowrap">{{ comp.sale_date|date:"M Y" }}</td>
-                                        <td class="py-2 pr-4 text-right text-charcoal-800">{{ comp.price|dollars }}</td>
-                                        <td class="py-2 pr-4 text-right text-charcoal-600">{{ comp.building_sqft|floatformat:"0g" }}</td>
-                                        <td class="py-2 text-right text-charcoal-800">${{ comp.price_per_sqft|floatformat:0 }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <p class="text-xs text-charcoal-500 leading-relaxed">
-                        Only sales the county marked as <a href="{% url 'help' %}#term-qualified-sale" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">qualified</a>, meaning an arm's-length sale between unrelated parties. Family transfers, foreclosures and deals covering several parcels are left out.
-                        Similar homes are the same kind of home in the same county appraisal neighborhood, within 25% of this home's living area.
-                        A median of a few sales is a starting point for an offer, and condition, updates and the lot can move a price a long way from it.
                     </p>
                 </div>
             </div>
@@ -455,6 +344,117 @@
             {{ affordability|json_script:"affordability-data" }}
             {% endif %}
 
+            <!-- Sales history and comparable sales -->
+            {% if sales %}
+            <div class="card" id="sales">
+                <div class="card-header">
+                    <h2 class="font-display font-semibold text-charcoal-800">What It Sold For, and What Similar Homes Sell For</h2>
+                    <p class="text-sm text-charcoal-500 mt-1">Recorded sale prices from the county. They are not asking prices, and not an appraisal.</p>
+                </div>
+                <div class="card-body space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-lg border border-charcoal-100 p-4">
+                            <p class="text-sm text-charcoal-500">This home last sold for</p>
+                            {% if sales.last_sale %}
+                            <p class="text-2xl font-semibold text-charcoal-800 mt-1">{{ sales.last_sale.price|dollars }}</p>
+                            <p class="text-xs text-charcoal-500 mt-1">{{ sales.last_sale.sale_date|date:"F Y" }}</p>
+                            {% else %}
+                            <p class="text-2xl font-semibold text-charcoal-400 mt-1">No recent sale</p>
+                            <p class="text-xs text-charcoal-500 mt-1">The county's sales file goes back about five years and has no qualified sale of this home.</p>
+                            {% endif %}
+                        </div>
+                        {% if sales.comps and not sales.comps.confident %}
+                        {# A median of three or four sales can land far from any of them, so the spread leads. #}
+                        <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
+                            <p class="text-sm font-medium text-primary-700">Similar homes nearby sold for</p>
+                            <p class="text-2xl font-semibold text-charcoal-900 mt-1">{{ sales.comps.low_per_sqft|dollars }} to {{ sales.comps.high_per_sqft|dollars }}<span class="text-sm font-normal text-charcoal-500">/sqft</span></p>
+                            <p class="text-xs text-charcoal-600 mt-1">
+                                Only {{ sales.comps.count }} sales in the last 12 months, so treat this as a range, not a price.
+                                The middle one was {{ sales.comps.median_per_sqft|dollars }}/sqft, which would put this home around {{ sales.comps.indicated_value|dollars }} at its {{ sales.comps.subject_sqft|floatformat:"0g" }} sqft.
+                            </p>
+                        </div>
+                        {% elif sales.comps %}
+                        <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
+                            <p class="text-sm font-medium text-primary-700">Similar homes nearby sold for</p>
+                            <p class="text-2xl font-semibold text-charcoal-900 mt-1">{{ sales.comps.median_per_sqft|dollars }}<span class="text-sm font-normal text-charcoal-500">/sqft</span></p>
+                            <p class="text-xs text-charcoal-600 mt-1">
+                                The middle of {{ sales.comps.count }} sales in the last 12 months, which ran from {{ sales.comps.low_per_sqft|dollars }} to {{ sales.comps.high_per_sqft|dollars }}.
+                                At this home's {{ sales.comps.subject_sqft|floatformat:"0g" }} sqft, that is about {{ sales.comps.indicated_value|dollars }}.
+                            </p>
+                        </div>
+                        {% else %}
+                        <div class="rounded-lg border border-charcoal-100 p-4">
+                            <p class="text-sm text-charcoal-500">Similar homes nearby</p>
+                            <p class="text-2xl font-semibold text-charcoal-400 mt-1">Too few sales</p>
+                            <p class="text-xs text-charcoal-500 mt-1">Fewer than three similar homes in this neighborhood sold in the last 12 months, so there is no fair comparison to show.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if sales.flip %}
+                    <div class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-charcoal-700">
+                        <p><span class="font-semibold">Resold {{ sales.flip.resold }}:</span> {{ sales.flip.earlier.price|dollars }} in {{ sales.flip.earlier.sale_date|date:"F Y" }}, then {{ sales.flip.later.price|dollars }} in {{ sales.flip.later.sale_date|date:"F Y" }}.</p>
+                        {% if sales.flip.later.price > sales.flip.earlier.price %}
+                        <p class="text-xs text-charcoal-600 mt-1">A quick resale at a higher price often follows a renovation. Ask what work was done, and check with the city or county that permits were pulled and closed.</p>
+                        {% else %}
+                        <p class="text-xs text-charcoal-600 mt-1">It sold for no more the second time. Ask why the last owner left so soon, and what the inspection found.</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if sales.history|length > 1 %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-charcoal-600 uppercase tracking-wider mb-2">This Home's Sales</h3>
+                        <ul class="divide-y divide-charcoal-100 text-sm">
+                            {% for sale in sales.history %}
+                            <li class="flex justify-between py-2">
+                                <span class="text-charcoal-600">{{ sale.sale_date|date:"M j, Y" }}</span>
+                                <span class="font-semibold text-charcoal-800">{{ sale.price|dollars }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if sales.comps %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-charcoal-600 uppercase tracking-wider mb-2">{% if sales.comps.count > sales.comps.shown|length %}Most Recent Similar Sales{% else %}Similar Sales{% endif %}</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left text-xs text-charcoal-500">
+                                        <th scope="col" class="py-2 pr-4 font-medium">Address</th>
+                                        <th scope="col" class="py-2 pr-4 font-medium">Sold</th>
+                                        <th scope="col" class="py-2 pr-4 font-medium text-right">Price</th>
+                                        <th scope="col" class="py-2 pr-4 font-medium text-right">Sqft</th>
+                                        <th scope="col" class="py-2 font-medium text-right">$/sqft</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-charcoal-100">
+                                    {% for comp in sales.comps.shown %}
+                                    <tr>
+                                        <td class="py-2 pr-4"><a href="{% url 'property-detail' comp.parcel_id %}" class="text-primary-600 hover:text-primary-700 font-medium">{{ comp.address }}</a></td>
+                                        <td class="py-2 pr-4 text-charcoal-600 whitespace-nowrap">{{ comp.sale_date|date:"M Y" }}</td>
+                                        <td class="py-2 pr-4 text-right text-charcoal-800">{{ comp.price|dollars }}</td>
+                                        <td class="py-2 pr-4 text-right text-charcoal-600">{{ comp.building_sqft|floatformat:"0g" }}</td>
+                                        <td class="py-2 text-right text-charcoal-800">{{ comp.price_per_sqft|dollars }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <p class="text-xs text-charcoal-500 leading-relaxed">
+                        Only sales the county marked as <a href="{% url 'help' %}#term-qualified-sale" class="underline decoration-dotted underline-offset-2 hover:text-primary-600">qualified</a>, meaning an arm's-length sale between unrelated parties. Family transfers, foreclosures and deals covering several parcels are left out.
+                        Similar homes are the same kind of home in the same county appraisal neighborhood, within 25% of this home's living area.
+                        A median of a few sales is a starting point for an offer, and condition, updates and the lot can move a price a long way from it.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Risk flags -->
             {% if risk_flags or has_risk_data %}
             <div class="card" id="risks">
@@ -507,10 +507,11 @@
             </div>
             {% endif %}
 
-            <!-- Valuation Card -->
-            <div class="card">
+            <!-- The county's record -->
+            <div class="card" id="county-record">
                 <div class="card-header">
-                    <h2 class="font-display font-semibold text-charcoal-800">Valuation & Tax Information</h2>
+                    <h2 class="font-display font-semibold text-charcoal-800">The County's Numbers</h2>
+                    <p class="text-sm text-charcoal-500 mt-1">Straight from the Property Appraiser's record, for the current owner. What you would pay is <a href="#taxes" class="text-primary-600 hover:text-primary-700 font-medium">estimated above</a>.</p>
                 </div>
                 <div class="card-body">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -543,7 +544,7 @@
                                     {% else %}
                                     <span class="text-charcoal-600">Annual Tax</span>
                                     {% endif %}
-                                    <span class="font-semibold text-charcoal-800">${{ property.tax_amount|floatformat:2 }}</span>
+                                    <span class="font-semibold text-charcoal-800">{{ property.tax_amount|dollars }}</span>
                                 </div>
                                 {% endif %}
                                 <div class="flex justify-between items-center py-2 border-b border-charcoal-100">
@@ -571,18 +572,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Owner Information -->
-            {% if property.owner_name %}
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="font-display font-semibold text-charcoal-800">Owner Information</h2>
-                </div>
-                <div class="card-body">
-                    <p class="text-charcoal-800">{{ property.owner_name }}</p>
-                </div>
-            </div>
-            {% endif %}
         </div>
 
         <!-- Right Column - Price and Actions -->
@@ -594,7 +583,7 @@
                         <p class="text-sm text-charcoal-500 mb-1">Market Value</p>
                         <p class="font-display text-display-md text-primary-600">{{ property.market_value|format_price }}</p>
                         {% if property.assessed_value %}
-                        <p class="text-sm text-charcoal-400 mt-1">Assessed: ${{ property.assessed_value|floatformat:0 }}</p>
+                        <p class="text-sm text-charcoal-400 mt-1">Assessed: {{ property.assessed_value|dollars }}</p>
                         {% endif %}
                         {% if tax_outlook %}
                         <a href="#taxes" class="inline-block text-sm text-primary-600 hover:text-primary-700 font-medium mt-2">

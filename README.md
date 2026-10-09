@@ -20,10 +20,10 @@ The market-insights dashboard — exact KPIs over 437,000+ parcels, with pandas/
 
 ![Pinellas Market Lens market-insights dashboard](docs/img/dashboard.png)
 
-A parcel drilldown and the responsive mobile layout:
+A parcel page (the new-owner tax estimate and monthly cost) and the responsive mobile layout:
 
 <p align="center">
-  <img src="docs/img/property-detail.png" alt="Parcel drilldown with valuation, tax, and similar-property context" width="62%">
+  <img src="docs/img/property-detail.png" alt="Parcel page showing the property tax a new owner would pay and the monthly cost calculator" width="62%">
   &nbsp;
   <img src="docs/img/mobile.png" alt="Responsive mobile dashboard" width="30%">
 </p>
