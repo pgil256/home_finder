@@ -11,12 +11,16 @@ Usage:
 
 Run migrate first so the tables exist. Exits non-zero after a rebuild, so
 the scheduled job fails and someone looks into what emptied the database.
+
+It also fills the street-name table when that alone is empty, which is how
+the table gets its first rows after the migration that creates it. That is
+routine, cheap, and does not fail the job.
 """
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
-from apps.analytics.models import PropertyListing
+from apps.analytics.models import PropertyListing, StreetName
 
 
 class Command(BaseCommand):
@@ -25,6 +29,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if PropertyListing.objects.exists():
             self.stdout.write('Property data is present.')
+            # The import fills this, but a migration that adds the table
+            # shouldn't have to wait a month (or cost a full import) for it.
+            if not StreetName.objects.exists():
+                call_command('rebuild_street_names')
             return
 
         self.stderr.write('The property table is empty; rebuilding from PCPAO.')

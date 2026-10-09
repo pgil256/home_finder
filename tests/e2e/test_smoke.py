@@ -96,6 +96,17 @@ def test_S1c_address_lookup_no_match(client, base_url):
     assert 'No match for' in r.text
 
 
+def test_S1e_mistyped_street_is_corrected(client, base_url):
+    """A typo in the street finds the address anyway, and says what it searched for."""
+    r = client.get(f'{base_url}/lookup/', params={'q': '1029 Charels St'}, timeout=TIMEOUT)
+    assert_ok(r)
+    assert 'Showing results for' in r.text, (
+        'No spelling correction. If the lookup page otherwise works, the street-name table is '
+        'probably empty: run the "Database guard" workflow, which fills it.'
+    )
+    assert 'CHARLES' in r.text
+
+
 def test_S1d_address_suggestions(client, base_url):
     """Typing the start of an address lists the parcel, fast enough to feel instant."""
     r = client.get(f'{base_url}/lookup/suggest/', params={'q': '1029 cha'}, timeout=TIMEOUT)

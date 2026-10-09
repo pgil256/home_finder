@@ -233,7 +233,7 @@ def web_scraper_view(request):
 @cdn_cache
 def address_lookup(request):
     """Find a home by street address or parcel ID."""
-    result = lookup_parcels(request.GET.get('q'))
+    result = lookup_parcels(request.GET.get('q'), exact=request.GET.get('exact') == '1')
     if result.parcel_id:
         return redirect('property-detail', parcel_id=result.parcel_id)
     return render(
@@ -243,6 +243,8 @@ def address_lookup(request):
             'query': result.query,
             'parcels': result.parcels,
             'truncated': result.truncated,
+            'corrected': result.corrected,
+            'nearby_streets': result.nearby_streets,
             'lookup_limit': LOOKUP_LIMIT,
         },
     )

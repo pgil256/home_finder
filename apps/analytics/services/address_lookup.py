@@ -16,6 +16,7 @@ from django.db.models import Q
 
 from ..models import PropertyListing
 from .filtering import PINELLAS_CITIES
+from .street_names import NearbyStreet, nearest_streets, split_address
 
 LOOKUP_LIMIT = 25
 
@@ -181,6 +182,11 @@ class LookupResult:
     parcel_id: str | None = None  # set when the query was a parcel ID that exists
     parcels: list[PropertyListing] = field(default_factory=list)
     truncated: bool = False
+    # The address searched instead, when the query as typed matched nothing
+    # and a street with a similar spelling did: '1700 GULF BLVD'.
+    corrected: str = ''
+    # Similarly spelled streets to offer when nothing matched at all.
+    nearby_streets: list[NearbyStreet] = field(default_factory=list)
 
 
 RESULT_FIELDS = (
@@ -195,7 +201,13 @@ RESULT_FIELDS = (
 )
 
 
-def lookup_parcels(raw: str | None, limit: int = LOOKUP_LIMIT) -> LookupResult:
+def lookup_parcels(raw: str | None, limit: int = LOOKUP_LIMIT, exact: bool = False) -> LookupResult:
+    """Parcels matching a typed address or parcel ID.
+
+    When the address as typed matches nothing, the search is retried with the
+    street names closest to it in spelling. `exact` turns the retry off, for
+    the "search for what I typed" link.
+    """
     result = LookupResult(query=(raw or '').strip())
     if not result.query:
         return result
@@ -207,15 +219,43 @@ def lookup_parcels(raw: str | None, limit: int = LOOKUP_LIMIT) -> LookupResult:
         return result
 
     match = address_q(result.query)
-    if match is None:
-        return result
+    if match is not None:
+        _fill(result, match, limit)
+    if not result.parcels:
+        _try_similar_streets(result, limit, exact)
+    return result
 
+
+def _fill(result: LookupResult, match: Q, limit: int) -> None:
     # No ORDER BY: sorting in the database would make it read every match
     # ("1700" alone is thousands of rows) before returning the first 25.
     rows = list(PropertyListing.objects.filter(match).only(*RESULT_FIELDS)[: limit + 1])
     result.truncated = len(rows) > limit
     result.parcels = sorted(rows[:limit], key=lambda parcel: (parcel.address or '', parcel.parcel_id))
-    return result
+
+
+def _try_similar_streets(result: LookupResult, limit: int, exact: bool) -> None:
+    candidates = address_candidates(result.query)
+    if not candidates:
+        return
+    # The abbreviated form is last, and it is the one shaped like the county's names.
+    house_number, street = split_address(candidates[-1])
+    result.nearby_streets = nearest_streets(street)
+    if exact:
+        return
+
+    for nearby in result.nearby_streets:
+        corrected = f'{house_number} {nearby.name}'.strip()
+        if corrected in candidates:
+            continue  # the spelling was right; that address just isn't there
+        # With a house number this is one more read of idx_address_prefix.
+        # A bare street name can only be found by scanning, as address_q does.
+        match = Q(address__startswith=corrected) if house_number else Q(address__contains=corrected)
+        _fill(result, match, limit)
+        if result.parcels:
+            result.corrected = corrected
+            result.nearby_streets = []
+            return
 
 
 SUGGEST_FIELDS = ('parcel_id', 'address', 'city', 'market_value')

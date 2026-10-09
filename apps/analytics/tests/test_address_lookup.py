@@ -1,11 +1,13 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
-from django.db import connection
+from django.core.management import call_command
+from django.db import DatabaseError, connection
 from django.db.models import Q
 from django.test import RequestFactory
 
-from apps.analytics.models import PropertyListing
+from apps.analytics.models import PropertyListing, StreetName
 from apps.analytics.services.address_lookup import (
     SUGGEST_LIMIT,
     address_candidates,
@@ -17,6 +19,13 @@ from apps.analytics.services.address_lookup import (
     suggest_parcels,
 )
 from apps.analytics.services.filtering import apply_filters
+from apps.analytics.services.street_names import (
+    nearest_streets,
+    rebuild_street_names,
+    split_address,
+    street_of,
+    trigram_similarity,
+)
 
 
 def make_parcel(n: int, address: str, **extra) -> PropertyListing:
@@ -292,3 +301,189 @@ class TestLookupFormMarkup:
         assert 'role="listbox"' in html
         assert 'lookup.bundle.js' in html
         assert '1700 Gulf' not in html
+
+
+class TestStreetOfAddress:
+    @pytest.mark.parametrize(
+        ('address', 'expected'),
+        [
+            ('1700 GULF BLVD', ('1700', 'GULF BLVD')),
+            ('1700 GULF BLVD # 2', ('1700', 'GULF BLVD')),
+            ('701 MIRROR LAKE DR N # 307', ('701', 'MIRROR LAKE DR N')),
+            ('832 8TH AVE S', ('832', '8TH AVE S')),
+            ('100A MAIN ST', ('100A', 'MAIN ST')),
+            ('17TH AVE N', ('', '17TH AVE N')),
+            ('MIRROR LAKE', ('', 'MIRROR LAKE')),
+            ('', ('', '')),
+        ],
+    )
+    def test_splits_house_number_from_street_and_drops_the_unit(self, address, expected):
+        assert split_address(address) == expected
+        assert street_of(address) == expected[1]
+
+    def test_similarity_matches_pg_trgm(self):
+        """Values checked against Postgres: select similarity('GULF BLVD', 'GULF BVLD')."""
+        assert trigram_similarity('GULF BLVD', 'GULF BLVD') == 1
+        assert trigram_similarity('GULF BLVD', 'gulf bvld') == pytest.approx(0.428571, abs=1e-6)
+        assert trigram_similarity('MIRROR LAKE DR N', 'MIRRER LAKE') == pytest.approx(0.45)
+        assert trigram_similarity('GULF BLVD', 'MANDALAY AVE') == 0
+        assert trigram_similarity('', 'GULF BLVD') == 0
+
+
+@pytest.fixture
+def county_streets(db):
+    """A few parcels and the street-name table built from them."""
+    make_parcel(1, '1700 GULF BLVD')
+    make_parcel(2, '1700 GULF BLVD # 2')
+    make_parcel(3, '1702 GULF BLVD', city='Belleair Beach')
+    make_parcel(4, '701 MIRROR LAKE DR N # 307', city='St. Petersburg')
+    make_parcel(5, '900 MANDALAY AVE')
+    make_parcel(6, '832 8TH AVE S', city='St. Petersburg')
+    rebuild_street_names()
+
+
+@pytest.mark.django_db
+class TestRebuildStreetNames:
+    def test_one_row_per_street_and_city_with_its_parcel_count(self, county_streets):
+        rows = set(StreetName.objects.values_list('name', 'city', 'parcel_count'))
+
+        assert rows == {
+            ('GULF BLVD', 'Clearwater', 2),
+            ('GULF BLVD', 'Belleair Beach', 1),
+            ('MIRROR LAKE DR N', 'St. Petersburg', 1),
+            ('MANDALAY AVE', 'Clearwater', 1),
+            ('8TH AVE S', 'St. Petersburg', 1),
+        }
+
+    def test_rebuild_replaces_what_was_there(self, county_streets):
+        PropertyListing.objects.filter(address__startswith='900 MANDALAY').delete()
+
+        assert rebuild_street_names() == 4
+        assert not StreetName.objects.filter(name='MANDALAY AVE').exists()
+
+    def test_command_reports_the_count(self, county_streets, capsys):
+        call_command('rebuild_street_names')
+        assert 'Street names rebuilt: 5 rows' in capsys.readouterr().out
+
+    def test_the_import_rebuilds_them(self):
+        call_command('import_pcpao_data', file='apps/analytics/fixtures/sample_pcpao_data.csv', quiet=True)
+
+        assert StreetName.objects.filter(name='CHARLES ST', city='Clearwater').exists()
+        assert StreetName.objects.filter(name='MIRROR LAKE DR N').exists()
+
+
+@pytest.mark.django_db
+class TestNearestStreets:
+    def test_finds_the_street_behind_a_typo(self, county_streets):
+        assert [street.name for street in nearest_streets('GULF BVLD')] == ['GULF BLVD']
+
+    def test_same_name_in_two_cities_is_one_suggestion_from_the_bigger_one(self, county_streets):
+        (street,) = nearest_streets('GULF BLVD')
+        assert (street.name, street.city, street.similarity) == ('GULF BLVD', 'Clearwater', 1)
+
+    def test_partial_and_misspelled_name(self, county_streets):
+        assert [street.name for street in nearest_streets('MIRRER LAKE')] == ['MIRROR LAKE DR N']
+
+    def test_nothing_close_enough(self, county_streets):
+        assert nearest_streets('ZZYZX RD') == []
+
+    def test_too_short_to_match_runs_no_query(self, county_streets, django_assert_num_queries):
+        with django_assert_num_queries(0):
+            assert nearest_streets('GU') == []
+
+    def test_missing_table_is_no_suggestions_not_an_error(self, county_streets):
+        reader = '_nearest_in_postgres' if connection.vendor == 'postgresql' else '_nearest_in_python'
+        with patch(f'apps.analytics.services.street_names.{reader}', side_effect=DatabaseError('no table')):
+            assert nearest_streets('GULF BVLD') == []
+
+    @pytest.mark.skipif(connection.vendor != 'postgresql', reason='pg_trgm is Postgres-only')
+    def test_postgres_has_the_trigram_index(self):
+        with connection.cursor() as cursor:
+            constraints = connection.introspection.get_constraints(cursor, StreetName._meta.db_table)
+        assert constraints['idx_street_name_trgm']['columns'] == ['name']
+
+
+@pytest.mark.django_db
+class TestTypoTolerantLookup:
+    def test_mistyped_street_type_finds_the_address(self, county_streets):
+        result = lookup_parcels('1700 Gulf Bvld')
+
+        assert [p.address for p in result.parcels] == ['1700 GULF BLVD', '1700 GULF BLVD # 2']
+        assert result.corrected == '1700 GULF BLVD'
+        assert result.nearby_streets == []
+
+    def test_mistyped_street_name_without_a_house_number(self, county_streets):
+        result = lookup_parcels('Mirrer Lake')
+
+        assert [p.address for p in result.parcels] == ['701 MIRROR LAKE DR N # 307']
+        assert result.corrected == 'MIRROR LAKE DR N'
+
+    def test_mistyped_street_with_house_number_and_unit(self, county_streets):
+        result = lookup_parcels('701 Miror Lake Dr N Apt 307')
+
+        assert [p.address for p in result.parcels] == ['701 MIRROR LAKE DR N # 307']
+        assert result.corrected == '701 MIRROR LAKE DR N'
+
+    def test_correct_spelling_is_not_reported_as_a_correction(self, county_streets):
+        result = lookup_parcels('1700 Gulf Blvd')
+
+        assert len(result.parcels) == 2
+        assert result.corrected == ''
+
+    def test_exact_skips_the_retry_but_still_offers_the_streets(self, county_streets):
+        result = lookup_parcels('1700 Gulf Bvld', exact=True)
+
+        assert result.parcels == []
+        assert result.corrected == ''
+        assert [street.name for street in result.nearby_streets] == ['GULF BLVD']
+
+    def test_right_street_wrong_number_offers_the_street(self, county_streets):
+        result = lookup_parcels('99999 Gulf Blvd')
+
+        assert result.parcels == []
+        assert result.corrected == ''
+        assert [street.name for street in result.nearby_streets] == ['GULF BLVD']
+
+    def test_a_match_as_typed_never_reads_the_street_names(self, county_streets, django_assert_num_queries):
+        # One EXISTS for the prefix, one read of the matches.
+        with django_assert_num_queries(2):
+            lookup_parcels('1700 gulf')
+
+    def test_before_the_table_is_filled_lookup_behaves_as_before(self):
+        make_parcel(1, '1700 GULF BLVD')
+
+        result = lookup_parcels('1700 Gulf Bvld')
+
+        assert result.parcels == []
+        assert result.nearby_streets == []
+
+
+@pytest.mark.django_db
+class TestTypoTolerantLookupView:
+    def test_says_what_it_searched_for_and_links_the_literal_search(self, client, county_streets):
+        response = client.get('/lookup/', {'q': '1700 Gulf Bvld'})
+        html = response.content.decode()
+
+        assert response.status_code == 200
+        assert 'Showing results for <span class="font-semibold text-charcoal-800">1700 GULF BLVD</span>' in html
+        assert 'href="/lookup/?q=1700%20Gulf%20Bvld&amp;exact=1"' in html
+        assert '2 matches for &ldquo;1700 GULF BLVD&rdquo;' in html
+        assert 'No match' not in html
+
+    def test_literal_search_shows_no_match_with_similar_streets(self, client, county_streets):
+        html = client.get('/lookup/', {'q': '1700 Gulf Bvld', 'exact': '1'}).content.decode()
+
+        assert 'No match for' in html
+        assert 'Streets with a similar name' in html
+        assert 'href="/lookup/?q=GULF%20BLVD"' in html
+
+    def test_no_similar_streets_shows_only_the_hint(self, client, county_streets):
+        html = client.get('/lookup/', {'q': '99999 Zzyzx Rd'}).content.decode()
+
+        assert 'No match for' in html
+        assert 'Streets with a similar name' not in html
+
+    def test_corrected_results_stay_cacheable(self, client, county_streets):
+        response = client.get('/lookup/', {'q': '1700 Gulf Bvld'})
+        assert 's-maxage=86400' in response['Cache-Control']
+        assert not response.cookies
