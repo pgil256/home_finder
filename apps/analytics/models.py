@@ -180,3 +180,26 @@ class ZipFloodHistory(models.Model):
 
     def __str__(self):
         return f'{self.zip_code}: {self.claim_count} flood claims'
+
+
+class StreetName(models.Model):
+    """A street name and how many parcels are on it in one city.
+
+    Rebuilt whole from PropertyListing.address by services/street_names.py.
+    It exists so a mistyped street can be matched by trigram similarity
+    against a few thousand names instead of 437,000 addresses. On Postgres,
+    migration 0015 adds a pg_trgm GIN index on `name` (idx_street_name_trgm)
+    that Django's model state doesn't know about.
+    """
+
+    name = models.CharField(max_length=255)  # 'GULF BLVD', 'MIRROR LAKE DR N'
+    city = models.CharField(max_length=100)
+    parcel_count = models.IntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'city'], name='uniq_street_name_city'),
+        ]
+
+    def __str__(self):
+        return f'{self.name}, {self.city}'

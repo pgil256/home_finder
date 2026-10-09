@@ -30,6 +30,7 @@ from apps.analytics.services.pcpao_importer import (
 )
 from apps.analytics.services.permits_importer import PERMITS_TABLE, PermitYears, read_permit_years
 from apps.analytics.services.sales_importer import SALES_TABLE, import_sales
+from apps.analytics.services.street_names import rebuild_street_names
 from apps.analytics.services.tax_estimate import Millage
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,7 @@ class Command(BaseCommand):
             millage = import_millage_rates(millage_path) if millage_path else stored_millage()
             permits = read_permit_years(permits_path) if permits_path else None
             self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet), permits)
+            self._rebuild_street_names(quiet)
             self._clear_cache()
             if sales_path:
                 self._import_sales(sales_path, quiet)
@@ -130,6 +132,7 @@ class Command(BaseCommand):
                 permits = self._download_permit_years(tmpdir, quiet)
                 csv_path = download_pcpao_file('RP_PROPERTY_INFO', tmpdir)
                 self._process_csv(csv_path, quiet, limit, vacuum_every, self._millage_or_none(millage, quiet), permits)
+                self._rebuild_street_names(quiet)
                 self._clear_cache()
                 # Last, so a problem with the sales file can't cost the property refresh.
                 if not quiet:
@@ -143,6 +146,17 @@ class Command(BaseCommand):
             cache.clear()
         except Exception:
             logger.warning('Could not clear the cache after the import', exc_info=True)
+
+    def _rebuild_street_names(self, quiet: bool) -> None:
+        # Only the spelling suggestions depend on this, so a failure here
+        # must not cost the property refresh.
+        try:
+            count = rebuild_street_names()
+        except Exception:
+            logger.exception('Could not rebuild street names; keeping the ones already loaded')
+            return
+        if not quiet:
+            self.stdout.write(f'Rebuilt {count} street names.')
 
     def _import_sales(self, sales_path: str, quiet: bool) -> None:
         count = import_sales(sales_path)

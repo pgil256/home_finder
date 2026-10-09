@@ -33,7 +33,7 @@ A parcel page (the new-owner tax estimate and monthly cost) and the responsive m
 | Route | Purpose |
 |---|---|
 | `/` | Home page that leads with the address lookup box |
-| `/lookup/?q=<address or parcel ID>` | Address lookup: up to 25 matching parcels with just value and estimated new-owner tax; a parcel ID redirects to its parcel page |
+| `/lookup/?q=<address or parcel ID>` | Address lookup: up to 25 matching parcels with just value and estimated new-owner tax; a parcel ID redirects to its parcel page. A mistyped street ("1700 Gulf Bvld") is retried with the closest street names and says what it searched for |
 | `/lookup/suggest/?q=<start of an address>` | JSON for the lookup box's typeahead: up to 8 addresses that start with what has been typed (3 characters or more), CDN-cached and closed to crawlers |
 | `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
 | `/analytics/` | Filter-builder form that redirects into `/insights/` |
