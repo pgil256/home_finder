@@ -29,6 +29,7 @@ CACHED_URLS = [
     '/robots.txt',
     '/lookup/',
     '/lookup/?q=no+such+street',
+    '/lookup/suggest/?q=no+such+street',
     '/insights/',
     '/insights/?city=Clearwater&sort=city',
     f'/analytics/property/{PARCEL_ID}/',

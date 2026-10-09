@@ -26,6 +26,7 @@ from apps.analytics import views as analytics_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('lookup/', analytics_views.address_lookup, name='lookup'),
+    path('lookup/suggest/', analytics_views.address_suggest, name='lookup-suggest'),
     path('insights/', analytics_views.insights_dashboard, name='insights'),
     path('analytics/', include('apps.analytics.urls')),
     # The app was renamed from "WebScraper" to "analytics"; keep the old

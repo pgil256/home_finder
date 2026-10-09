@@ -34,6 +34,7 @@ A parcel drilldown and the responsive mobile layout:
 |---|---|
 | `/` | Home page that leads with the address lookup box |
 | `/lookup/?q=<address or parcel ID>` | Address lookup: up to 25 matching parcels with just value and estimated new-owner tax; a parcel ID redirects to its parcel page |
+| `/lookup/suggest/?q=<start of an address>` | JSON for the lookup box's typeahead: up to 8 addresses that start with what has been typed (3 characters or more), CDN-cached and closed to crawlers |
 | `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
 | `/analytics/` | Filter-builder form that redirects into `/insights/` |
 | `/analytics/dashboard/` | Legacy URL that redirects to `/insights/` |

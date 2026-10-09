@@ -17,7 +17,7 @@ from django.views.decorators.http import require_GET, require_POST
 from home_finder.caching import cdn_cache
 
 from .models import PropertyListing, TaxDistrictMillage
-from .services.address_lookup import LOOKUP_LIMIT, lookup_parcels
+from .services.address_lookup import LOOKUP_LIMIT, lookup_parcels, suggest_parcels
 from .services.compare import COMPARE_LIMIT, ComparedHome, build_comparison
 from .services.comps import build_sales_outlook
 from .services.exports import generate_excel_response, generate_pdf_response
@@ -245,6 +245,23 @@ def address_lookup(request):
             'lookup_limit': LOOKUP_LIMIT,
         },
     )
+
+
+@require_GET
+@cdn_cache
+def address_suggest(request):
+    """Addresses matching what is being typed into the lookup box, as JSON."""
+    results = [
+        {
+            'parcel_id': row['parcel_id'],
+            'address': row['address'],
+            'city': row['city'],
+            'market_value': int(row['market_value']) if row['market_value'] is not None else None,
+            'url': reverse('property-detail', args=[row['parcel_id']]),
+        }
+        for row in suggest_parcels(request.GET.get('q'))
+    ]
+    return JsonResponse({'results': results})
 
 
 def property_dashboard(request):
