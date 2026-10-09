@@ -236,7 +236,17 @@
                             <p class="text-xs text-charcoal-500 mt-1">The county's sales file goes back about five years and has no qualified sale of this home.</p>
                             {% endif %}
                         </div>
-                        {% if sales.comps %}
+                        {% if sales.comps and not sales.comps.confident %}
+                        {# A median of three or four sales can land far from any of them, so the spread leads. #}
+                        <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
+                            <p class="text-sm font-medium text-primary-700">Similar homes nearby sold for</p>
+                            <p class="text-2xl font-semibold text-charcoal-900 mt-1">${{ sales.comps.low_per_sqft|floatformat:0 }} to ${{ sales.comps.high_per_sqft|floatformat:0 }}<span class="text-sm font-normal text-charcoal-500">/sqft</span></p>
+                            <p class="text-xs text-charcoal-600 mt-1">
+                                Only {{ sales.comps.count }} sales in the last 12 months, so treat this as a range, not a price.
+                                The middle one was ${{ sales.comps.median_per_sqft|floatformat:0 }}/sqft, which would put this home around {{ sales.comps.indicated_value|dollars }} at its {{ sales.comps.subject_sqft|floatformat:"0g" }} sqft.
+                            </p>
+                        </div>
+                        {% elif sales.comps %}
                         <div class="rounded-lg border border-primary-200 bg-primary-50 p-4">
                             <p class="text-sm font-medium text-primary-700">Similar homes nearby sold for</p>
                             <p class="text-2xl font-semibold text-charcoal-900 mt-1">${{ sales.comps.median_per_sqft|floatformat:0 }}<span class="text-sm font-normal text-charcoal-500">/sqft</span></p>
