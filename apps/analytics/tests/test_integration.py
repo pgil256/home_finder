@@ -32,10 +32,11 @@ class TestPropertySearchWorkflow:
         # Verify price range filtering works
         assert in_range >= 0
 
-    def test_scraper_page_loads(self, client):
-        """Test the scraper page renders successfully."""
-        response = client.get('/analytics/')
+    def test_old_search_page_leads_to_the_market_page(self, client, db):
+        """The retired search form's URL still gets a visitor somewhere useful."""
+        response = client.get('/analytics/', follow=True)
         assert response.status_code == 200
+        assert response.redirect_chain == [('/insights/', 301)]
 
 
 class TestDataImportWorkflow:

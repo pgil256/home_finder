@@ -7,6 +7,8 @@ from urllib.parse import parse_qs, urlparse
 
 import openpyxl
 import pytest
+from django.conf import settings
+from django.urls import reverse
 
 from apps.analytics.models import PropertyListing, Sale, TaxDistrictMillage, ZipFloodHistory
 from apps.analytics.services import tax_estimate
@@ -14,100 +16,45 @@ from apps.analytics.services import tax_estimate
 pytestmark = pytest.mark.django_db
 
 
-class TestFilterBuilder:
-    def test_get_renders_filter_builder(self, client):
+class TestRetiredFilterBuilder:
+    """/analytics/ was a separate filter form. It now redirects to the market page."""
+
+    def test_redirects_permanently_to_insights(self, client):
         response = client.get('/analytics/')
-        assert response.status_code == 200
-        assert 'analytics/search.html' in [t.name for t in response.templates]
-        assert b'Build a Market Analysis' in response.content
 
-    def test_get_prefills_form_from_query_params(self, client):
-        response = client.get(
-            '/analytics/',
-            {
-                'q': 'Main',
-                'city': 'Clearwater',
-                'zip_code': '33755',
-                'property_type': ['Single Family', 'Condo'],
-                'min_price': '100000',
-                'max_price': '500000',
-                'year_built': '1980',
-                'min_sqft': '1000',
-                'max_sqft': '2200',
-                'min_lot_sqft': '5000',
-                'max_lot_sqft': '9000',
-                'min_tax_amount': '1000',
-                'max_tax_amount': '4500',
-            },
-        )
+        assert response.status_code == 301
+        assert response['Location'] == '/insights/'
 
-        values = response.context['search_values']
-        assert values['q'] == 'Main'
-        assert values['city'] == 'Clearwater'
-        assert values['zip_code'] == '33755'
-        assert values['property_type'] == ['Single Family', 'Condo']
-        assert values['min_price'] == '100000'
-        assert values['max_price'] == '500000'
-        assert values['year_built'] == '1980'
-        assert values['min_sqft'] == '1000'
-        assert values['max_sqft'] == '2200'
-        assert values['min_lot_sqft'] == '5000'
-        assert values['max_lot_sqft'] == '9000'
-        assert values['min_tax_amount'] == '1000'
-        assert values['max_tax_amount'] == '4500'
+    def test_old_links_keep_their_filters(self, client, sample_property):
+        response = client.get('/analytics/?city=Dunedin&property_type=Condo&property_type=Townhouse&max_price=400000')
 
-    def test_post_redirects_to_insights_with_filter_params(self, client):
-        response = client.post(
-            '/analytics/',
-            {
-                'city': 'Clearwater',
-                'min_price': '100000',
-                'max_price': '500000',
-            },
-        )
-        assert response.status_code == 302
-        parsed = urlparse(response.url)
+        assert response.status_code == 301
+        parsed = urlparse(response['Location'])
         assert parsed.path == '/insights/'
-        params = parse_qs(parsed.query)
-        assert params['city'] == ['Clearwater']
-        assert params['min_price'] == ['100000']
-        assert params['max_price'] == ['500000']
+        assert parse_qs(parsed.query) == {
+            'city': ['Dunedin'],
+            'property_type': ['Condo', 'Townhouse'],
+            'max_price': ['400000'],
+        }
 
-    def test_post_preserves_multi_value_property_types(self, client):
-        response = client.post(
-            '/analytics/',
-            {
-                'city': 'St. Petersburg',
-                'property_type': ['Single Family', 'Condo'],
-            },
-        )
-        assert response.status_code == 302
-        params = parse_qs(urlparse(response.url).query)
-        assert sorted(params['property_type']) == ['Condo', 'Single Family']
+        landed = client.get(response['Location'])
+        assert landed.status_code == 200
+        assert '<option value="Dunedin" selected>' in landed.content.decode()
 
-    def test_post_drops_removed_filter_params(self, client):
-        response = client.post(
-            '/analytics/',
-            {
-                'q': 'Main',
-                'min_assessed_value': '90000',
-                'max_assessed_value': '450000',
-                'tax_status': 'Delinquent',
-                'min_lot_sqft': '5000',
-            },
-        )
+    def test_url_name_still_resolves(self):
+        assert reverse('scraper') == '/analytics/'
 
-        params = parse_qs(urlparse(response.url).query)
-        assert params['q'] == ['Main']
-        assert params['min_lot_sqft'] == ['5000']
-        assert 'min_assessed_value' not in params
-        assert 'max_assessed_value' not in params
-        assert 'tax_status' not in params
+    def test_template_and_links_are_gone(self, client):
+        assert not (settings.BASE_DIR / 'templates/analytics/search.html').exists()
+        for url in ('/', '/help', '/insights/'):
+            html = client.get(url).content.decode()
+            assert 'Filter Builder' not in html
+            assert 'filter builder' not in html
+            assert 'href="/analytics/"' not in html
 
-    def test_post_with_no_fields_still_redirects(self, client):
-        response = client.post('/analytics/', {})
-        assert response.status_code == 302
-        assert urlparse(response.url).path == '/insights/'
+    def test_buyers_guide_points_at_the_market_page_for_budget_search(self, client):
+        html = client.get('/help').content.decode()
+        assert 'the filters turn a monthly budget into a price range' in html
 
 
 class TestInsightsDashboard:
@@ -420,20 +367,11 @@ class TestSessionsStayOutOfTheDatabase:
         assert response.status_code == 200
         assert Session.objects.count() == 0
 
-    def test_insights_hands_its_filters_to_the_browser_to_remember(self, client, sample_property):
-        """The last search is kept in localStorage, not in a session cookie."""
+    def test_filtered_insights_request_sets_no_cookie(self, client, sample_property):
+        """The filters live in the URL, so nothing has to be remembered for the visitor."""
         response = client.get('/insights/', {'city': 'Clearwater', 'min_price': '100000', 'sort': 'city'})
 
-        assert 'data-remember-search="city=Clearwater&amp;min_price=100000"' in response.content.decode()
         assert not response.cookies
-
-    def test_filter_builder_asks_the_browser_for_the_last_search(self, client, sample_property):
-        client.get('/insights/', {'city': 'Clearwater', 'min_price': '100000'})
-
-        html = client.get('/analytics/').content.decode()
-
-        assert 'data-restore-search="/analytics/"' in html
-        assert 'value="100000"' not in html
 
 
 class TestCrawlerHygiene:
@@ -910,15 +848,15 @@ class TestRiskFilterPlumbing:
         ):
             assert label in html
 
-    def test_filters_survive_the_trip_through_the_search_form(self, client):
-        response = client.post('/analytics/', self.PARAMS)
+    def test_filters_survive_an_old_filter_builder_link(self, client):
+        response = client.get('/analytics/', self.PARAMS)
 
-        assert response.status_code == 302
+        assert response.status_code == 301
         query = parse_qs(urlparse(response['Location']).query)
         assert query == {key: [value] for key, value in self.PARAMS.items()}
 
-    def test_search_form_prefills_the_risk_filters(self, client):
-        html = client.get('/analytics/', self.PARAMS).content.decode()
+    def test_insights_filter_panel_prefills_the_risk_filters(self, client, sample_property):
+        html = client.get('/insights/', self.PARAMS).content.decode()
 
         assert '<option value="B" selected>Outside evacuation zones A-B</option>' in html
         assert 'name="max_est_tax"' in html and 'value="6000"' in html

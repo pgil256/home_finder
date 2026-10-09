@@ -35,9 +35,8 @@ A parcel page (the new-owner tax estimate and monthly cost) and the responsive m
 | `/` | Home page that leads with the address lookup box |
 | `/lookup/?q=<address or parcel ID>` | Address lookup: up to 25 matching parcels with just value and estimated new-owner tax; a parcel ID redirects to its parcel page. A mistyped street ("1700 Gulf Bvld") is retried with the closest street names and says what it searched for |
 | `/lookup/suggest/?q=<start of an address>` | JSON for the lookup box's typeahead: up to 8 addresses that start with what has been typed (3 characters or more), CDN-cached and closed to crawlers |
-| `/insights/` | Main market insights dashboard with filters, KPIs, charts, segment tables, methodology, and outlier drilldowns |
-| `/analytics/` | Filter-builder form that redirects into `/insights/` |
-| `/analytics/dashboard/` | Legacy URL that redirects to `/insights/` |
+| `/insights/` | Main market insights dashboard with filters (including a monthly-budget box that sets the maximum value), KPIs, charts, segment tables, methodology, and outlier drilldowns |
+| `/analytics/`, `/analytics/dashboard/` | Old URLs that redirect to `/insights/` with their filters |
 | `/analytics/property/<parcel_id>/` | Parcel page: new-owner tax, recorded sales and comparable sales, monthly cost and risk flags, including the year of the last roof permit and the FEMA flood zone, plus the ZIP code's flood-claim history, and a map with FEMA's flood zones as an overlay. Also the drilldown for sample parcels and outlier rows |
 | `/analytics/compare/?ids=<parcel IDs>` | Saved homes side by side (up to 6): value, new-owner tax, monthly cost and risk flags. The list lives in the browser's `localStorage`; the header's Saved link builds the URL |
 | `/analytics/download/excel/` | Analysis workbook: Overview, City Segments, Property Type Segments, Outliers, Sample Parcels, Methodology |

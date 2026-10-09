@@ -76,7 +76,7 @@ class TestPublicPagesAreCdnCacheable:
     def test_returning_visitor_with_old_cookies_gets_the_same_cacheable_page(self, parcel):
         """Cookies from before this change must not make the page personal again."""
         client = Client()
-        client.get('/analytics/')  # the filter builder still sets a CSRF cookie
+        client.get('/analytics/csrf/')  # what a form on a cached page fetches before it posts
         assert 'csrftoken' in client.cookies
 
         response = client.get(f'/analytics/property/{PARCEL_ID}/')
@@ -97,10 +97,6 @@ class TestPublicPagesAreCdnCacheable:
 
 
 class TestPersonalResponsesStayOutOfTheCdn:
-    def test_filter_builder_is_not_cached(self, client):
-        """It renders a CSRF token for its POST form."""
-        assert_not_cdn_cacheable(client.get('/analytics/'))
-
     def test_csrf_endpoint_is_never_cached_and_sets_the_cookie(self, client):
         response = client.get('/analytics/csrf/')
 

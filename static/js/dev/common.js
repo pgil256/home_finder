@@ -411,51 +411,6 @@ function initComparePage(navigate = (url) => window.location.replace(url)) {
 }
 
 // ============================================
-// Last Search
-// ============================================
-
-// The filter builder reopens with the visitor's last search. It lives in this
-// browser rather than a server session, because a session cookie would keep
-// every page out of the CDN cache.
-const LAST_SEARCH_KEY = 'lastSearch';
-
-function readLastSearch() {
-  try {
-    return window.localStorage.getItem(LAST_SEARCH_KEY) || '';
-  } catch (error) {
-    return '';
-  }
-}
-
-function forgetLastSearch() {
-  try {
-    window.localStorage.removeItem(LAST_SEARCH_KEY);
-  } catch (error) {
-    // Nothing stored, nothing to forget.
-  }
-}
-
-function initLastSearch(navigate = (url) => window.location.replace(url), currentQuery = window.location.search) {
-  // The insights page carries its filters as a query string: remember them.
-  const results = document.querySelector('[data-remember-search]');
-  const query = results ? results.getAttribute('data-remember-search') : '';
-  if (query) {
-    try {
-      window.localStorage.setItem(LAST_SEARCH_KEY, query);
-    } catch (error) {
-      // Storage is blocked: the builder just opens empty next time.
-    }
-  }
-
-  // The filter builder opened without filters: reload it with the last search.
-  const builder = document.querySelector('[data-restore-search]');
-  const saved = readLastSearch();
-  if (builder && saved && !currentQuery) {
-    navigate(`${builder.getAttribute('data-restore-search')}?${saved}`);
-  }
-}
-
-// ============================================
 // CSRF Token On Demand
 // ============================================
 
@@ -519,9 +474,6 @@ document.addEventListener('DOMContentLoaded', function() {
   updateSavedLinks();
   initComparePage();
 
-  // Last search: remembered on the insights page, restored on the builder
-  initLastSearch();
-
   // Legacy support for learn more button
   const learnMoreButton = document.getElementById('learnMoreButton');
   if (learnMoreButton) {
@@ -554,9 +506,6 @@ if (typeof module !== 'undefined' && module.exports) {
     updateSavedLinks,
     toggleSavedHome,
     initComparePage,
-    readLastSearch,
-    forgetLastSearch,
-    initLastSearch,
     submitWithCsrfToken
   };
 }
@@ -570,6 +519,5 @@ window.HomeFinder = {
   copyToClipboard: copyToClipboard,
   debounce: debounce,
   readSavedHomes: readSavedHomes,
-  toggleSavedHome: toggleSavedHome,
-  forgetLastSearch: forgetLastSearch
+  toggleSavedHome: toggleSavedHome
 };

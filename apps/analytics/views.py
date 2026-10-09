@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Callable
-from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.cache import cache
@@ -111,14 +110,6 @@ def _cache_busted(url: str, param: str) -> str:
     return f'{url}{separator}{param}={int(time.time())}'
 
 
-def _search_url_from_values(values: dict[str, str | list[str]]) -> str:
-    params = _search_params_from_values(values)
-    url = reverse('scraper')
-    if params:
-        url += '?' + urlencode(params)
-    return url
-
-
 def _dashboard_querydict(request) -> QueryDict:
     """Return dashboard params that still map to buyer-facing filters.
 
@@ -199,35 +190,19 @@ def _active_filter_chips(request) -> list[dict[str, str]]:
     return chips
 
 
-def web_scraper_view(request):
-    """Search form. POST translates form fields to dashboard query params and 302s.
+def _redirect_to_insights(request, permanent: bool = False):
+    target = reverse('insights')
+    query_string = request.META.get('QUERY_STRING')
+    if query_string:
+        target = f'{target}?{query_string}'
+    return redirect(target, permanent=permanent)
 
-    Searches are now DB queries against the bulk-imported PCPAO data, not live
-    scrapes — fast, accurate, no rate limit, no loading state needed.
-    """
-    if request.method == 'POST':
-        search_values = _search_values_from_querydict(request.POST)
-        params = _search_params_from_values(search_values)
 
-        url = reverse('insights')
-        if params:
-            url += '?' + urlencode(params)
-        return redirect(url)
-
-    # With no filters in the URL, the page's script restores the last search
-    # from the browser's localStorage.
-    search_values = _search_values_from_querydict(request.GET)
-    return render(
-        request,
-        'analytics/search.html',
-        {
-            'cities': sorted(PINELLAS_CITIES),
-            'property_types': PROPERTY_TYPES,
-            'search_values': search_values,
-            'evac_filter_choices': EVAC_FILTER_CHOICES,
-            'affordability': affordability_config(),
-        },
-    )
+def retired_filter_builder(request):
+    """/analytics/ was a separate filter form. Its filters, and the monthly
+    budget search, are on the market page now, so old links land there with
+    their filters intact."""
+    return _redirect_to_insights(request, permanent=True)
 
 
 @cdn_cache
@@ -269,11 +244,7 @@ def address_suggest(request):
 
 def property_dashboard(request):
     """Legacy dashboard URL; redirect to the canonical market-insights route."""
-    target = reverse('insights')
-    query_string = request.META.get('QUERY_STRING')
-    if query_string:
-        target = f'{target}?{query_string}'
-    return redirect(target)
+    return _redirect_to_insights(request)
 
 
 @cdn_cache
@@ -316,10 +287,10 @@ def insights_dashboard(request):
             'dashboard_querystring': dashboard_qs.urlencode(),
             'filter_values': filter_values,
             'active_filter_chips': _active_filter_chips(request),
-            'modify_search_url': _search_url_from_values(filter_values),
-            'search_querystring': urlencode(_search_params_from_values(filter_values)),
             'insights_url': reverse('insights'),
             'evac_filter_choices': EVAC_FILTER_CHOICES,
+            # The loan assumptions behind the monthly-budget box in the filters.
+            'affordability': affordability_config(),
         },
     )
 
