@@ -718,19 +718,22 @@
         </div>
     </div>
 
-    <!-- Similar Properties -->
-    {% if similar_properties %}
-    <section class="mt-12">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="font-display text-display-xs text-charcoal-800">Similar Properties</h2>
+    <!-- Nearby homes with a similar county value -->
+    {% if nearby_homes %}
+    <section class="mt-12" aria-labelledby="nearby-heading">
+        <div class="flex items-start justify-between gap-4 mb-6">
+            <div>
+                <h2 id="nearby-heading" class="font-display text-display-xs text-charcoal-800">Nearby homes the county values alike</h2>
+                <p class="text-sm text-charcoal-500 mt-1 max-w-3xl">The same kind of home, from this county appraisal neighborhood where it has enough of them, closest to this one in the county's value. These are not sales{% if sales %}; <a href="#sales" class="text-primary-600 hover:text-primary-700 font-medium">recorded sale prices are above</a>{% endif %}.</p>
+            </div>
             <a href="{% url 'insights' %}?city={{ property.city|urlencode }}"
-               class="text-primary-500 hover:text-primary-600 transition-colors text-sm font-medium">
+               class="flex-shrink-0 text-primary-500 hover:text-primary-600 transition-colors text-sm font-medium">
                 View all in {{ property.city }}
             </a>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {% for similar in similar_properties %}
+            {% for similar in nearby_homes %}
             <article class="property-card group">
                 <div class="relative overflow-hidden">
                     <div class="property-card-image bg-gradient-to-br from-charcoal-200 to-charcoal-300 flex items-center justify-center">
@@ -758,9 +761,8 @@
                     <p class="font-display text-lg font-semibold text-primary-600">{{ similar.market_value|format_price }}</p>
                     <p class="text-sm text-charcoal-800 font-medium line-clamp-1 mt-1">{{ similar.address }}</p>
                     <div class="flex items-center gap-3 mt-2 text-xs text-charcoal-500">
-                        {% if similar.bedrooms %}<span>{{ similar.bedrooms }} bd</span>{% endif %}
-                        {% if similar.bathrooms %}<span>{{ similar.bathrooms|floatformat:0 }} ba</span>{% endif %}
-                        {% if similar.building_sqft %}<span>{{ similar.building_sqft|floatformat:0 }} sqft</span>{% endif %}
+                        {% if similar.building_sqft %}<span>{{ similar.building_sqft|floatformat:"0g" }} sqft</span>{% endif %}
+                        {% if similar.year_built %}<span>Built {{ similar.year_built }}</span>{% endif %}
                     </div>
                 </div>
             </article>

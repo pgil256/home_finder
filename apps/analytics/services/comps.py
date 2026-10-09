@@ -16,6 +16,7 @@ from datetime import date
 from statistics import median
 
 from django.db import DatabaseError
+from django.db.models import Q
 
 from apps.analytics.models import PropertyListing, Sale
 
@@ -92,6 +93,17 @@ def comp_type_bucket(property_type: str | None) -> str | None:
         if any(keyword.lower() in lowered for keyword in PROPERTY_TYPE_KEYWORDS[label]):
             return label
     return None
+
+
+def comp_type_q(bucket: str) -> Q:
+    """The database filter for the rows comp_type_bucket() puts in `bucket`."""
+    match = Q()
+    for keyword in PROPERTY_TYPE_KEYWORDS[bucket]:
+        match |= Q(property_type__icontains=keyword)
+    for earlier in _COMP_TYPE_ORDER[: _COMP_TYPE_ORDER.index(bucket)]:
+        for keyword in PROPERTY_TYPE_KEYWORDS[earlier]:
+            match &= ~Q(property_type__icontains=keyword)
+    return match
 
 
 def build_sales_outlook(listing: PropertyListing, today: date | None = None) -> SalesOutlook | None:

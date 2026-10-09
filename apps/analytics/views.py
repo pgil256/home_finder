@@ -30,6 +30,7 @@ from .services.filtering import (
 from .services.flood_claims import CLAIM_RECORDS_START_YEAR, RECENT_SINCE_YEAR, zip_flood_history
 from .services.lending_config import affordability_config
 from .services.market_insights import build_market_insights
+from .services.nearby_homes import nearby_homes
 from .services.risk_flags import (
     EVAC_FILTER_CHOICES,
     allowed_evac_zones,
@@ -347,25 +348,6 @@ def property_detail(request, parcel_id: str):
     """Single property detail view."""
     property_obj = get_object_or_404(PropertyListing, parcel_id=parcel_id)
 
-    similar_properties = PropertyListing.objects.filter(
-        city=property_obj.city,
-        property_type=property_obj.property_type,
-    ).exclude(parcel_id=parcel_id)
-
-    if property_obj.market_value:
-        min_price = float(property_obj.market_value) * 0.8
-        max_price = float(property_obj.market_value) * 1.2
-        similar_properties = similar_properties.filter(
-            market_value__gte=min_price,
-            market_value__lte=max_price,
-        )
-
-    # Only what the cards show: crawlers walk parcel pages through these links,
-    # so every column read here is paid for in database egress.
-    similar_properties = similar_properties.only(
-        'parcel_id', 'address', 'market_value', 'bedrooms', 'bathrooms', 'building_sqft', 'image_url'
-    )[:4]
-
     district_millage = None
     if property_obj.tax_district:
         district_millage = (
@@ -379,7 +361,7 @@ def property_detail(request, parcel_id: str):
         'analytics/property-detail.html',
         {
             'property': property_obj,
-            'similar_properties': similar_properties,
+            'nearby_homes': nearby_homes(property_obj),
             'tax_outlook': tax_outlook,
             'sales': build_sales_outlook(property_obj),
             'affordability': _parcel_affordability(tax_outlook),
