@@ -15,6 +15,7 @@ import io
 import logging
 import os
 import zipfile
+from collections.abc import Mapping
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -206,12 +207,20 @@ def _split_property_use(value: str) -> str | None:
     return value.strip() or None
 
 
-def map_csv_row_to_property(row: dict[str, str], millage: dict[str, Millage] | None = None) -> dict[str, Any]:
+def map_csv_row_to_property(
+    row: dict[str, str],
+    millage: dict[str, Millage] | None = None,
+    permits: Mapping[str, tuple[int | None, int | None]] | None = None,
+) -> dict[str, Any]:
     """Map a PCPAO RP_PROPERTY_INFO row to PropertyListing fields.
 
     With a district -> Millage lookup (see import_millage_rates), also
     precomputes the tax estimates. Without one, the estimate fields are left
     out so an upsert keeps whatever the database already has.
+
+    The same goes for `permits`, a parcel -> (roof year, heating/air year)
+    lookup (see permits_importer.read_permit_years): with one, a parcel
+    missing from it has its permit years cleared.
 
     Schema reference:
       - PARCEL_NUMBER, SITE_ADDRESS, STR_CITY, STR_ZIP, OWNER1
@@ -276,6 +285,9 @@ def map_csv_row_to_property(row: dict[str, str], millage: dict[str, Millage] | N
 
     if millage is not None:
         result.update(_tax_estimates(row, result, millage))
+
+    if permits is not None:
+        result['roof_permit_year'], result['hvac_permit_year'] = permits.get(result['parcel_id'], (None, None))
 
     return result
 
@@ -428,6 +440,8 @@ def bulk_upsert_properties(properties: list[dict[str, Any]], batch_size: int = 1
             'est_tax_current',
             'est_tax_homestead',
             'est_tax_no_homestead',
+            'roof_permit_year',
+            'hvac_permit_year',
         ]
 
         for prop in valid_properties:

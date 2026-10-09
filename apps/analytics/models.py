@@ -66,6 +66,10 @@ class PropertyListing(models.Model):
     historic_landmark = models.BooleanField(null=True)
     living_units = models.IntegerField(null=True)
 
+    # Year of the latest county permit of each kind (RP_PERMITS, services/permits_importer.py)
+    roof_permit_year = models.SmallIntegerField(null=True)
+    hvac_permit_year = models.SmallIntegerField(null=True)
+
     # Metadata
     last_scraped = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)

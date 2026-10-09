@@ -29,6 +29,8 @@ def _listing(**overrides):
         'subsidence': False,
         'contamination': False,
         'historic_landmark': False,
+        'roof_permit_year': None,
+        'hvac_permit_year': None,
     }
     return SimpleNamespace(**{**fields, **overrides})
 
@@ -103,14 +105,14 @@ class TestWaterfront:
 
 class TestBuildingAge:
     def test_home_built_before_the_2002_code(self):
-        (flag,) = _flags(year_built=1987)
+        _roof, flag = _flags(year_built=1987)
 
         assert flag.level == INFO
         assert flag.title == 'Built in 1987, before the 2002 Florida Building Code'
         assert 'wind-mitigation' in flag.ask
 
     def test_home_built_in_2002_or_later_is_not_flagged(self):
-        assert _flags(year_built=2002) == []
+        assert _titles(year_built=2002) == ['No roof permit on record']
 
     def test_vacant_land_has_no_age_flags(self):
         assert _flags(year_built=None) == []
@@ -135,6 +137,67 @@ class TestBuildingAge:
         assert not any(title.startswith('Condo building') for title in titles)
 
 
+class TestRoofPermit:
+    def test_house_with_no_roof_permit_in_15_years(self):
+        (flag,) = _flags(year_built=2011)
+
+        assert flag.level == MEDIUM
+        assert flag.title == 'No roof permit on record'
+        assert 'go back to 1997' in flag.why and 'built in 2011' in flag.why
+        assert 'insurance quotes' in flag.ask
+
+    def test_house_under_15_years_old_is_not_flagged(self):
+        assert _flags(year_built=2012) == []
+
+    def test_old_permit_is_named(self):
+        (flag,) = _flags(year_built=2003, roof_permit_year=2011)
+
+        assert flag.level == MEDIUM
+        assert flag.title == 'Last roof permit was in 2011'
+        assert 'from 2011' in flag.why
+
+    def test_recent_permit_is_good_news_but_may_be_a_repair(self):
+        (flag,) = _flags(year_built=2003, roof_permit_year=2012)
+
+        assert flag.level == GOOD
+        assert flag.title == 'Roof permit in 2012'
+        assert 'repair' in flag.why
+
+    @pytest.mark.parametrize('permit_year', [1998, 2003])
+    def test_permit_no_newer_than_the_house_is_the_original_roof(self, permit_year):
+        assert _titles(year_built=2003, roof_permit_year=permit_year) == ['No roof permit on record']
+
+    @pytest.mark.parametrize(
+        'property_type',
+        ['Condominium', 'Planned Unit Development', 'Manufactured Home (Co-Op or Share Owned)', 'General Office'],
+    )
+    def test_missing_permit_is_only_flagged_for_houses(self, property_type):
+        assert 'No roof permit on record' not in _titles(property_type=property_type, year_built=2003)
+
+    def test_duplex_counts_as_a_house(self):
+        assert _titles(property_type='Duplex-Triplex-Fourplex', year_built=2003) == ['No roof permit on record']
+
+    def test_recent_permit_shows_for_any_kind_of_home(self):
+        titles = _titles(property_type='Planned Unit Development', year_built=2003, roof_permit_year=2020)
+
+        assert titles == ['Roof permit in 2020']
+
+    def test_vacant_land_says_nothing(self):
+        assert _flags(year_built=None, roof_permit_year=2020, hvac_permit_year=2020) == []
+
+
+class TestHeatingAndAirPermit:
+    def test_permit_in_the_last_10_years_is_good_news(self):
+        (flag,) = _flags(hvac_permit_year=2017)
+
+        assert flag.level == GOOD
+        assert flag.title == 'Heating and air permit in 2017'
+
+    def test_older_or_original_system_says_nothing(self):
+        assert _flags(hvac_permit_year=2016) == []
+        assert _flags(year_built=2020, hvac_permit_year=2020) == []
+
+
 class TestRecordFlags:
     def test_subsidence_contamination_and_landmark(self):
         flags = _flags(subsidence=True, contamination=True, historic_landmark=True)
@@ -148,7 +211,8 @@ class TestRecordFlags:
     def test_most_serious_flags_come_first(self):
         flags = _flags(evac_zone='NONE', year_built=1960, seawall=True, subsidence=True)
 
-        assert [flag.level for flag in flags] == [HIGH, MEDIUM, INFO, GOOD]
+        assert [flag.level for flag in flags] == [HIGH, MEDIUM, MEDIUM, INFO, GOOD]
+        assert flags[2].title == 'No roof permit on record'
 
     def test_every_flag_explains_itself(self):
         flags = _flags(
@@ -161,9 +225,11 @@ class TestRecordFlags:
             subsidence=True,
             contamination=True,
             historic_landmark=True,
+            roof_permit_year=2020,
+            hvac_permit_year=2020,
         )
 
-        assert len(flags) == 8
+        assert len(flags) == 10
         assert all(flag.title and flag.why and flag.ask for flag in flags)
 
 
