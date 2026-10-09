@@ -38,7 +38,7 @@ Still open:
 
 - **Purge secrets (deferred by the owner on 2026-10-09).** `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_PURGE_TOKEN` are not set, so the data refresh workflows skip the Cloudflare purge and a parcel page can lag an import by up to a day (longer while stale copies are served). See [docs/cloudflare-cache.md](../cloudflare-cache.md).
 - The "parcel page after a refresh shows the new value" check for step 2 waits on those secrets.
-- **README dashboard screenshot** (`docs/img/dashboard.png`) still shows the old headings. Retake it after 2026-10-10: the market page's figures are cached for a day, so until then the unfiltered page still shows the old notes under each figure ("Exact filtered count") beneath the new headings.
+- **Market page notes.** Until its one-day cache expires on 2026-10-10, the unfiltered market page still shows the old notes under each figure ("Exact filtered count") beneath the new headings. Filtered views already show the new ones. The README dashboard screenshot was retaken from the all-property-types view for that reason.
 
 ## What was found
 

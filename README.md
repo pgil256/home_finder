@@ -18,9 +18,9 @@ Pinellas Market Lens answers a home buyer's question about any Pinellas County, 
 
 ## Screenshots
 
-The market-insights dashboard — exact KPIs over 437,000+ parcels, with pandas/numpy distributions, city/type segments, and auditable outliers:
+The market page, here with every property type included: figures counted across all 437,000+ parcels, with distributions and breakdowns by city, type and age computed with pandas/numpy:
 
-![Pinellas Market Lens market-insights dashboard](docs/img/dashboard.png)
+![The Explore the market page, showing county-wide figures and value distributions](docs/img/dashboard.png)
 
 A parcel page (the new-owner tax estimate and monthly cost) and the responsive mobile layout:
 
