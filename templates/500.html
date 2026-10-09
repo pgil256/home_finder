@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{# Django renders this with an empty context after an unhandled error: no request, no messages. Keep it free of database reads and of anything about the visitor. #}
+
+{% block title %}Something Went Wrong - Pinellas Market Lens{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl space-y-6 py-8">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-primary-600">Something went wrong</p>
+        <h1 class="mt-2 font-display text-display-sm text-charcoal-900">The data for this page isn't available right now</h1>
+        <p class="mt-3 text-charcoal-600">
+            That is a problem on our side, not with what you typed. It is usually brief, so try again in a few minutes.
+        </p>
+    </div>
+
+    <ul class="list-disc space-y-1 pl-5 text-sm text-charcoal-600">
+        <li><a href="{% url 'api-status' %}" class="font-medium text-primary-600 hover:text-primary-700">Check whether the county data is loaded</a> (a short status readout).</li>
+        <li><a href="{% url 'home' %}" class="font-medium text-primary-600 hover:text-primary-700">Go back to the home page</a>.</li>
+        <li>The county's own record for any parcel is at <a href="https://www.pcpao.gov" target="_blank" rel="noopener" class="font-medium text-primary-600 hover:text-primary-700">pcpao.gov</a>.</li>
+    </ul>
+</div>
+{% endblock %}

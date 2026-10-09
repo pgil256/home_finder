@@ -621,6 +621,54 @@ class TestTaxEstimateCard:
         assert 'Annual Tax' not in html
 
 
+class TestErrorPages:
+    def test_unknown_parcel_gets_a_styled_page_with_the_lookup_box(self, client, db):
+        response = client.get('/analytics/property/00-00-00-00000-000-0000/')
+        html = response.content.decode()
+
+        assert response.status_code == 404
+        assert "That parcel isn't in the county's current file" in html
+        assert '00-00-00-00000-000-0000' in html
+        assert 'action="/lookup/"' in html
+        assert 'name="q"' in html
+        # The site header, so there is a way back.
+        assert 'Pinellas Market Lens' in html
+        assert 'aria-label="Main navigation"' in html
+
+    def test_unknown_url_gets_the_general_message(self, client, db):
+        response = client.get('/no/such/page/')
+        html = response.content.decode()
+
+        assert response.status_code == 404
+        assert "We couldn't find that page" in html
+        assert 'county&#x27;s current file' not in html
+        assert 'action="/lookup/"' in html
+
+    def test_not_found_pages_are_not_cached_by_the_cdn(self, client, db):
+        response = client.get('/analytics/property/00-00-00-00000-000-0000/')
+        assert 's-maxage' not in response.get('Cache-Control', '')
+
+    def test_parcel_id_in_the_url_is_escaped(self, client, db):
+        response = client.get('/analytics/property/<script>alert(1)<%2Fscript>/')
+        assert response.status_code == 404
+        assert b'<script>alert(1)' not in response.content
+
+    def test_server_error_page_is_styled_and_reads_no_data(self, client, db, django_assert_num_queries):
+        client.raise_request_exception = False
+        with (
+            patch('apps.analytics.views.lookup_parcels', side_effect=RuntimeError('boom')),
+            django_assert_num_queries(0),
+        ):
+            response = client.get('/lookup/', {'q': '1029 charles'})
+        html = response.content.decode()
+
+        assert response.status_code == 500
+        assert "The data for this page isn't available right now" in html
+        assert 'href="/api/status/"' in html
+        assert 'Pinellas Market Lens' in html
+        assert 'boom' not in html
+
+
 class TestParcelPageTidyUp:
     def test_money_is_formatted_with_commas_and_no_cents(self, client, sample_property):
         sample_property.tax_amount = Decimal('283608.00')

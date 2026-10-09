@@ -144,6 +144,9 @@ def test_S5_invalid_parcel_returns_404(client, base_url):
     """Detail page for a nonexistent parcel returns 404."""
     r = client.get(f'{base_url}/analytics/property/00-00-00-00000-000-0000/', timeout=TIMEOUT)
     assert_ok(r, 404)
+    # A styled page with a way forward, not a bare "Not Found".
+    assert 'Pinellas Market Lens' in r.text
+    assert 'action="/lookup/"' in r.text
 
 
 @pytest.mark.heavy
