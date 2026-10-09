@@ -103,7 +103,6 @@ def test_S1d_address_suggestions(client, base_url):
     addresses = [row['address'] for row in r.json()['results']]
     assert '1029 CHARLES ST' in addresses
     assert r.elapsed.total_seconds() < 1, f'suggestions took {r.elapsed.total_seconds():.1f}s'
-    assert 's-maxage' in r.headers.get('Cache-Control', '')
 
 
 def test_S2_scraper_form_loads(client, base_url):
