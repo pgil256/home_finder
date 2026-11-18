@@ -1,8 +1,8 @@
 # Caching HTML at Cloudflare
 
-`homefinder.patbuilds.dev` is proxied by Cloudflare in front of Vercel. Pages that are the same for every visitor send `Cache-Control: public, max-age=0, s-maxage=86400, stale-while-revalidate=604800` (see `home_finder/caching.py`), but Cloudflare does not cache HTML by default, so it answers `cf-cache-status: DYNAMIC` and passes every request to Vercel. Vercel also removes `s-maxage` from `Cache-Control` once its own edge has used it, so the same pages send `CDN-Cache-Control: public, s-maxage=86400, stale-while-revalidate=604800`, which Vercel passes on and Cloudflare reads first. This is the dashboard setup that makes Cloudflare honor those headers. None of it is in the repository.
+Cloudflare fronts the homelab deployment for both public domains. Cacheable HTML carries a one-day shared cache lifetime and a seven-day stale-while-revalidate window. Browsers revalidate on each visit. The cache rules live in Cloudflare. After switching the origin, use a single-file purge for each affected URL on both domains and check the public smoke workflow.
 
-The rule below was created on 2026-10-09 as "Cache homefinder HTML (respect origin headers)". The DNS record for `homefinder` is a proxied CNAME to the Vercel project's DNS name (it used to be a route to the homelab tunnel, which served a copy of the app with an empty database).
+The example below documents the cache rule created for the homefinder domain on October 9, 2026.
 
 ## 1. Cache Rule
 

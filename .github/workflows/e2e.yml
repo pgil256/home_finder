@@ -72,7 +72,7 @@ jobs:
           "Production smoke failed"
           "The read-only smoke suite failed against $E2E_BASE_URL.
           If test_S0_has_data is the first failure, that host has no parcel data:
-          check which Vercel project and database the domain points at before
+          check the homelab service, its database, and the monthly import before
           looking at application code."
 
   functional:
