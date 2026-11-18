@@ -8,7 +8,7 @@
 
 > **Live:** [homefinder.patbuilds.dev](https://homefinder.patbuilds.dev)
 >
-> The same Vercel project also answers at [homefinder-jet.vercel.app](https://homefinder-jet.vercel.app), which is the URL a push to `main` deploys to. The custom domain is a Cloudflare-proxied alias for it; if the two ever disagree (compare `/api/status/` on each), the domain is pointed at the wrong Vercel project or database. The daily smoke test checks the custom domain and opens a "Production smoke failed" issue when it fails.
+> The daily smoke test checks the public site and opens a “Production smoke failed” issue when a monitored feature fails.
 >
 > Cloudflare only caches the HTML if a Cache Rule tells it to; the rule and the two secrets the data jobs use to purge it are described in [docs/cloudflare-cache.md](docs/cloudflare-cache.md).
 
