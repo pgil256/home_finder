@@ -59,16 +59,16 @@ flowchart LR
     DJANGO --> UI
 ```
 
-The production architecture keeps the app cheap and understandable: Vercel serves Django, Neon stores the indexed parcel table, and GitHub Actions refreshes the public-record data. The interesting data-science layer is now visible in the product instead of hidden inside a download.
+Both public domains serve the same homelab deployment. Cloudflare forwards requests to Gunicorn and Django. An indexed SQLite database holds the county data, and a systemd timer refreshes it monthly.
 
 ### Design decisions
 
-- **Exact DB aggregates + capped pandas frames.** Headline KPIs (counts, medians, sums, tax rates) are exact database aggregates over the full filtered queryset, so the numbers are always right. The pandas/numpy layer that powers distributions, segments, and scatter plots reads a capped analysis frame (≤50k rows) — enough for representative EDA without pulling ~437k rows into a serverless function on every request.
+- **Exact DB aggregates + capped pandas frames.** Headline KPIs (counts, medians, sums, tax rates) are exact database aggregates over the full filtered queryset, so the numbers are always right. The pandas/numpy layer that powers distributions, segments, and scatter plots reads a capped analysis frame (≤50k rows) — enough for representative EDA without pulling ~437k rows into memory on every request.
 - **Monthly bulk CSV import over live scraping.** The original app scraped PCPAO per search (Selenium, ~15 rows, 15–30s, often zero results). Importing the county's public bulk CSV once a month turns every search into a sub-second indexed query over complete data and removes Chrome/Selenium from the request path. The old per-parcel scrape survives only as an on-demand refresh.
 - **No Google or paid API dependency.** Search and analytics use the county's public dataset, parcel photos come directly from the Property Appraiser when available, the parcel map is MapLibre GL with OpenFreeMap tiles (free, no key, loaded by the visitor's browser), and the interface uses system fonts and bundled SVG icons.
-- **Vercel serverless + Neon Postgres.** Vercel runs Django with no servers to manage; Neon is a serverless Postgres that idles to zero between requests. The full dataset (~150 MB / ~437k parcels) fits under Neon's free storage, so the project is effectively free to run.
+- **SQLite on the web host.** Property lookups and dashboard queries use a local indexed database. The Django models also support PostgreSQL.
 - **DatabaseCache over Redis.** The only things needing a cache are the per-parcel refresh and per-IP export rate limits. A database-backed cache table needs no extra service, survives serverless cold starts, and fails open — not worth standing up Redis for a couple of rate-limit keys.
-- **GitHub Actions for the data refresh.** The import runs 10–20 minutes, well past Vercel's function timeout, so a monthly GitHub Actions cron runs it against Neon instead — free, no extra infrastructure, and duration doesn't matter for a one-shot batch.
+- **Scheduled imports.** A systemd timer starts the county import on the fifth of each month at 06:00 UTC. GitHub Actions runs the public smoke check against the production domain.
 
 ## Interesting Bits
 
@@ -77,18 +77,18 @@ The production architecture keeps the app cheap and understandable: Vercel serve
 - Auditable outliers: high-value IQR outliers, largest assessed gaps, and highest tax-burden parcels link back to parcel drilldowns.
 - Honest methodology: no predictive valuation. Parcel pages show recorded qualified sales and a median price per square foot from similar nearby sales, with the count and range, and hide it when fewer than three homes sold. The dataset has no listing prices and no reliable bedrooms/bathrooms coverage.
 - Production constraints: interactive EDA is capped for responsiveness, while headline KPIs remain exact database aggregates.
-- On-demand freshness: the full dataset refreshes monthly via GitHub Actions, and any single parcel can be re-pulled from the County Property Appraiser on demand — rate-limited to one refresh per parcel per minute via the database cache.
+- On-demand freshness: the full dataset refreshes monthly on the homelab, and any single parcel can be re-pulled from the County Property Appraiser on demand — rate-limited to one refresh per parcel per minute via the database cache.
 
 ## Tech Stack
 
 | Layer | Choice |
 |---|---|
-| Web | Django 5.2 on Vercel |
-| Database | Neon Postgres in production, SQLite locally |
+| Web | Django 5.2 with Gunicorn behind Cloudflare |
+| Database | Indexed SQLite on the homelab |
 | Analysis | pandas, numpy, Django ORM aggregates |
 | Frontend | Django templates, Tailwind CSS, Chart.js, vanilla JS |
 | Exports | openpyxl and ReportLab |
-| Data refresh | GitHub Actions + bulk CSV import |
+| Data refresh | systemd timer + bulk CSV import |
 | Tests | pytest, pytest-django, Jest, Playwright/httpx smoke tests |
 
 ## Quick Start
